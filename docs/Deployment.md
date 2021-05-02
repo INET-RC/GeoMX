@@ -1,4 +1,4 @@
-# Environment Variables explained
+## Environment Variables explained
 
 `DMLC_ROLE`: Specifies the local role of current process. It can be `server`,  `worker` , or `scheduler`
 
@@ -27,7 +27,7 @@
 - `PS_VERBOSE=1` logs connection information like the IPs and ports of all nodes
 - `PS_VERBOSE=2` logs all data communication information
 
-# Manually start distributed jobs
+## Manually start distributed jobs
 
 Assume that we have 3 host machines:
 
@@ -35,7 +35,7 @@ Assume that we have 3 host machines:
 - B: IP 10.1.1.29
 - C: IP 10.1.1.33
 
-## Configure Network
+### Configure Network
 
 Containers are separated into three networks and they should be able to communicate with others.
 
@@ -86,7 +86,7 @@ $ sudo iptables -t nat -A POSTROUTING -s 172.17.33.0/24 ! -d 172.17.0.0/16 -j MA
 
 > Besides, [weaveworks/weave](https://github.com/weaveworks/weave) is also practical and recommended.
 
-## Run Containers
+### Run Containers
 
 >  NOTE: Always start scheduler and global scheduler first to ensure their IP addresses are 172.17.XX.2 and 172.17.XX.3 respectively, otherwise the process would fail to bind the ports.
 

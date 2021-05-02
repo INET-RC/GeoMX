@@ -124,7 +124,7 @@ sudo systemctl restart docker
 
 - [Deployment](./docs/Deployment.md): How to run HiPS on multiple machines with Docker.
 - [Configurations](./docs/Configurations.md): How to use HiPS' communication-efficient strategies.
-- [System Design](./docs/System Design.md): How and why HiPS and its modifications make better.
+- [System Design](./docs/System%20Design.md): How and why HiPS and its modifications make better.
 
 ## Communication
 
