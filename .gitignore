@@ -35,7 +35,7 @@ doc/doc
 docs/web-data
 
 #dmlc
-config.mk
+./config.mk
 
 *.pyc
 .Rhistory
