@@ -1,0 +1,62 @@
+FROM nvidia/cuda:9.0-devel
+RUN APT_INSTALL="apt install -y --no-install-recommends" && \
+    rm -rf /var/lib/apt/lists/* \
+           /etc/apt/sources.list.d/cuda.list \
+           /etc/apt/sources.list.d/nvidia-ml.list && \
+    sed -i 's/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' \
+        /etc/apt/sources.list && \
+    apt update && \
+# ==================================================================
+# apt tools
+# ------------------------------------------------------------------
+    DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
+        build-essential \
+        ca-certificates \
+        cmake \
+        zip \
+        unzip \
+        vim \ 
+        wget \
+        curl \
+        git \
+        apt-transport-https \
+        openssh-client \
+        openssh-server \
+        libopencv-dev \
+        libsnappy-dev \
+        libopenblas-dev \
+        tzdata \
+        autogen \
+        autoconf \
+        automake
+
+RUN apt autoremove && apt clean
+
+# ==================================================================
+# miniconda python3.7
+# ------------------------------------------------------------------
+RUN curl -so ~/anaconda.sh https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-py37_4.9.2-Linux-x86_64.sh && \
+    chmod +x ~/anaconda.sh && \
+    ~/anaconda.sh -b -p /opt/conda && \
+    rm ~/anaconda.sh
+
+ENV PATH /opt/conda/bin:$PATH
+ENV CONDA_AUTO_UPDATE_CONDA false
+
+RUN conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/ && \
+    conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/ && \
+    conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/pytorch/ && \
+    conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/ && \
+    conda config --set show_channel_urls yes && \
+    conda update --all
+
+RUN conda install -y numpy \
+                     pandas \
+                     py-opencv && \
+    conda clean -y -a
+
+RUN git clone https://github.com/INET-RC/HiPS.git 
+RUN cd HiPS && make -j$(nproc)
+RUN cd python && pip install -e .
+
+WORKDIR /root/
