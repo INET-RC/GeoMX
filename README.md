@@ -131,6 +131,16 @@ sudo systemctl restart docker
 
 - [Github Issues](https://github.com/INET-RC/GeoMX/issues) is welcomed.
 
+## Contributors and Institutions
+
+**Contributors**:
+- Intelligent Network and Application Research Center¹
+- DataMiningLab¹
+
+**Institutions**:
+
+1. University of Electronic Science and Technology of China
+
 ## Copyright and License
 
 GeoMX is provided under the [Apache-2.0 license](https://github.com/INET-RC/GeoMX/blob/main/LICENSE).
