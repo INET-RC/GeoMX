@@ -1,16 +1,16 @@
 ## Introduction
 
-HiPS is a MXNet-based two-layer parameter server framework, aiming at integrating data knowledge that owned by multiple independent parties in a privacy-preservating way (i.e. no need to transfer raw data), by training a shared deep learning model collaboratively in a decentralized and distributed manner.
+GeoMX is a MXNet-based two-layer parameter server framework, aiming at integrating data knowledge that owned by multiple independent parties in a privacy-preservating way (i.e. no need to transfer raw data), by training a shared deep learning model collaboratively in a decentralized and distributed manner.
 
-Unlike other distributed deep learning software framworks and the emerging Federated Learning technologies which are based on single-layer parameter server architecture, HiPS applies two-layer architecture to reduce communication cost between parties. 
+Unlike other distributed deep learning software framworks and the emerging Federated Learning technologies which are based on single-layer parameter server architecture, GeoMX applies two-layer architecture to reduce communication cost between parties. 
 
-HiPS allows parties to train the deep learning model on their own data and clusters in a distributed mannar locally. Parties only need to upload the locally aggregated model gradients (or model updates) to the central party to perform global aggregation, model updating and model synchronization.
+GeoMX allows parties to train the deep learning model on their own data and clusters in a distributed mannar locally. Parties only need to upload the locally aggregated model gradients (or model updates) to the central party to perform global aggregation, model updating and model synchronization.
 
-To mitigate the communication bottleneck between the central party and participating parties, HiPS implements multiple communication-efficient strategies, such as BSC, DGT, TSEngine and P3, boosting the model training.
+To mitigate the communication bottleneck between the central party and participating parties, GeoMX implements multiple communication-efficient strategies, such as BSC, DGT, TSEngine and P3, boosting the model training.
 
 **BSC**, fully named as *Bilateral Sparse Compression*, reduces the size of gradient tensors during Local Server's push and pull progress. **DGT**, fully named as *Differential Gradient Transmission*, transfers gradients in multi-channels with different  reliability and priority according to their contribution to model convergence. **TSEngine** dynamically schedules the communication logic over the parameter server and workers based on the active network perception. **P3** overlaps parameter synchronization with computation in order to improve the training performance.
 
-Furthermore, HiPS supports:
+Furthermore, GeoMX supports:
 
 1. **4 communication algorithms**, including fully-synchronous algorithm, mix-synchronous algorithm, HierFAVG-styled synchronous algorithm and DC-ASGD asynchronous algorithm. 
 
@@ -20,11 +20,11 @@ Furthermore, HiPS supports:
 
 ### Build from source
 
-#### clone the HiPS project
+#### clone the GeoMX project
 
 ```shell
-git clone xxx.git
-cd HiPS
+git clone https://github.com/INET-RC/GeoMX.git
+cd GeoMX
 ```
 
 #### Install a Math Library and OpenCV
@@ -67,7 +67,7 @@ export LD_LIBRARY_PATH=$PWD/lib
 
 #### Install Python bindings
 
-Navigate to the root of the hips folder then run the following:
+Navigate to the root of the GeoMX folder then run the following:
 
 ```shell
 $ cd python
@@ -78,10 +78,10 @@ Note that the `-e` flag is optional. It is equivalent to `--editable` and means 
 
 ### Docker
 
-It's highly recommended to run HiPS in a Docker container. To build such a Docker image, use the provided `Dockerfile`.
+It's highly recommended to run GeoMX in a Docker container. To build such a Docker image, use the provided `Dockerfile`.
 
 ```shell
-docker build -t hips -f Dockerfile .
+docker build -t GeoMX -f Dockerfile .
 ```
 
 #### GPU Backend
@@ -122,14 +122,14 @@ sudo systemctl restart docker
 
 ## Documentation
 
-- [Deployment](./docs/Deployment.md): How to run HiPS on multiple machines with Docker.
-- [Configurations](./docs/Configurations.md): How to use HiPS' communication-efficient strategies.
-- [System Design](./docs/System%20Design.md): How and why HiPS and its modifications make better.
+- [Deployment](./docs/Deployment.md): How to run GeoMX on multiple machines with Docker.
+- [Configurations](./docs/Configurations.md): How to use GeoMX's communication-efficient strategies.
+- [System Design](./docs/System%20Design.md): How and why GeoMX and its modifications make better.
 
 ## Communication
 
-- [Github Issues](https://github.com/INET-RC/HiPS/issues) is welcomed.
+- [Github Issues](https://github.com/INET-RC/GeoMX/issues) is welcomed.
 
 ## Copyright and License
 
-HiPS is provided under the Apache-2.0 license.
+GeoMX is provided under the [Apache-2.0 license](https://github.com/INET-RC/GeoMX/blob/main/LICENSE).

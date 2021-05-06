@@ -1,6 +1,6 @@
 ## Communication algorithms
 
-As mentioned before, HiPS supports 4 communication algorithms, including fully-synchronous algorithm, mix-synchronous algorithm, HierFAVG-styled synchronous algorithm and DC-ASGD asynchronous algorithm. Let's first look into two basic algorithms: fully-synchronous algorithm and mix-synchronous algorithm. The main difference is whether `Global Server` and `Servers` communicate in a synchronous way or not, while `Server` and `Workers` are always communicating synchronously within.
+As mentioned before, GeoMX supports 4 communication algorithms, including fully-synchronous algorithm, mix-synchronous algorithm, HierFAVG-styled synchronous algorithm and DC-ASGD asynchronous algorithm. Let's first look into two basic algorithms: fully-synchronous algorithm and mix-synchronous algorithm. The main difference is whether `Global Server` and `Servers` communicate in a synchronous way or not, while `Server` and `Workers` are always communicating synchronously within.
 
 ### Fully-synchronous Algorithm
 

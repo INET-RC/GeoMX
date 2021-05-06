@@ -1,16 +1,15 @@
-HiPS System Design
-## HiPS
+## GeoMX
 
-Shown below is a general demonstration of `HiPS` infrastructure.
+Shown below is a general demonstration of `GeoMX` infrastructure.
 
-![HiPS Overview](./src/image/../images/HiPS%20Overview.png)
+![GeoMX Overview](./src/image/../images/GeoMX%20Overview.png)
 
-Clusters are divided into two categories, the central and the participating. Each owns a `Parameter Server` and some `Workers` while the central PS named `Global Server` aggregates models, gradients or model updates from all other participating clusters. Both locally and globally, nodes work in a traditional `Server ↔ Worker` pattern. Unlike other single-layer prameter server framework, HiPS takes privacy into consideration, meanwhile reducing communication overheads via WAN.
+Clusters are divided into two categories, the central and the participating. Each owns a `Parameter Server` and some `Workers` while the central PS named `Global Server` aggregates models, gradients or model updates from all other participating clusters. Both locally and globally, nodes work in a traditional `Server ↔ Worker` pattern. Unlike other single-layer prameter server framework, GeoMX takes privacy into consideration, meanwhile reducing communication overheads via WAN.
 
 ## BSC
 `BSC` adopts top-k sparsification, which sort the gradient matrix and only top kth largest gradients are transmitted. To avoid information loss, gradients left over from last round of sparsification are collected and corrected in store for the next round.
 
-![HiPS Overview](./src/image/../images/BSC%20Overview.png)
+![BSC Overview](./src/image/../images/BSC%20Overview.png)
 
 ## DGT
 `DGT` ranks all the sub-blocks in the k-th tensor according to their contribution, and classifies the gradients of top-p% sub-blocks as important and the rest as unimportant. Then, DGT schedules the important gradients to the channel with reliable transmission protocol (e.g. TCP) to provide model convergence guarantee, instead, the unimportant gradients are scheduled to channels with unreliable transmission protocol (e.g. UDP) to minimum transmission delay.
