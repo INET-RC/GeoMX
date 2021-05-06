@@ -125,6 +125,7 @@ sudo systemctl restart docker
 - [Deployment](./docs/Deployment.md): How to run GeoMX on multiple machines with Docker.
 - [Configurations](./docs/Configurations.md): How to use GeoMX's communication-efficient strategies.
 - [System Design](./docs/System%20Design.md): How and why GeoMX and its modifications make better.
+- [Examples](./examples/README.md): Understandable demos of GeoMX's communication-efficient strategies, communication algorithms and machine learning algorithms.
 
 ## Communication
 
