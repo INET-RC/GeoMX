@@ -1,6 +1,6 @@
 ## Introduction
 
-GeoMX is a MXNet-based two-layer parameter server framework, aiming at integrating data knowledge that owned by multiple independent parties in a privacy-preservating way (i.e. no need to transfer raw data), by training a shared deep learning model collaboratively in a decentralized and distributed manner.
+GeoMX is a MXNet-based two-layer parameter server framework, aiming at integrating data knowledge that owned by multiple independent parties in a privacy-preserving way (i.e. no need to transfer raw data), by training a shared deep learning model collaboratively in a decentralized and distributed manner.
 
 Unlike other distributed deep learning software framworks and the emerging Federated Learning technologies which are based on single-layer parameter server architecture, GeoMX applies two-layer architecture to reduce communication cost between parties. 
 
@@ -8,7 +8,7 @@ GeoMX allows parties to train the deep learning model on their own data and clus
 
 To mitigate the communication bottleneck between the central party and participating parties, GeoMX implements multiple communication-efficient strategies, such as BSC, DGT, TSEngine and P3, boosting the model training.
 
-**BSC**, fully named as *Bilateral Sparse Compression*, reduces the size of gradient tensors during Local Server's push and pull progress. **DGT**, fully named as *Differential Gradient Transmission*, transfers gradients in multi-channels with different  reliability and priority according to their contribution to model convergence. **TSEngine** dynamically schedules the communication logic over the parameter server and workers based on the active network perception. **P3** overlaps parameter synchronization with computation in order to improve the training performance.
+**BSC**, fully named as *Bilateral Sparse Compression*, reduces the size of gradient tensors during Local Server's push and pull progress. **DGT**, a contribution-aware differential gradient transmission protocol, fully named as *Differential Gradient Transmission* , transfers gradients in multi-channels with different  reliability and priority according to their contribution to model convergence. **TSEngine**, an adaptive communication scheduler for efficient communication overlay of the parameter server system in DML-WANs, dynamically schedules the communication logic over the parameter server and workers based on the active network perception. **P3** overlaps parameter synchronization with computation in order to improve the training performance.
 
 Furthermore, GeoMX supports:
 

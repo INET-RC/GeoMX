@@ -16,7 +16,7 @@ As mentioned, GeoMX supports **4 communication algorithms** and  (6 categories) 
     1. Convolutional Neural Networks, CNN
     2. Recurrent Neural Network, RNN
     3. Reinforcement Learning
-    4. Regions with CNN features
+    4. AutoEncoder
     5. Matrix Factorization
     6. Generative Adversarial Network，GAN
     7. Logistic Regression
