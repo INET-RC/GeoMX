@@ -1,4 +1,7 @@
 FROM nvidia/cuda:9.0-devel
+
+WORKDIR /root/
+
 RUN APT_INSTALL="apt install -y --no-install-recommends" && \
     rm -rf /var/lib/apt/lists/* \
            /etc/apt/sources.list.d/cuda.list \
@@ -6,9 +9,6 @@ RUN APT_INSTALL="apt install -y --no-install-recommends" && \
     sed -i 's/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' \
         /etc/apt/sources.list && \
     apt update && \
-# ==================================================================
-# apt tools
-# ------------------------------------------------------------------
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
         build-essential \
         ca-certificates \
@@ -58,5 +58,3 @@ RUN conda install -y numpy \
 RUN git clone https://github.com/INET-RC/GeoMX.git
 RUN cd GeoMX && make -j$(nproc) && \
     cd python && pip install -e .
-
-WORKDIR /root/
