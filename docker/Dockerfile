@@ -28,7 +28,8 @@ RUN APT_INSTALL="apt install -y --no-install-recommends" && \
         tzdata \
         autogen \
         autoconf \
-        automake
+        automake \
+        libtool
 
 RUN apt autoremove && apt clean
 
