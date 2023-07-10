@@ -50,11 +50,7 @@ RUN conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pk
     conda config --set show_channel_urls yes && \
     conda update --all
 
-RUN conda install -y numpy \
-                     pandas \
-                     py-opencv && \
-    conda clean -y -a
-
+RUN pip install numpy pandas python-opencv
 RUN git clone https://github.com/INET-RC/GeoMX.git
 RUN cd GeoMX && make -j$(nproc) && \
     cd python && pip install -e .
