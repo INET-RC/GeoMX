@@ -55,5 +55,4 @@ RUN conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pk
 RUN pip install numpy==1.17.3 pandas opencv-python -i https://mirrors.aliyun.com/pypi/simple
 RUN git clone https://ghproxy.com/https://github.com/INET-RC/GeoMX.git
 RUN cd GeoMX && make -j$(nproc) && \
-    cd python && pip install -e . && \
-    python -c "import mxnet as mx; from mxnet import nd; print(nd.zeros(1, ctx=mx.gpu(0)))"
+    cd python && pip install -e .
