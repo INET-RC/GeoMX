@@ -1,4 +1,4 @@
-FROM lizonghango00o1/cuda:9.0-devel
+FROM nvidia/cuda:10.1-devel
 
 WORKDIR /root/
 
