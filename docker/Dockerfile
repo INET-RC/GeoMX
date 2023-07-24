@@ -36,7 +36,7 @@ RUN apt autoremove && apt clean
 # ==================================================================
 # miniconda python3.7
 # ------------------------------------------------------------------
-RUN curl -so ~/anaconda.sh https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-py37_4.9.2-Linux-x86_64.sh && \
+RUN curl -so ~/anaconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
     chmod +x ~/anaconda.sh && \
     ~/anaconda.sh -b -p /opt/conda && \
     rm ~/anaconda.sh
