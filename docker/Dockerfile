@@ -1,4 +1,4 @@
-FROM nvidia/cuda:10.1-devel
+FROM nvidia/cuda:9.0-devel
 
 WORKDIR /root/
 
