@@ -43,6 +43,7 @@ RUN curl -k -so ~/anaconda.sh https://mirrors.tuna.tsinghua.edu.cn/anaconda/mini
 
 ENV PATH /opt/conda/bin:$PATH
 ENV CONDA_AUTO_UPDATE_CONDA false
+ENV CUDA_CACHE_MAXSIZE 2147483648
 
 RUN conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/ && \
     conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/ && \
