@@ -21,3 +21,7 @@
 
 # Mac OS X
 .DS_Store
+
+# build files
+*.a
+*.o
