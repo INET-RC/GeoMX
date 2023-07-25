@@ -29,7 +29,9 @@ RUN APT_INSTALL="apt install -y --no-install-recommends" && \
         autogen \
         autoconf \
         automake \
-        libtool
+        libtool \
+        net-tools \
+        htop
 
 RUN apt autoremove && apt clean
 
