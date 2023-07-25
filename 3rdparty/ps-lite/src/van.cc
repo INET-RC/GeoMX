@@ -476,25 +476,25 @@ void Van::Start(int customer_id) {
       // get my node info
       if (is_scheduler_) {
         my_node_ = scheduler_;
-        //added by vbc
-          max_greed_rate= atof(Environment::Get()->find("MAX_GREED_RATE_TS"));
-          //PS_VLOG(2)<<"111 greed is "<<max_greed_rate;
-          int num_servers= Postoffice::Get()->num_servers();//added by vbc, init A and B
-          int num_workers= Postoffice::Get()->num_workers();
-          int num_max=num_servers > num_workers ? num_servers : num_workers;
-          int num_node_id=2*num_max;
-          std::vector<int> temp(num_node_id,-1);
-          int i;
-          for(i=0;i<num_node_id;i++){
-              A.push_back(temp);
-              lifetime.push_back(temp);
-          }
-          for(i=0;i<num_node_id;i++){
-              B.push_back(0);
-              B1.push_back(0);
-          }
-          ask_q.push(0);
-          //PS_VLOG(2)<<"ask_q size is "<<ask_q.size();
+	if (!Environment::Get()->contains("MAX_GREED_RATE_TS")) {
+	    Environment::Get()->insert("MAX_GREED_RATE_TS", "0.9");
+	}
+        max_greed_rate= atof(Environment::Get()->find("MAX_GREED_RATE_TS"));
+        int num_servers= Postoffice::Get()->num_servers();
+        int num_workers= Postoffice::Get()->num_workers();
+        int num_max=num_servers > num_workers ? num_servers : num_workers;
+        int num_node_id=2*num_max;
+        std::vector<int> temp(num_node_id,-1);
+        int i;
+        for(i=0;i<num_node_id;i++){
+            A.push_back(temp);
+            lifetime.push_back(temp);
+        }
+        for(i=0;i<num_node_id;i++){
+            B.push_back(0);
+            B1.push_back(0);
+        }
+        ask_q.push(0);
       } else {
         auto role = is_scheduler_ ? Node::SCHEDULER :
                     (Postoffice::Get()->is_worker() ? Node::WORKER : Node::SERVER);
@@ -575,9 +575,11 @@ void Van::Start(int customer_id) {
       if (!is_scheduler_) {
         // start heartbeat thread
         heartbeat_thread_ = std::unique_ptr<std::thread>(new std::thread(&Van::Heartbeat, this));
-        // start sender thread, added by vbc
+        // start sender thread
+	if (!Environment::Get()->contains("ENABLE_P3")) {
+	  Environment::Get()->insert("ENABLE_P3", "0");
+	}
         enable_p3 = atoi(Environment::Get()->find("ENABLE_P3"));
-        PS_VLOG(1) << "enable_p3 = " << enable_p3;
         if(enable_p3){
           // start sender thread
           sender_thread_ = std::unique_ptr<std::thread>(
@@ -602,25 +604,25 @@ void Van::StartGlobal(int customer_id) {
     is_global_scheduler_ = Postoffice::Get()->is_global_scheduler();
     if (is_global_scheduler_) {
       my_node_global_ = global_scheduler_;
-        //added by vbc
-        max_greed_rate= atof(Environment::Get()->find("MAX_GREED_RATE_TS"));
-        //PS_VLOG(2)<<"222 greed is "<<max_greed_rate;
-        int num_servers= Postoffice::Get()->num_global_servers();//added by vbc, init A and B
-        int num_workers= Postoffice::Get()->num_global_workers();
-        int num_max=num_servers > num_workers ? num_servers : num_workers;
-        int num_node_id=2*num_max+8;
-        std::vector<int> temp(num_node_id,-1);
-        int i;
-        for(i=0;i<num_node_id;i++){
-            A.push_back(temp);
-            lifetime.push_back(temp);
-        }
-        for(i=0;i<num_node_id;i++){
-            B.push_back(0);
-            B1.push_back(0);
-        }
-        ask_q.push(8);
-        //PS_VLOG(2)<<"ask_q size is "<<ask_q.size();
+      if (!Environment::Get()->contains("MAX_GREED_RATE_TS")) {
+        Environment::Get()->insert("MAX_GREED_RATE_TS", "0.9");
+      }
+      max_greed_rate= atof(Environment::Get()->find("MAX_GREED_RATE_TS"));
+      int num_servers= Postoffice::Get()->num_global_servers();
+      int num_workers= Postoffice::Get()->num_global_workers();
+      int num_max=num_servers > num_workers ? num_servers : num_workers;
+      int num_node_id=2*num_max+8;
+      std::vector<int> temp(num_node_id,-1);
+      int i;
+      for(i=0;i<num_node_id;i++){
+        A.push_back(temp);
+        lifetime.push_back(temp);
+      }
+      for(i=0;i<num_node_id;i++){
+        B.push_back(0);
+        B1.push_back(0);
+      }
+      ask_q.push(8);
     } else {
       auto role = Postoffice::Get()->is_global_server() ? Node::GLOBAL_SERVER : Node::SERVER;
       std::string ip(my_node_.hostname);
@@ -640,17 +642,18 @@ void Van::StartGlobal(int customer_id) {
     PS_VLOG(1) << "Bind to " << my_node_global_.DebugString();
     CHECK_NE(my_node_global_.port, -1) << "bind failed";
 
-    
-    
     // start receiver
     receiver_global_thread_ = std::unique_ptr<std::thread>(new std::thread(&Van::ReceivingGlobal, this));
-//begin, added by huaman
-    //PS_VLOG(1) << "com here!!";
+
     if(!is_global_scheduler_){
-      
+        if (!Environment::Get()->contains("ENABLE_DGT")) {
+          Environment::Get()->insert("ENABLE_DGT", "0");
+        }
         enable_dgt = atoi(Environment::Get()->find("ENABLE_DGT"));
-        PS_VLOG(1) << "enable_dgt = " << enable_dgt;
         if(enable_dgt){
+	    if (!Environment::Get()->contains("DMLC_UDP_CHANNEL_NUM")) {
+	      Environment::Get()->insert("DMLC_UDP_CHANNEL_NUM", "3");
+	    }
             int udp_ch_num = atoi(Environment::Get()->find("DMLC_UDP_CHANNEL_NUM"));
             for(int i = 0; i < udp_ch_num; ++i){
               int p = GetAvailablePort();
@@ -673,7 +676,7 @@ void Van::StartGlobal(int customer_id) {
         }
 
     }
-//end, added by huaman              
+            
     // connect to the global scheduler
     Connect(global_scheduler_, true);
     start_mu_.unlock();
