@@ -35,9 +35,6 @@ RUN APT_INSTALL="apt install -y --no-install-recommends" && \
 
 RUN apt autoremove && apt clean
 
-# ==================================================================
-# miniconda python3.7
-# ------------------------------------------------------------------
 RUN curl -k -so ~/anaconda.sh https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-py37_4.9.2-Linux-x86_64.sh && \
     chmod +x ~/anaconda.sh && \
     ~/anaconda.sh -b -p /opt/conda && \
@@ -54,7 +51,8 @@ RUN conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pk
     conda config --set show_channel_urls yes && \
     conda update --all
 
-RUN pip install numpy==1.17.3 pandas opencv-python -i https://mirrors.aliyun.com/pypi/simple
+RUN pip install pandas opencv-python -i https://mirrors.aliyun.com/pypi/simple
+
 RUN git clone https://ghproxy.com/https://github.com/INET-RC/GeoMX.git
 RUN cd GeoMX && make -j$(nproc) && \
     cd python && pip install -e .
