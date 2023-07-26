@@ -90,6 +90,7 @@ def main():
         if is_master_worker:
             kvstore_dist.set_optimizer(mx.optimizer.Adam(learning_rate=learning_rate))
     num_all_workers = kvstore_dist.num_all_workers
+    my_rank = kvstore_dist.rank
     # waiting for configurations to complete
     time.sleep(1)
 
@@ -120,6 +121,7 @@ def main():
     eval_time = 0
     global_iters = 1
 
+    print(f"Start training on {num_all_workers} workers, my rank is {my_rank}.")
     for epoch in range(epochs):
         for _, batch in enumerate(train_iter):
             Xs, ys, num_samples = get_batch(batch, ctx)
@@ -139,19 +141,19 @@ def main():
                 param.set_data(temp)
             mx.nd.waitall()
 
-            if data_slice_idx == 0:
-                _ = time.time()
-                test_acc = eval_acc(test_iter, net, ctx)
-                mx.nd.waitall()
-                eval_time += (time.time() - _)
-                now = time.time() - begin_time - eval_time
-                print("[Time %.3f][Epoch %d][Iteration %d] Test Acc %.4f IterTime %.3f\n"
-                      % (now,
-                         epoch,
-                         global_iters,
-                         test_acc,
-                         now / global_iters))
-            global_iters += 1
+            # run evaluation
+            _ = time.time()
+            test_acc = eval_acc(test_iter, net, ctx)
+            mx.nd.waitall()
+            eval_time += (time.time() - _)
+            now = time.time() - begin_time - eval_time
+            print("[Time %.3f][Epoch %d][Iteration %d] Test Acc %.4f IterTime %.3f\n"
+                  % (now,
+                     epoch,
+                     global_iters,
+                     test_acc,
+                     now / global_iters))
+        global_iters += 1
 
 
 if __name__ == "__main__":
