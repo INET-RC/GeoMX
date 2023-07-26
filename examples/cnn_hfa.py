@@ -112,7 +112,6 @@ def main():
     begin_time = time.time()
     eval_time = 0
     global_iters = 1
-    local_iters = 1
 
     print(f"Start training on {num_all_workers} workers, my rank is {my_rank}.")
     for epoch in range(epochs):
@@ -125,7 +124,7 @@ def main():
                 l.backward()
             trainer.step(num_samples)
             
-            if local_iters % period_k1 == 0:
+            if global_iters % period_k1 == 0:
                 # run synchronization
                 for idx, param in enumerate(params):
                     if param.grad_req == "null":
