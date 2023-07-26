@@ -51,7 +51,7 @@ RUN conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pk
     conda config --set show_channel_urls yes && \
     conda update --all
 
-RUN pip install pandas opencv-python -i https://mirrors.aliyun.com/pypi/simple
+RUN pip install numpy==1.17.3 pandas opencv-python -i https://mirrors.aliyun.com/pypi/simple
 
 RUN git clone https://ghproxy.com/https://github.com/INET-RC/GeoMX.git
 RUN cd GeoMX && cp make/gpu_config.mk ./config.mk && make -j$(nproc) && \
