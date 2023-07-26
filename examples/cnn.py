@@ -37,10 +37,10 @@ def main():
     parser.add_argument("-bs", "--batch_size", type=int, default=32)
     parser.add_argument("-ds", "--data_slice_idx", type=int, default=0)
     parser.add_argument("-ep", "--epoch", type=int, default=5)
-    parser.add_argument('-ms', '--mix_sync', type=int, default=0)
-    parser.add_argument('-dc', '--dcasgd', type=int, default=0)
-    parser.add_argument("-sc", "--split-by-class", type=int, default=0)
-    parser.add_argument("-c", "--cpu", type=int, default=0)
+    parser.add_argument('-ms', '--mix_sync', action="store_true")
+    parser.add_argument('-dc', '--dcasgd', action="store_true")
+    parser.add_argument("-sc", "--split-by-class", action="store_true")
+    parser.add_argument("-c", "--cpu", action="store_true")
     args = parser.parse_args()
 
     learning_rate = args.learning_rate
