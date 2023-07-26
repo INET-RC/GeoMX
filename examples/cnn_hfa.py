@@ -123,21 +123,22 @@ def main():
                 ls = [loss(y_hat, y) for y_hat, y in zip(y_hats, ys)]
             for l in ls:
                 l.backward()
-
             trainer.step(num_samples)
+            
             if local_iters % period_k1 == 0:
+                # run synchronization
                 for idx, param in enumerate(params):
                     if param.grad_req == "null":
                         continue
                     kvstore_dist.push(idx, param.data() / num_local_workers, priority=-idx)
                     kvstore_dist.pull(idx, param.data(), priority=-idx)
-            mx.nd.waitall()
 
-            # run evaluation
-            test_acc = eval_acc(test_iter, net, ctx)
-            print("[Time %.3f][Epoch %d][Iteration %d] Test Acc %.4f"
-                  % (time.time() - begin_time, epoch, global_iters, test_acc))
+                # run evaluation
+                test_acc = eval_acc(test_iter, net, ctx)
+                print("[Time %.3f][Epoch %d][Iteration %d] Test Acc %.4f"
+                      % (time.time() - begin_time, epoch, global_iters, test_acc))
             
+            mx.nd.waitall()
             global_iters += 1
 
 
