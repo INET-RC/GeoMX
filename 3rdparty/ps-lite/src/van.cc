@@ -446,9 +446,9 @@ void Van::Start(int customer_id) {
         my_node_ = scheduler_;
         if (getenv("MAX_GREED_RATE_TS") == nullptr) {
             #ifdef _MSC_VER
-                _putenv_s("MAX_GREED_RATE_TS", 0.9);
+                _putenv_s("MAX_GREED_RATE_TS", "0.9");
             #else
-                setenv("MAX_GREED_RATE_TS", 0.9, true);
+                setenv("MAX_GREED_RATE_TS", "0.9", true);
             #endif
         }
         max_greed_rate= atof(Environment::Get()->find("MAX_GREED_RATE_TS"));
@@ -550,9 +550,9 @@ void Van::Start(int customer_id) {
         // start sender thread
         if (getenv("ENABLE_P3") == nullptr) {
             #ifdef _MSC_VER
-                _putenv_s("ENABLE_P3", 0);
+                _putenv_s("ENABLE_P3", "0");
             #else
-                setenv("ENABLE_P3", 0, true);
+                setenv("ENABLE_P3", "0", true);
             #endif
         }
         enable_p3 = atoi(Environment::Get()->find("ENABLE_P3"));
@@ -582,9 +582,9 @@ void Van::StartGlobal(int customer_id) {
       my_node_global_ = global_scheduler_;
       if (getenv("MAX_GREED_RATE_TS") == nullptr) {
           #ifdef _MSC_VER
-              _putenv_s("MAX_GREED_RATE_TS", 0.9);
+              _putenv_s("MAX_GREED_RATE_TS", "0.9");
           #else
-              setenv("MAX_GREED_RATE_TS", 0.9, true);
+              setenv("MAX_GREED_RATE_TS", "0.9", true);
           #endif
       }
       max_greed_rate= atof(Environment::Get()->find("MAX_GREED_RATE_TS"));
@@ -628,18 +628,18 @@ void Van::StartGlobal(int customer_id) {
     if(!is_global_scheduler_){
         if (getenv("ENABLE_DGT") == nullptr) {
             #ifdef _MSC_VER
-                _putenv_s("ENABLE_DGT", 0);
+                _putenv_s("ENABLE_DGT", "0");
             #else
-                setenv("ENABLE_DGT", 0, true);
+                setenv("ENABLE_DGT", "0", true);
             #endif
         }
         enable_dgt = atoi(Environment::Get()->find("ENABLE_DGT"));
         if(enable_dgt){
             if (getenv("DMLC_UDP_CHANNEL_NUM") == nullptr) {
                 #ifdef _MSC_VER
-                    _putenv_s("DMLC_UDP_CHANNEL_NUM", 3);
+                    _putenv_s("DMLC_UDP_CHANNEL_NUM", "3");
                 #else
-                    setenv("DMLC_UDP_CHANNEL_NUM", 3, true);
+                    setenv("DMLC_UDP_CHANNEL_NUM", "3", true);
                 #endif
             }
             int udp_ch_num = atoi(Environment::Get()->find("DMLC_UDP_CHANNEL_NUM"));
