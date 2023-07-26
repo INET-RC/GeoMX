@@ -40,6 +40,7 @@ def main():
     parser.add_argument('-ms', '--mix_sync', type=int, default=0)
     parser.add_argument('-dc', '--dcasgd', type=int, default=0)
     parser.add_argument("-sc", "--split-by-class", type=int, default=0)
+    parser.add_argument("-c", "--cpu", type=int, default=0)
     args = parser.parse_args()
 
     learning_rate = args.learning_rate
@@ -49,7 +50,7 @@ def main():
     is_mix_sync = args.mix_sync
     is_dcasgd = args.dcasgd
     split_by_class = args.split_by_class
-    ctx = try_gpu()
+    ctx = mx.cpu() if args.cpu else try_gpu()
     data_type = "mnist"
     data_dir = "/root/data"
     shape = (batch_size, 1, 28, 28)
