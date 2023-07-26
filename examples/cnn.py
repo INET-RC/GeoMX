@@ -137,13 +137,13 @@ def main():
                 kvstore_dist.push(idx, param.grad() / num_samples, priority=-idx)
                 kvstore_dist.pull(idx, param.data(), priority=-idx)
             mx.nd.waitall()
-            
-            global_iters += 1
 
             # run evaluation
             test_acc = eval_acc(test_iter, net, ctx)
             print("[Time %.3f][Epoch %d][Iteration %d] Test Acc %.4f"
                   % (time.time() - begin_time, epoch, global_iters, test_acc))
+
+            global_iters += 1
 
 
 if __name__ == "__main__":
