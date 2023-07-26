@@ -37,10 +37,9 @@ def main():
     parser.add_argument("-bs", "--batch-size", type=int, default=32)
     parser.add_argument("-ds", "--data-slice-idx", type=int, default=0)
     parser.add_argument("-ep", "--epoch", type=int, default=5)
-    parser.add_argument("-bsc", "--use_bisparse_compression", type=int, default=1)
-    parser.add_argument("-bcr", "--bisparse_compression_ratio", type=float, default=0.01)
-    parser.add_argument("-sc", "--split-by-class", type=int, default=0)
-    parser.add_argument("-c", "--cpu", type=int, default=0)
+    parser.add_argument("-bcr", "--bisparse-compression-ratio", type=float, default=0.01)
+    parser.add_argument("-sc", "--split-by-class", action="store_true")
+    parser.add_argument("-c", "--cpu", action="store_true")
     args = parser.parse_args()
 
     learning_rate = args.learning_rate
@@ -48,11 +47,9 @@ def main():
     data_slice_idx = args.data_slice_idx
     epochs = args.epoch
     split_by_class = args.split_by_class
-    use_bisparse_compression = args.use_bisparse_compression
     compression_ratio = args.bisparse_compression_ratio
     ctx = mx.cpu() if args.cpu else try_gpu()
 
-    assert use_bisparse_compression == 1, '--use_bisparse_compression should be set 1'
     assert 0 < compression_ratio < 1, 'bisparse_compression_ratio is not properly set'
 
     data_type = "mnist"
