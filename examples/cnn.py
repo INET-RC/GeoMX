@@ -87,16 +87,6 @@ def main():
     # waiting for configurations to complete
     time.sleep(1)
 
-    train_iter, test_iter, _, _ = load_data(
-        batch_size,
-        num_all_workers,
-        data_slice_idx,
-        data_type=data_type,
-        split_by_class=split_by_class,
-        resize=shape[-2:],
-        root=data_dir
-    )
-
     params = list(net.collect_params().values())
     for idx, param in enumerate(params):
         if param.grad_req == "null":
@@ -106,8 +96,19 @@ def main():
             continue
         kvstore_dist.pull(idx, param.data(), priority=-idx)
     mx.nd.waitall()
+    
     if is_master_worker:
         return
+
+    train_iter, test_iter, _, _ = load_data(
+        batch_size,
+        num_all_workers,
+        data_slice_idx,
+        data_type=data_type,
+        split_by_class=split_by_class,
+        resize=shape[-2:],
+        root=data_dir
+    )
 
     begin_time = time.time()
     eval_time = 0
