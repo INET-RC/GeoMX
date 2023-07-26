@@ -202,10 +202,8 @@ class KVStoreLocal : public KVStore {
         // if string keys are used and str_updater_ is available
         // otherwise fallback to updater_ which uses int key interface
         if (key_type_ == kStringKey && str_updater_ != nullptr) {
-          // TODO(haibin) CHECK(str_updater_ != nullptr) if use_str_key
           // after all language bindings picks up string interface changes
           const std::string &str_key = reverse_str_key_dict_[key];
-          // TODO(haibin) avoid reverse key lookup if use_str_key
           str_updater_(str_key, merged,  &local);
         } else {
           updater_(key, merged,  &local);
@@ -349,7 +347,6 @@ class KVStoreLocal : public KVStore {
                     const FValidate& is_valid,
                     bool ignore_sparse) {
     CHECK_EQ(keys.size(), values.size());
-    // TODO(mli) check if already sorted as an optimization
     using Idx = std::pair<int, int>;
     std::vector<Idx> idx(keys.size());
     for (size_t i = 0; i < keys.size(); ++i) {
