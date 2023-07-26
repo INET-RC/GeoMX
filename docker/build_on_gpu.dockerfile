@@ -31,7 +31,8 @@ RUN APT_INSTALL="apt install -y --no-install-recommends" && \
         automake \
         libtool \
         net-tools \
-        htop
+        htop \
+        psmisc
 
 RUN apt autoremove && apt clean
 
