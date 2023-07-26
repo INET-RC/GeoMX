@@ -42,13 +42,12 @@ def load_data(batch_size,
               data_type="mnist",
               split_by_class=False,
               resize=None,
-              root=""):
-    assert os.path.exists(root), \
-        "The specified file path does not exist. (%s)" % root
+              root="/root/data"):
     assert data_slice_idx < num_workers, \
         "Invalid slice id (%s), a slice id smaller than num_workers (%s) is required." \
         % (data_slice_idx, num_workers)
 
+    if not os.path.exists(root): os.mkdir(root)
     root = os.path.join(root, data_type)
     root = os.path.expanduser(root)
     if data_type == "fashion-mnist":
