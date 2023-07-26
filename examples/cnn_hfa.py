@@ -123,6 +123,7 @@ def main():
             for l in ls:
                 l.backward()
             trainer.step(num_samples)
+            mx.nd.waitall()
             
             if global_iters % period_k1 == 0:
                 # run synchronization
@@ -137,7 +138,6 @@ def main():
                 print("[Time %.3f][Epoch %d][Iteration %d] Test Acc %.4f"
                       % (time.time() - begin_time, epoch, global_iters, test_acc))
             
-            mx.nd.waitall()
             global_iters += 1
 
 
