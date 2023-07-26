@@ -1,6 +1,6 @@
 #!/bin/bash
 
-EXAMPLE_PYTHON_SCRIPT='examples/cnn.py'
+EXAMPLE_PYTHON_SCRIPT='../examples/cnn.py'
 
 # run the following nodes in a central party:
 # global scheduler, global server, master worker, and scheduler
