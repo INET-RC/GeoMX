@@ -132,7 +132,6 @@ void Van::ProcessAddGlobalNodeCommandAtScheduler(Message* msg, Meta* nodes) {
         PS_VLOG(1) << "assign id=" << id << " to node " << node.DebugString();
         node.id = id;
         Connect(node, true);
-        // TODO(zhli): heartbeat
         connected_nodes_[node_host_ip] = id;
       } else {
         int id = node.role == Node::GLOBAL_SERVER ?
@@ -222,7 +221,7 @@ void Van::UpdateServerID(Message* msg, Meta* nodes) {
       PS_VLOG(1) << "add node";
       nodes->control.node.push_back(ctrl.node[0]);
     } else {
-      // TODO(zhli): some node dies and restarts
+      // TODO: some node dies and restarts
     }
   }
   // update my id
@@ -288,14 +287,12 @@ void Van::ProcessBarrierCommand(Message* msg, bool is_global) {
   }
 }
 
-//begin,added by huaman              
 void Van::MergeMsg(Message* msg1, Message* msg2){
     std::lock_guard<std::mutex> lk(merge_mu_);
     float *p1 = (float*)msg1->data[1].data();
     float *p2 = (float*)msg2->data[1].data();
     int nlen1 = msg1->data[1].size() / sizeof(float);
     int nlen2 = msg2->data[1].size() / sizeof(float);
-    //std::cout << "nlen1=" << nlen1 << ",nlen2=" << nlen2 << std::endl;
     assert(nlen1 == nlen2);
 
     struct timespec req;
@@ -309,53 +306,49 @@ void Van::MergeMsg(Message* msg1, Message* msg2){
         merged[i] += n[i];
     }
     msg1->data[1].reset((char *)merged,nlen1*sizeof(float), [merged](char* buf) {
-                    free(merged);
-                    });
+        free(merged);
+    });
     free(n);
 }
-    void Van::MergeMsg_HALF(Message* msg1, Message* msg2){
-        std::lock_guard<std::mutex> lk(merge_mu_);
-        half *p1 = (half*)msg1->data[1].data();
-        half *p2 = (half*)msg2->data[1].data();
-        int nlen1 = msg1->data[1].size() / 16;
-        int nlen2 = msg2->data[1].size() / 16;
-        //std::cout << "nlen1=" << nlen1 << ",nlen2=" << nlen2 << std::endl;
-        assert(nlen1 == nlen2);
 
-        struct timespec req;
-        req.tv_sec = 0;
-        req.tv_nsec = 1;
-        half* merged = (half*)malloc(nlen1*16);
-        half* n = (half*)malloc(nlen1*sizeof(half));
-        memcpy(merged,p1,nlen1*sizeof(half));
-        memcpy(n,p2,nlen1*sizeof(half));
-        for(int i = 0; i < nlen1; i++){
-            merged[i] += n[i];
-        }
-        msg1->data[1].reset((char *)merged,nlen1*sizeof(half), [merged](char* buf) {
-            free(merged);
-        });
-        free(n);
+void Van::MergeMsg_HALF(Message* msg1, Message* msg2){
+    std::lock_guard<std::mutex> lk(merge_mu_);
+    half *p1 = (half*)msg1->data[1].data();
+    half *p2 = (half*)msg2->data[1].data();
+    int nlen1 = msg1->data[1].size() / 16;
+    int nlen2 = msg2->data[1].size() / 16;
+    assert(nlen1 == nlen2);
+
+    struct timespec req;
+    req.tv_sec = 0;
+    req.tv_nsec = 1;
+    half* merged = (half*)malloc(nlen1*16);
+    half* n = (half*)malloc(nlen1*sizeof(half));
+    memcpy(merged,p1,nlen1*sizeof(half));
+    memcpy(n,p2,nlen1*sizeof(half));
+    for(int i = 0; i < nlen1; i++){
+        merged[i] += n[i];
     }
-//end, added by huaman
+    msg1->data[1].reset((char *)merged,nlen1*sizeof(half), [merged](char* buf) {
+        free(merged);
+    });
+    free(n);
+}
+
 void Van::ProcessDataMsg(Message* msg) {
   // data msg
   CHECK_NE(msg->meta.sender, Meta::kEmpty);
   CHECK_NE(msg->meta.recver, Meta::kEmpty);
   CHECK_NE(msg->meta.app_id, Meta::kEmpty);
-  //PS_VLOG(2)<<"in processdatamsg, msg->meta.head is "<<msg->meta.head<<" and msg->meta.sender is "<<msg->meta.sender;
   int app_id = msg->meta.app_id;
   int customer_id = Postoffice::Get()->is_worker() ? msg->meta.customer_id : app_id;
   auto* obj = Postoffice::Get()->GetCustomer(app_id, customer_id, 5);
   CHECK(obj) << "timeout (5 sec) to wait App " << app_id << " customer " << customer_id \
     << " ready at " << my_node_.role;
-//begin,added by huaman
 
-
-   if(enable_dgt && DepairDataHandleType(msg->meta.head).requestType == RequestType::kDefaultPushPull &&  my_node_global_.role == 3 && msg->meta.msg_type == 1){ //If i am global_server, and recv push msg
-
+   if(enable_dgt && DepairDataHandleType(msg->meta.head).requestType == RequestType::kDefaultPushPull && \
+       my_node_global_.role == 3 && msg->meta.msg_type == 1){ //If i am global_server, and recv push msg
        if(enable_dgt == 3){
-
             decode(*msg);
         }
         if(msg_map[msg->meta.sender][msg->meta.first_key].find(msg->meta.seq) == msg_map[msg->meta.sender][msg->meta.first_key].end()){
@@ -369,42 +362,22 @@ void Van::ProcessDataMsg(Message* msg) {
 
         }
         
-        if(msg->meta.seq == msg->meta.seq_end){
-
-            char* buf = (char *)malloc(msg->meta.total_bytes);
-            memset(buf,0,msg->meta.total_bytes);
-             for(auto &m : msg_map[msg->meta.sender][msg->meta.first_key]){
-            /*********************************************************test*/
-            /* if(msg->meta.sender == 9) {
-                cn += 1;
-                if(msg->meta.push_op_num-m.second.meta.push_op_num>0){
-                    push_t += msg->meta.push_op_num-m.second.meta.push_op_num;
-                    push_n += 1;
-                }
-                if(msg->meta.push_op_num-m.second.meta.push_op_num==0){
-                    cur_push += 1;
-                }
-
-            }  */
-            /*********************************************************/
-            
-            memcpy(buf+m.second.meta.val_bytes, m.second.data[1].data(), m.second.data[1].size());
-            
-                                                                       
+       if(msg->meta.seq == msg->meta.seq_end){
+           char* buf = (char *)malloc(msg->meta.total_bytes);
+           memset(buf,0,msg->meta.total_bytes);
+           for(auto &m : msg_map[msg->meta.sender][msg->meta.first_key]){
+           memcpy(buf+m.second.meta.val_bytes, m.second.data[1].data(), m.second.data[1].size());
         }
-        msg_map[msg->meta.sender][msg->meta.first_key].clear();
-        msg->data[1].reset(buf, msg->meta.total_bytes, [buf](char* p) {
-                                free(buf);
-                                });
-        
-        obj->Accept(*msg);                                                                                                     
-            
-        }
-//end, added by huaman
+       msg_map[msg->meta.sender][msg->meta.first_key].clear();
+       msg->data[1].reset(buf, msg->meta.total_bytes, [buf](char* p) {
+           free(buf);
+       });
+       obj->Accept(*msg);
+
+       }
    }else{
         obj->Accept(*msg);
-   }                              
- 
+   }
 }
 
 void Van::ProcessAddNodeCommand(Message* msg, Meta* nodes, Meta* recovery_nodes) {
@@ -441,16 +414,11 @@ void Van::ProcessAddGlobalNodeCommand(Message* msg, Meta* nodes) {
       std::string addr_str = node.hostname + ":" + std::to_string(node.port);
       if (connected_nodes_.find(addr_str) == connected_nodes_.end()) {
         Connect(node, true);
-//begin, added by huaman
         PS_VLOG(1) << "Connected to" << node.DebugString();
         if(node.role != Node::Role::GLOBAL_SCHEDULER){
             PS_VLOG(1) << my_node_global_.DebugString()<< "ready to connect " << node.DebugString();
            Connect_UDP(node); 
         }
-            
-           
-//end, added by huaman
-        
         connected_nodes_[addr_str] = node.id;
       }
       if (node.role == Node::GLOBAL_SERVER) ++num_global_servers_;
@@ -476,9 +444,13 @@ void Van::Start(int customer_id) {
       // get my node info
       if (is_scheduler_) {
         my_node_ = scheduler_;
-	if (!Environment::Get()->contains("MAX_GREED_RATE_TS")) {
-	    Environment::Get()->insert("MAX_GREED_RATE_TS", "0.9");
-	}
+        if (getenv("MAX_GREED_RATE_TS") == nullptr) {
+            #ifdef _MSC_VER
+                _putenv_s("MAX_GREED_RATE_TS", 0.9);
+            #else
+                setenv("MAX_GREED_RATE_TS", 0.9, true);
+            #endif
+        }
         max_greed_rate= atof(Environment::Get()->find("MAX_GREED_RATE_TS"));
         int num_servers= Postoffice::Get()->num_servers();
         int num_workers= Postoffice::Get()->num_workers();
@@ -576,9 +548,13 @@ void Van::Start(int customer_id) {
         // start heartbeat thread
         heartbeat_thread_ = std::unique_ptr<std::thread>(new std::thread(&Van::Heartbeat, this));
         // start sender thread
-	if (!Environment::Get()->contains("ENABLE_P3")) {
-	  Environment::Get()->insert("ENABLE_P3", "0");
-	}
+        if (getenv("ENABLE_P3") == nullptr) {
+            #ifdef _MSC_VER
+                _putenv_s("ENABLE_P3", 0);
+            #else
+                setenv("ENABLE_P3", 0, true);
+            #endif
+        }
         enable_p3 = atoi(Environment::Get()->find("ENABLE_P3"));
         if(enable_p3){
           // start sender thread
@@ -604,8 +580,12 @@ void Van::StartGlobal(int customer_id) {
     is_global_scheduler_ = Postoffice::Get()->is_global_scheduler();
     if (is_global_scheduler_) {
       my_node_global_ = global_scheduler_;
-      if (!Environment::Get()->contains("MAX_GREED_RATE_TS")) {
-        Environment::Get()->insert("MAX_GREED_RATE_TS", "0.9");
+      if (getenv("MAX_GREED_RATE_TS") == nullptr) {
+          #ifdef _MSC_VER
+              _putenv_s("MAX_GREED_RATE_TS", 0.9);
+          #else
+              setenv("MAX_GREED_RATE_TS", 0.9, true);
+          #endif
       }
       max_greed_rate= atof(Environment::Get()->find("MAX_GREED_RATE_TS"));
       int num_servers= Postoffice::Get()->num_global_servers();
@@ -646,14 +626,22 @@ void Van::StartGlobal(int customer_id) {
     receiver_global_thread_ = std::unique_ptr<std::thread>(new std::thread(&Van::ReceivingGlobal, this));
 
     if(!is_global_scheduler_){
-        if (!Environment::Get()->contains("ENABLE_DGT")) {
-          Environment::Get()->insert("ENABLE_DGT", "0");
+        if (getenv("ENABLE_DGT") == nullptr) {
+            #ifdef _MSC_VER
+                _putenv_s("ENABLE_DGT", 0);
+            #else
+                setenv("ENABLE_DGT", 0, true);
+            #endif
         }
         enable_dgt = atoi(Environment::Get()->find("ENABLE_DGT"));
         if(enable_dgt){
-	    if (!Environment::Get()->contains("DMLC_UDP_CHANNEL_NUM")) {
-	      Environment::Get()->insert("DMLC_UDP_CHANNEL_NUM", "3");
-	    }
+            if (getenv("DMLC_UDP_CHANNEL_NUM") == nullptr) {
+                #ifdef _MSC_VER
+                    _putenv_s("DMLC_UDP_CHANNEL_NUM", 3);
+                #else
+                    setenv("DMLC_UDP_CHANNEL_NUM", 3, true);
+                #endif
+            }
             int udp_ch_num = atoi(Environment::Get()->find("DMLC_UDP_CHANNEL_NUM"));
             for(int i = 0; i < udp_ch_num; ++i){
               int p = GetAvailablePort();
@@ -661,8 +649,6 @@ void Van::StartGlobal(int customer_id) {
             } 
             my_node_global_.udp_port = Bind_UDP(my_node_global_, is_global_scheduler_ ? 0 : 40);
             PS_VLOG(1) << "(UDP)Bind to " << my_node_global_.DebugString();
-                
-          
             // start udp receiver
             for(int i = 0; i < my_node_global_.udp_port.size(); ++i){
                 udp_receiver_thread_[i] = std::unique_ptr<std::thread>(
@@ -674,7 +660,6 @@ void Van::StartGlobal(int customer_id) {
             unimportant_scheduler_thread_ = std::unique_ptr<std::thread>(
                 new std::thread(&Van::Unimportant_scheduler, this));
         }
-
     }
             
     // connect to the global scheduler
@@ -698,8 +683,6 @@ void Van::StartGlobal(int customer_id) {
     while (!ready_global_.load()) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-
-    // TODO(zhli): support resender & heartbeat
   }
 }
 
@@ -719,19 +702,14 @@ void Van::Stop(bool is_global) {
       receiver_thread_->join();
     }
     receiver_global_thread_->join();
-//begin, added by huaman
     for(int i = 0; i < udp_receiver_thread_vec.size(); ++i){
-                                     
-                        
         udp_receiver_thread_[i]->join();
     }
     if(!is_scheduler_){
         important_scheduler_thread_->join();
         unimportant_scheduler_thread_->join();
     }
-//end, added by huaman
     if (!is_global_scheduler_) heartbeat_thread_->join();
-    //if (!is_global_scheduler_ && enable_p3) sender_thread_->join();
   } else {
     receiver_thread_->join();
     if (!is_scheduler_) heartbeat_thread_->join();
@@ -742,7 +720,6 @@ void Van::Stop(bool is_global) {
   if (is_global) ready_global_ = false;
 }
 
-//begin, added by huaman
 int Van::Classifier( Message& msg, int channel, int tag) {
     if(channel == 0){
         important_queue_.Push(msg);
@@ -750,6 +727,7 @@ int Van::Classifier( Message& msg, int channel, int tag) {
         unimportant_queue_.Push(msg);
     }
 }
+
 void Van::Important_scheduler() {
   while (true) {
     Message msg;
@@ -757,161 +735,119 @@ void Van::Important_scheduler() {
     Important_send(msg);
   }
 }
+
 void Van::Unimportant_scheduler() {
-    /* struct timespec req;
-    req.tv_sec = 0;
-    req.tv_nsec = ns_delay; */
   while (true) {
     if(important_queue_.empty()){
         Message msg;
         unimportant_queue_.WaitAndPop(&msg);
         Unimportant_send(msg);
-        //nanosleep(&req,NULL);//
     }
-    
   }
 }
 int Van::Important_send(Message& msg) {
-    //if(enable_dgt == 3)
-        //encode(msg,8);
   int send_bytes = SendMsg(msg, true);
   CHECK_NE(send_bytes, -1);
-  //send_bytes_ += send_bytes;
-
-  if (Postoffice::Get()->verbose() >= 2) {
-//    PS_VLOG(2) << msg.DebugString();
-  }
   return send_bytes;
 }
+
 int Van::Unimportant_send(Message& msg) {
-    int send_bytes = 0;
-    if(enable_dgt == 1){
-        send_bytes = SendMsg_UDP(msg.meta.channel-1, msg, 0);
-    }else if(enable_dgt == 2){
-        send_bytes = SendMsg(msg, true); //for tcp-dgt
-    }else if(enable_dgt == 3){
-        encode(msg,4);
-        send_bytes = SendMsg(msg, true); //for tcp-dgt,and encode
-    }
-
-
-  CHECK_NE(send_bytes, -1);
-  //send_bytes_ += send_bytes;
-
-  if (Postoffice::Get()->verbose() >= 2) {
-    //PS_VLOG(2) << msg.DebugString();
+  int send_bytes = 0;
+  if(enable_dgt == 1){
+      send_bytes = SendMsg_UDP(msg.meta.channel-1, msg, 0);
+  }else if(enable_dgt == 2){
+      send_bytes = SendMsg(msg, true); //for tcp-dgt
+  }else if(enable_dgt == 3){
+      encode(msg,4);
+      send_bytes = SendMsg(msg, true); //for tcp-dgt and encode
   }
+  CHECK_NE(send_bytes, -1);
   return send_bytes;
 }
+
 float Van::encode(Message& msg, int bits_num){
-        //PS_VLOG(2) << "====" << msg.DebugString();
-        std::lock_guard<std::mutex> lk(encode_mu_);
-        SArray<char>& s_val = msg.data[1];
-        float *ps = (float*)s_val.data();
-        int d_val_size = 0;
-        //PS_VLOG(2) << "s_val.size()=" << s_val.size()<< ",*((int*)msg.data[2].data())="<< *((int*)msg.data[2].data());
-        //assert(s_val.size() == *((int*)msg.data[2].data()));
+  std::lock_guard<std::mutex> lk(encode_mu_);
+  SArray<char>& s_val = msg.data[1];
+  float *ps = (float*)s_val.data();
+  int d_val_size = 0;
 
+  if(s_val.size()%(msg.meta.bits_num/bits_num) == 0){
+      d_val_size = s_val.size()/(msg.meta.bits_num/bits_num);
+  }else{
+      d_val_size = s_val.size()/(msg.meta.bits_num/bits_num) + 1;
+  }
+  SArray<char> d_val(d_val_size);
+  char *pd = d_val.data();
+  auto it = residual[msg.meta.first_key].find(msg.meta.seq);
+  if(it == residual[msg.meta.first_key].end()) residual[msg.meta.first_key][msg.meta.seq] = SArray<char>(s_val.size());
+  float *pr = (float*)residual[msg.meta.first_key][msg.meta.seq].data();
 
-        if(s_val.size()%(msg.meta.bits_num/bits_num) == 0){
-            d_val_size = s_val.size()/(msg.meta.bits_num/bits_num);
-        }else{
-            d_val_size = s_val.size()/(msg.meta.bits_num/bits_num) + 1;
-        }
-        SArray<char> d_val(d_val_size);
-        char *pd = d_val.data();
-        auto it = residual[msg.meta.first_key].find(msg.meta.seq);
-        if(it == residual[msg.meta.first_key].end()) residual[msg.meta.first_key][msg.meta.seq] = SArray<char>(s_val.size());
-        float *pr = (float*)residual[msg.meta.first_key][msg.meta.seq].data();
+  int param_n = s_val.size() / sizeof(float);
+  float max_v = 0.0, min_v = 0.0;
+  for(int i = 0; i < param_n; ++i){
+    *(pr+i) += *(ps+i);
+  }
+  for(int i = 0; i < param_n; ++i){
+    max_v = std::max(max_v, *(pr+i));
+    min_v = std::min(min_v, *(pr+i));
+  }
+  for(int i = 0; i < pow(2,bits_num); ++i){
+    float zv = ((min_v + i*(max_v-min_v)/pow(2,bits_num)) + (min_v + (i+1)*(max_v-min_v)/pow(2,bits_num)))/2;
+    msg.meta.compr.push_back(zv);
+  }
+  char qj = 0;
+  for(int i = 0; i < param_n; ++i){
+    qj = (*(pr+i) - min_v)/((max_v-min_v)/pow(2,bits_num));
+    *pd |= (qj << (((8/bits_num)-1-i%(8/bits_num))*bits_num));
+    if(i%(8/bits_num) == 0) pd += 1;
+    *(pr+i) -= msg.meta.compr[qj];
+  }
+  msg.meta.bits_num = bits_num;
+  msg.data[1] = d_val;
+}
 
-        int param_n = s_val.size() / sizeof(float);
-        float max_v = 0.0, min_v = 0.0;
-        for(int i = 0; i < param_n; ++i){
-            //*(pr+i) += *(ps+i);
-            *(pr+i) += *(ps+i);
-        }
-        for(int i = 0; i < param_n; ++i){
-            max_v = std::max(max_v, *(pr+i));
-            min_v = std::min(min_v, *(pr+i));
-        }
-        for(int i = 0; i < pow(2,bits_num); ++i){
-            float zv = ((min_v + i*(max_v-min_v)/pow(2,bits_num)) + (min_v + (i+1)*(max_v-min_v)/pow(2,bits_num)))/2;
-            msg.meta.compr.push_back(zv);
-        }
-        char qj = 0;
-        for(int i = 0; i < param_n; ++i){
-            /*for(int j=0; j < 4; ++j){
-                if(*(pr+i) >= min_v + j*(max_v-min_v)/4 && *(pr+i) <= min_v + (j+1)*(max_v-min_v)/4){
-                    qj = j;
-                    break;
-                }
-            }*/
-            qj = (*(pr+i) - min_v)/((max_v-min_v)/pow(2,bits_num));
-            *pd |= (qj << (((8/bits_num)-1-i%(8/bits_num))*bits_num));
-            if(i%(8/bits_num) == 0) pd += 1;
-            *(pr+i) -= msg.meta.compr[qj];
-        }
-        msg.meta.bits_num = bits_num;
-        msg.data[1] = d_val;
-        //msg.meta.vals_len = msg.data[1].size();
-        //PS_VLOG(2) << "------" << msg.DebugString();
+void Van::decode(Message& msg) {
+  if(DepairDataHandleType(msg.meta.head).dtype == 0 && msg.meta.bits_num == 32){ //kFloat32
+      return;
+  }else if(DepairDataHandleType(msg.meta.head).dtype == 2 && msg.meta.bits_num == 16){ //kFloat16
+      return;
+  }
+
+  SArray<char>& s_val = msg.data[1];
+  char *ps = (char*)s_val.data();
+  int d_val_size = msg.meta.vals_len;
+  SArray<char> d_val(d_val_size);
+  float *pd = (float*)d_val.data();
+  int nlen = s_val.size();
+  char qj = 0;
+  int param_n = d_val_size/sizeof(float);
+  int bits_num  = msg.meta.bits_num;
+  assert(pow(2,bits_num) == msg.meta.compr.size());
+  char mask = pow(2,bits_num) - 1;
+  for(int i = 0; i < nlen; ++i){
+    for(int j =0; j<8/bits_num; ++j){
+      qj = (*(ps+i) >> (8-bits_num-bits_num*j)) & mask;
+      *pd = msg.meta.compr[qj];
+      pd += 1;
+      param_n -= 1;
+      if(param_n == 0) break;
     }
-    void Van::decode(Message& msg) {
-        //PS_VLOG(2) << "at decode,------" << msg.DebugString();
-        //PS_VLOG(2)<<"in decode, msg.meta.head is "<<msg.meta.head;
-        if(DepairDataHandleType(msg.meta.head).dtype == 0 && msg.meta.bits_num == 32){ //kFloat32
-            return;
-        }else if(DepairDataHandleType(msg.meta.head).dtype == 2 && msg.meta.bits_num == 16){ //kFloat16
-            return;
-        }
-        //if(msg.meta.bits_num == 32) return;
-        SArray<char>& s_val = msg.data[1];
-        char *ps = (char*)s_val.data();
-        //int d_val_size = *((int*)msg.data[2].data());
-        int d_val_size = msg.meta.vals_len;
-        SArray<char> d_val(d_val_size);
-        float *pd = (float*)d_val.data();
-        //int nlen = *((int*)msg.data[2].data());
-        int nlen = s_val.size();
-        char qj = 0;
-        int param_n = d_val_size/sizeof(float);
-        int bits_num  = msg.meta.bits_num;
-        assert(pow(2,bits_num) == msg.meta.compr.size());
-        char mask = pow(2,bits_num) - 1;
-        for(int i = 0; i < nlen; ++i){
-            for(int j =0; j<8/bits_num; ++j){
-                qj = (*(ps+i) >> (8-bits_num-bits_num*j)) & mask;
-                *pd = msg.meta.compr[qj];
-                pd += 1;
-                param_n -= 1;
-                if(param_n == 0) break;
-            }
-        }
-        msg.data[1] = d_val;
-        //msg.meta.vals_len = msg.data[1].size();
-        //PS_VLOG(2) << "at decode,======" << msg.DebugString();
-    }
-//end, added by huaman  
-//begin, modified by huaman  
+  }
+  msg.data[1] = d_val;
+}
+
 int Van::DGT_Send(const Message& msg, int channel, int tag) {
-  int send_bytes;                                                             
-  
+  int send_bytes;
   send_bytes = SendMsg_UDP(channel-1, msg, tag);
-                                              
-  
   CHECK_NE(send_bytes, -1);
   send_bytes_ += send_bytes;
   if (resender_) resender_->AddOutgoing(msg);
-  if (Postoffice::Get()->verbose() >= 2) {
-    PS_VLOG(2) << "[DGT-SEND][" <<channel << "]"<< msg.DebugString();
-  }
   return send_bytes;
 }
                 
 int Van::Send(const Message& msg, bool is_global) {
   int send_bytes;
-  send_bytes = SendMsg(msg, is_global);                                             
-  
+  send_bytes = SendMsg(msg, is_global);
   CHECK_NE(send_bytes, -1);
   send_bytes_ += send_bytes;
   if (resender_) resender_->AddOutgoing(msg);
@@ -920,8 +856,7 @@ int Van::Send(const Message& msg, bool is_global) {
   }
   return send_bytes;
 }
-//end, modified by huaman
-//added by vbc
+
 void Van::Push(const Message& msg) {
   send_queue_.Push(msg);
 }
@@ -931,7 +866,6 @@ void Van::Sending() {
     Message msg;
     send_queue_.WaitAndPop(&msg);
     Send(msg);
-    //PS_VLOG(2)<<"key is "<<msg.meta.first_key<<" priority is "<<msg.meta.priority;
     if (!msg.meta.control.empty() &&
         msg.meta.control.cmd == Control::TERMINATE) {
       break;
@@ -1008,7 +942,6 @@ void Van::ReceivingGlobal() {
 
     // duplicated message
     if (resender_ && resender_->AddIncomming(msg)) continue;
-     // PS_VLOG(2)<<"in van.cc receiving global";
     if (!msg.meta.control.empty()) {
       // control msg
       auto& ctrl = msg.meta.control;
@@ -1020,7 +953,7 @@ void Van::ReceivingGlobal() {
       } else if (ctrl.cmd == Control::BARRIER_GLOBAL) {
         ProcessBarrierCommand(&msg, true);
       } else if (ctrl.cmd == Control::HEARTBEAT) {
-        // TODO(zhli): perform heartbeat
+        // TODO: perform heartbeat
       } else if (ctrl.cmd == Control::AUTOPULLRPY) {
           ProcessAutopullrpyGlobal();
       } else if (ctrl.cmd == Control::ASK) {//vbc
@@ -1037,17 +970,16 @@ void Van::ReceivingGlobal() {
     }
   }
 }
-//begin, added by huaman
+
 void Van::Receiving_UDP(int channel) {
   Meta nodes;
   Meta recovery_nodes;  // store recovery nodes
   recovery_nodes.control.cmd = Control::ADD_NODE;
-  PS_VLOG(1) << "Start thread{Receiving_UDP} in UDP channel [" << channel+1 << "]";
+  PS_VLOG(1) << "Start thread {Receiving_UDP} in UDP channel [" << channel+1 << "]";
   
   while (true) {
     Message msg;
     int recv_bytes = RecvMsg_UDP(channel, &msg);
-	
     // For debug, drop received message
     if (ready_.load() && drop_rate_ > 0) {
       unsigned seed = time(NULL) + my_node_.id;
@@ -1056,34 +988,11 @@ void Van::Receiving_UDP(int channel) {
         continue;
       }
     }
-/* #ifdef ENCODE
-    if(enable_encode && msg.meta.msg_type == 2){   //if msg is push's gradient,then decode it
-       //std::cout << "$$$" << msg.DebugString() << std::endl;
-       decode(msg);
-       //std::cout << "@@@" << msg.DebugString() << std::endl;
-       //msg_float_print(msg, 20);
-    }
-#endif */
     CHECK_NE(recv_bytes, -1);
     recv_bytes_ += recv_bytes;
     if (Postoffice::Get()->verbose() >= 2) {
       PS_VLOG(2) << msg.DebugString();
     }
-	
-	 /* static uint64_t udp_rcv_msg_cnt = 0;
-	  if(recv_bytes > 0) udp_rcv_msg_cnt++;
-	  if(msg.meta.udp_reliable){
-		  std::cout << " udp_rcv_msg_cnt = " <<  udp_rcv_msg_cnt << std::endl;
-		  udp_rcv_msg_cnt = 0;
-	  } */
-    // duplicated message
-    //std::cout << msg.DebugString() << std::endl;
-    /* if(msg.meta.udp_reliable){
-        LOG(WARNING) << msg.DebugString();
-    } */
-/* 	if(msg.meta.control.cmd == Control::ACK || msg.meta.udp_reliable){
-		if (resender_ && resender_->AddIncomming(msg)) continue;
-	} */
 	if (!msg.meta.control.empty()) {
       // control msg
       auto& ctrl = msg.meta.control;
@@ -1100,30 +1009,21 @@ void Van::Receiving_UDP(int channel) {
         LOG(WARNING) << "Drop unknown typed message " << msg.DebugString();
       }
     } else {
-     
       ProcessDataMsg(&msg);
-      /* if(msg.meta.sender == 9)
-        udp_recv++; */
-      PS_VLOG(1) << "[UDP]==" << msg.DebugString();
-	  
     }
   }
 }
-//end, added by huaman
+
 void Van::PackMeta(const Meta& meta, char** meta_buf, int* buf_size, bool is_global) {
   // convert into protobuf
   PBMeta pb;
   pb.set_head(meta.head);
   if (meta.app_id != Meta::kEmpty) pb.set_app_id(meta.app_id);
   if (meta.timestamp != Meta::kEmpty) pb.set_timestamp(meta.timestamp);
-  //add by cqq
   if(meta.version != Meta::kEmpty) pb.set_version(meta.version);
   if (meta.key != Meta::kEmpty) pb.set_key(meta.key);
-  // end cqq
-  //added by vbc
   if (meta.iters != Meta::kEmpty) pb.set_iters(meta.iters);
   if (meta.body.size()) pb.set_body(meta.body);
-//begin, added by huaman
   if(is_global)
     pb.set_sender(my_node_global_.id);
   else
@@ -1143,7 +1043,6 @@ void Van::PackMeta(const Meta& meta, char** meta_buf, int* buf_size, bool is_glo
   pb.set_vals_len(meta.vals_len);
   pb.set_lens_len(meta.lens_len);
   for (auto v : meta.compr) pb.add_compr(v);
-//end, added by huaman                                         
   pb.set_push(meta.push);
   pb.set_request(meta.request);
   pb.set_simple_app(meta.simple_app);
@@ -1164,11 +1063,9 @@ void Van::PackMeta(const Meta& meta, char** meta_buf, int* buf_size, bool is_glo
       p->set_id(n.id);
       p->set_role(n.role);
       p->set_port(n.port);
-//begin, added by huaman
       for(auto up : n.udp_port){
           p->add_udp_port(up);
       }
-//end, added by  huaman                       
       p->set_hostname(n.hostname);
       p->set_is_recovery(n.is_recovery);
       p->set_customer_id(n.customer_id);
@@ -1188,18 +1085,13 @@ void Van::UnpackMeta(const char* meta_buf, int buf_size, Meta* meta) {
   CHECK(pb.ParseFromArray(meta_buf, buf_size))
     << "failed to parse string into protobuf";
 
-  //add by cqq
   meta->key = pb.has_key() ? pb.key() : Meta::kEmpty;
   meta->version = pb.has_version() ? pb.version() : Meta::kEmpty;
-  //end cqq
-  //added by vbc
   meta->iters = pb.has_iters() ? pb.iters() : Meta::kEmpty;
   // to meta
   meta->head = pb.head();
   meta->app_id = pb.has_app_id() ? pb.app_id() : Meta::kEmpty;
   meta->timestamp = pb.has_timestamp() ? pb.timestamp() : Meta::kEmpty;
-
-//begin, added by huaman
   meta->sender = pb.sender();
   meta->recver = pb.recver();
   meta->bits_num = pb.bits_num();
@@ -1219,7 +1111,6 @@ void Van::UnpackMeta(const char* meta_buf, int buf_size, Meta* meta) {
     for(int i = 0; i < pb.compr_size();++i){
         meta->compr.push_back(pb.compr(i));
     }
-//end, added by huaman                              
   meta->request = pb.request();
   meta->push = pb.push();
   meta->simple_app = pb.simple_app();
@@ -1239,11 +1130,9 @@ void Van::UnpackMeta(const char* meta_buf, int buf_size, Meta* meta) {
       Node n;
       n.role = static_cast<Node::Role>(p.role());
       n.port = p.port();
-//begin, added by huaman
       for(int i = 0; i < p.udp_port_size();++i){
           n.udp_port.push_back(p.udp_port(i));
       }
-//end, added by huaman                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
       n.hostname = p.hostname();
       n.id = p.has_id() ? p.id() : Node::kEmpty;
       n.is_recovery = p.is_recovery();
@@ -1268,160 +1157,144 @@ void Van::Heartbeat() {
     Send(msg);
   }
 }
-//added by vbc
+
 void Van::Wait_for_finished(){
-    std::unique_lock<std::mutex> ver_lk(ver_mu);
-    while(!ver_flag){
-       // PS_VLOG(2)<<"in van.cc wait_for_finished";
-        ver_cond.wait(ver_lk);
-    }
-    ver_flag=false;
-    ver_lk.unlock();
+  std::unique_lock<std::mutex> ver_lk(ver_mu);
+  while(!ver_flag){
+    ver_cond.wait(ver_lk);
+  }
+  ver_flag=false;
+  ver_lk.unlock();
 }
 void Van::Wait_for_global_finished(){
-    std::unique_lock<std::mutex> ver_global_lk(ver_global_mu);
-    while(!ver_global_flag){
-       // PS_VLOG(2)<<"in van.cc wait_for_finished";
-        ver_global_cond.wait(ver_global_lk);
-    }
-    ver_global_flag=false;
-    ver_global_lk.unlock();
+  std::unique_lock<std::mutex> ver_global_lk(ver_global_mu);
+  while(!ver_global_flag){
+      ver_global_cond.wait(ver_global_lk);
+  }
+  ver_global_flag=false;
+  ver_global_lk.unlock();
 }
-//added by vbc
-    void Van::ProcessAutopullrpy(){
-        std::unique_lock<std::mutex> ver_lk(ver_mu);
-        ver_flag=true;
-        ver_lk.unlock();
-        ver_cond.notify_one();
-    }
-//added by vbc
-void Van::ProcessAutopullrpyGlobal(){
-    std::unique_lock<std::mutex> ver_global_lk(ver_global_mu);
-    ver_global_flag=true;
-    ver_global_lk.unlock();
-    ver_global_cond.notify_one();
-}
-//vbc:ask for scheduler to get receiver_id
-    void Van::Ask(int throughput, int last_recv_id, int version)
-    {
-        Message msg;
-        msg.meta.customer_id = last_recv_id;//last receiver id
-        msg.meta.app_id = throughput;
-        msg.meta.sender=my_node_.id;
-        msg.meta.recver = kScheduler;
-        msg.meta.control.cmd = Control::ASK;
-        msg.meta.version=version;
-        msg.meta.timestamp = timestamp_++;
-        //PS_VLOG(2)<<"in ask , iters is "<<version;
-       // PS_VLOG(2)<<"in van.cc ask, my node id is "<<my_node_.id<<" and kscheduler is "<<kScheduler;
-        Send(msg);
-    }
-void Van::AskGlobal(int throughput, int last_recv_id, int version)
-{
-    Message msg;
-    msg.meta.customer_id = last_recv_id;//last receiver id
-    msg.meta.app_id = throughput;
-    msg.meta.sender=my_node_global_.id;
-    msg.meta.recver = kSchedulerGlobal;
-    msg.meta.control.cmd = Control::ASK;
-    msg.meta.version=version;
-    msg.meta.timestamp = timestamp_++;
-    //PS_VLOG(2)<<"in ask , iters is "<<version;
-   // PS_VLOG(2)<<"in van.cc ask, my node id is "<<my_node_global_.id<<" and kscheduler is "<<kSchedulerGlobal;
-    Send(msg,true);
-}
-    void Van::Ask1(int app,int customer, int timestamp){
-        Message msg;
-        msg.meta.sender=my_node_.id;
-        msg.meta.recver = kScheduler;
-        msg.meta.control.cmd = Control::ASK1;
-        msg.meta.timestamp = timestamp;
-        msg.meta.app_id = app;
-        msg.meta.customer_id = customer;
-        //PS_VLOG(2)<<"ASK1 finished ";
-       // PS_VLOG(2)<<"in van.cc ask1";
-        Send(msg);
-    }
-void Van::Ask1Global(int app,int customer, int timestamp){
-    Message msg;
-    msg.meta.sender=my_node_global_.id;
-    msg.meta.recver = kSchedulerGlobal;
-    msg.meta.control.cmd = Control::ASK1;
-    msg.meta.timestamp = timestamp;
-    msg.meta.app_id = app;
-    msg.meta.customer_id = customer;
-    //PS_VLOG(2)<<"ASK1 finished ";
-   // PS_VLOG(2)<<"in van.cc global ask1";
-    Send(msg,true);
-}
-    void Van::ProcessAsk1Command(Message* msg){
-        if(ask_q.size()==1 && ask_q.front()==(msg->meta.sender-100)){
-            return;
-        }
-        Message rpl;
-        rpl.meta.sender = my_node_.id;
-        rpl.meta.app_id=msg->meta.app_id;
-        rpl.meta.customer_id = msg->meta.customer_id;
-        rpl.meta.timestamp = msg->meta.timestamp;
-        rpl.meta.push=true;
-        rpl.meta.request=true;
-        //PS_VLOG(2)<<"in process ask1, key is"<<rpl.meta.key;
-        std::unique_lock<std::mutex> lk_sch1(sched1);
-        ask_q.push(msg->meta.sender-100);
-        //PS_VLOG(2)<<msg->meta.sender<<"come in the queue";
 
-       // PS_VLOG(2)<<"in van.cc process ask1, ask_q size is "<<ask_q.size();
-        if(ask_q.size()>1){
-            int node_a=ask_q.front();
-            ask_q.pop();
-            int node_b=ask_q.front();
-            ask_q.pop();
-            if(node_a==0 ||node_b==0){
-                if(node_a==0){
-                    rpl.meta.iters=node_a+100;
-                    rpl.meta.recver = node_b+100;
-                    B1[node_b]=1;
-                    Send(rpl);
-                    PS_VLOG(2)<<"in local push, "<<node_b<<" send to server 100";
-                }else{
-                    rpl.meta.iters=node_b+100;
-                    rpl.meta.recver = node_a+100;
-                    B1[node_a]=1;
-                    Send(rpl);
-                    PS_VLOG(2)<<"in local push, "<<node_a<<" send to server 100";
-                }
+void Van::ProcessAutopullrpy(){
+  std::unique_lock<std::mutex> ver_lk(ver_mu);
+  ver_flag=true;
+  ver_lk.unlock();
+  ver_cond.notify_one();
+}
+
+void Van::ProcessAutopullrpyGlobal(){
+  std::unique_lock<std::mutex> ver_global_lk(ver_global_mu);
+  ver_global_flag=true;
+  ver_global_lk.unlock();
+  ver_global_cond.notify_one();
+}
+
+void Van::Ask(int throughput, int last_recv_id, int version){
+  Message msg;
+  msg.meta.customer_id = last_recv_id; //last receiver id
+  msg.meta.app_id = throughput;
+  msg.meta.sender=my_node_.id;
+  msg.meta.recver = kScheduler;
+  msg.meta.control.cmd = Control::ASK;
+  msg.meta.version=version;
+  msg.meta.timestamp = timestamp_++;
+  Send(msg);
+}
+
+void Van::AskGlobal(int throughput, int last_recv_id, int version){
+  Message msg;
+  msg.meta.customer_id = last_recv_id; //last receiver id
+  msg.meta.app_id = throughput;
+  msg.meta.sender=my_node_global_.id;
+  msg.meta.recver = kSchedulerGlobal;
+  msg.meta.control.cmd = Control::ASK;
+  msg.meta.version=version;
+  msg.meta.timestamp = timestamp_++;
+  Send(msg,true);
+}
+
+void Van::Ask1(int app,int customer, int timestamp){
+  Message msg;
+  msg.meta.sender=my_node_.id;
+  msg.meta.recver = kScheduler;
+  msg.meta.control.cmd = Control::ASK1;
+  msg.meta.timestamp = timestamp;
+  msg.meta.app_id = app;
+  msg.meta.customer_id = customer;
+  Send(msg);
+}
+
+void Van::Ask1Global(int app,int customer, int timestamp){
+  Message msg;
+  msg.meta.sender=my_node_global_.id;
+  msg.meta.recver = kSchedulerGlobal;
+  msg.meta.control.cmd = Control::ASK1;
+  msg.meta.timestamp = timestamp;
+  msg.meta.app_id = app;
+  msg.meta.customer_id = customer;
+  Send(msg,true);
+}
+
+void Van::ProcessAsk1Command(Message* msg){
+    if(ask_q.size()==1 && ask_q.front()==(msg->meta.sender-100)){
+        return;
+    }
+    Message rpl;
+    rpl.meta.sender = my_node_.id;
+    rpl.meta.app_id=msg->meta.app_id;
+    rpl.meta.customer_id = msg->meta.customer_id;
+    rpl.meta.timestamp = msg->meta.timestamp;
+    rpl.meta.push=true;
+    rpl.meta.request=true;
+    std::unique_lock<std::mutex> lk_sch1(sched1);
+    ask_q.push(msg->meta.sender-100);
+
+    if(ask_q.size()>1){
+        int node_a=ask_q.front();
+        ask_q.pop();
+        int node_b=ask_q.front();
+        ask_q.pop();
+        if(node_a==0 ||node_b==0){
+            if(node_a==0){
+                rpl.meta.iters=node_a+100;
+                rpl.meta.recver = node_b+100;
+                B1[node_b]=1;
+                Send(rpl);
+                PS_VLOG(2)<<"in local push, "<<node_b<<" send to server 100";
             }else{
-                if(A[node_a][node_b]>A[node_b][node_a]){
-                    //rpl.meta.customer_id=0;
-                    //rpl.meta.recver = node_b;
-                    //Send(rpl);
-                    rpl.meta.iters=node_b+100;
-                    rpl.meta.recver = node_a+100;
-                    Send(rpl);
-                    B1[node_a]=1;
-                    PS_VLOG(2)<<"in local push, sender is "<<node_a<<" and receiver is "<<node_b;
-                }else {
-                    //rpl.meta.customer_id=0;
-                    //rpl.meta.recver = node_a;
-                    //Send(rpl);
-                    rpl.meta.iters=node_a+100;
-                    rpl.meta.recver = node_b+100;
-                    Send(rpl);
-                    B1[node_b]=1;
-                    PS_VLOG(2)<<"in local push, sender is "<<node_b<<" and receiver is "<<node_a;
-                }
+                rpl.meta.iters=node_b+100;
+                rpl.meta.recver = node_a+100;
+                B1[node_a]=1;
+                Send(rpl);
+                PS_VLOG(2)<<"in local push, "<<node_a<<" send to server 100";
+            }
+        }else{
+            if(A[node_a][node_b]>A[node_b][node_a]){
+                rpl.meta.iters=node_b+100;
+                rpl.meta.recver = node_a+100;
+                Send(rpl);
+                B1[node_a]=1;
+                PS_VLOG(2)<<"in local push, sender is "<<node_a<<" and receiver is "<<node_b;
+            }else {
+                rpl.meta.iters=node_a+100;
+                rpl.meta.recver = node_b+100;
+                Send(rpl);
+                B1[node_b]=1;
+                PS_VLOG(2)<<"in local push, sender is "<<node_b<<" and receiver is "<<node_a;
             }
         }
-
-        int count=0;
-        for(auto it:B1)count+=it;
-        if(count==Postoffice::Get()->num_workers()){
-            for(std::size_t i=0;i<B1.size();i++)B1[i]=0;
-            PS_VLOG(2)<<"local push is over!";
-        }
-
-        lk_sch1.unlock();
     }
+
+    int count=0;
+    for(auto it:B1)count+=it;
+    if(count==Postoffice::Get()->num_workers()){
+        for(std::size_t i=0;i<B1.size();i++)B1[i]=0;
+        PS_VLOG(2)<<"local push is over!";
+    }
+
+    lk_sch1.unlock();
+}
+
 void Van::ProcessAsk1GlobalCommand(Message* msg){
     if(ask_q.size()==1 && ask_q.front()==msg->meta.sender){
         return;
@@ -1433,12 +1306,9 @@ void Van::ProcessAsk1GlobalCommand(Message* msg){
     rpl.meta.timestamp = msg->meta.timestamp;
     rpl.meta.push=true;
     rpl.meta.request=true;
-    //PS_VLOG(2)<<"in process ask1, key is"<<rpl.meta.key;
     std::unique_lock<std::mutex> lk_sch1(sched1);
     ask_q.push(msg->meta.sender);
-    //PS_VLOG(2)<<msg->meta.sender<<"come in the queue";
 
-   // PS_VLOG(2)<<"in van.cc process ask1 global , ask_q size is "<<ask_q.size();
     if(ask_q.size()>1){
         int node_a=ask_q.front();
         ask_q.pop();
@@ -1460,18 +1330,12 @@ void Van::ProcessAsk1GlobalCommand(Message* msg){
             }
         }else{
             if(A[node_a][node_b]>A[node_b][node_a]){
-                //rpl.meta.customer_id=0;
-                //rpl.meta.recver = node_b;
-                //Send(rpl);
                 rpl.meta.iters=node_b;
                 rpl.meta.recver = node_a;
                 Send(rpl,true);
                 B1[node_a]=1;
                 PS_VLOG(2)<<"in global push, sender is "<<node_a<<" and receiver is "<<node_b;
             }else {
-                //rpl.meta.customer_id=0;
-                //rpl.meta.recver = node_a;
-                //Send(rpl);
                 rpl.meta.iters=node_a;
                 rpl.meta.recver = node_b;
                 Send(rpl,true);
@@ -1490,102 +1354,87 @@ void Van::ProcessAsk1GlobalCommand(Message* msg){
 
     lk_sch1.unlock();
 }
-//added by vbc
-    void Van::ProcessAskCommand(Message* msg)
-    {
-        //update A and B
-        std::unique_lock<std::mutex> lks(sched);
-        int req_node_id = msg->meta.sender-100;
-        if (msg->meta.app_id != -1) {//isn't the first ask
-            A[req_node_id][msg->meta.customer_id-100] = msg->meta.app_id;
-            lifetime[req_node_id][msg->meta.customer_id-100] = msg->meta.version;
-        }
-        //create reply message
-        Message rpl;
-        rpl.meta.sender = my_node_.id;
-        rpl.meta.recver = req_node_id+100;
-        rpl.meta.control.cmd = Control::REPLY;
-        rpl.meta.timestamp = timestamp_++;
 
-        int temp=0;
-        for(std::size_t i=0;i<B.size();i++)temp+=B[i];
-
-        if(temp== Postoffice::Get()->num_workers()){
-            for(std::size_t i=0;i<B.size();i++)B[i]=0;
-            iters++;
-        }
-        //PS_VLOG(2)<<"iters of "<<req_node_id<<" is "<<msg->meta.version;
-        //PS_VLOG(2)<<"iters of sched is "<<iters;
-        if(msg->meta.version<=iters){
-            rpl.meta.customer_id = -1;
-        }
-        else{//decision making for receiver
-            /*
-            for(std::size_t i=0;i<lifetime[req_node_id].size();i++){
-                if(lifetime[req_node_id][i]!=-1 and (iters-lifetime[req_node_id][i])>5){
-                    //lifetime[req_node_id][i]=-1;
-                    A[req_node_id][i]=-1;
-                }
-            }
-             */
-            int receiver_id=-1;
-            int num_know_node=0, num_unknow_node=0;
-            for(std::size_t i=0;i<A[req_node_id].size();i++)//statistic number of known and unknown node about throughput
-            {
-                if((i%2) && B[i]==0){
-                    if(A[req_node_id][i]!=-1)num_know_node++;
-                    else num_unknow_node++;
-                }
-            }
-            //数值矫正
-            //num_unknow_node-=4;
-            //if(Postoffice::Get()->num_servers() > Postoffice::Get()->num_workers())num_unknow_node-=(Postoffice::Get()->num_servers() - Postoffice::Get()->num_workers());
-            //choose dicision mode
-            unsigned seed;
-            seed=time(0);
-            srand(seed);
-            int rand_number=rand()%10;
-            double greed_rate=double(num_know_node/(num_know_node+num_unknow_node)) < max_greed_rate ?
-                    double(num_know_node/(num_know_node+num_unknow_node)):max_greed_rate;
-            if((num_know_node!=0) && (rand_number<=(greed_rate*10)))//greedy mode
-            {
-                int throughput = -1;
-                for (std::size_t i = 0; i<A[req_node_id].size(); i++) {
-                    if (B[i]==0 && (A[req_node_id][i] > throughput)) {
-                        receiver_id = i;
-                        throughput = A[req_node_id][i];
-                    }
-                }
-            }
-            else {//random mode
-                rand_number = (rand() % (num_unknow_node+num_know_node))+1;
-                int counter = 0;
-                for (std::size_t i = 0; i < A[req_node_id].size(); i++){
-                    if (B[i]==0 && (i%2)) {//&&(A[req_node_id][i] == -1)
-                        counter++;
-                        if (counter == rand_number) {
-                            receiver_id = i;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            //send reply message
-            rpl.meta.customer_id = receiver_id;
-        }
-        if(rpl.meta.customer_id!=-1){
-            B[rpl.meta.customer_id] = 1;
-            rpl.meta.customer_id +=100;
-        }
-
-        //PS_VLOG(2)<<"in van.cc process ask [iters]: "<<msg->meta.version<<", "<<msg->meta.sender<<" => "<<rpl.meta.customer_id;
-        PS_VLOG(2)<<"in local pull, node "<<rpl.meta.sender<<" send to node "<<rpl.meta.customer_id;
-        lks.unlock();
-        Send(rpl);
+void Van::ProcessAskCommand(Message* msg){
+    //update A and B
+    std::unique_lock<std::mutex> lks(sched);
+    int req_node_id = msg->meta.sender-100;
+    if (msg->meta.app_id != -1) { //isn't the first ask
+        A[req_node_id][msg->meta.customer_id-100] = msg->meta.app_id;
+        lifetime[req_node_id][msg->meta.customer_id-100] = msg->meta.version;
     }
-void Van::ProcessAskGlobalCommand(Message* msg)
-{
+    //create reply message
+    Message rpl;
+    rpl.meta.sender = my_node_.id;
+    rpl.meta.recver = req_node_id+100;
+    rpl.meta.control.cmd = Control::REPLY;
+    rpl.meta.timestamp = timestamp_++;
+
+    int temp=0;
+    for(std::size_t i=0;i<B.size();i++)temp+=B[i];
+
+    if(temp== Postoffice::Get()->num_workers()){
+        for(std::size_t i=0;i<B.size();i++)B[i]=0;
+        iters++;
+    }
+
+    if(msg->meta.version<=iters){
+        rpl.meta.customer_id = -1;
+    }
+    else{
+        int receiver_id=-1;
+        int num_know_node=0, num_unknow_node=0;
+        for(std::size_t i=0;i<A[req_node_id].size();i++)//statistic number of known and unknown node about throughput
+        {
+            if((i%2) && B[i]==0){
+                if(A[req_node_id][i]!=-1)num_know_node++;
+                else num_unknow_node++;
+            }
+        }
+        unsigned seed;
+        seed=time(0);
+        srand(seed);
+        int rand_number=rand()%10;
+        double greed_rate=double(num_know_node/(num_know_node+num_unknow_node)) < max_greed_rate ?
+                double(num_know_node/(num_know_node+num_unknow_node)):max_greed_rate;
+        if((num_know_node!=0) && (rand_number<=(greed_rate*10)))//greedy mode
+        {
+            int throughput = -1;
+            for (std::size_t i = 0; i<A[req_node_id].size(); i++) {
+                if (B[i]==0 && (A[req_node_id][i] > throughput)) {
+                    receiver_id = i;
+                    throughput = A[req_node_id][i];
+                }
+            }
+        }
+        else { //random mode
+            rand_number = (rand() % (num_unknow_node+num_know_node))+1;
+            int counter = 0;
+            for (std::size_t i = 0; i < A[req_node_id].size(); i++){
+                if (B[i]==0 && (i%2)) {//&&(A[req_node_id][i] == -1)
+                    counter++;
+                    if (counter == rand_number) {
+                        receiver_id = i;
+                        break;
+                    }
+                }
+            }
+        }
+        //send reply message
+        rpl.meta.customer_id = receiver_id;
+    }
+
+    if(rpl.meta.customer_id!=-1){
+        B[rpl.meta.customer_id] = 1;
+        rpl.meta.customer_id +=100;
+    }
+
+    PS_VLOG(2)<<"in local pull, node "<<rpl.meta.sender<<" send to node "<<rpl.meta.customer_id;
+    lks.unlock();
+    Send(rpl);
+}
+
+void Van::ProcessAskGlobalCommand(Message* msg){
     //update A and B
     std::unique_lock<std::mutex> lks(sched);
     int req_node_id = msg->meta.sender;
@@ -1607,33 +1456,20 @@ void Van::ProcessAskGlobalCommand(Message* msg)
         for(std::size_t i=0;i<B.size();i++)B[i]=0;
         iters++;
     }
-    //PS_VLOG(2)<<"iters of "<<req_node_id<<" is "<<msg->meta.version;
-    //PS_VLOG(2)<<"iters of sched is "<<iters;
     if(msg->meta.version<=iters){
         rpl.meta.customer_id = -1;
     }
-    else{//decision making for receiver
-        /*
-        for(std::size_t i=0;i<lifetime[req_node_id].size();i++){
-            if(lifetime[req_node_id][i]!=-1 and (iters-lifetime[req_node_id][i])>5){
-                //lifetime[req_node_id][i]=-1;
-                A[req_node_id][i]=-1;
-            }
-        }
-         */
+    else{
         int receiver_id=-1;
         int num_know_node=0, num_unknow_node=0;
-        for(std::size_t i=0;i<A[req_node_id].size();i++)//statistic number of known and unknown node about throughput
+        for(std::size_t i=0;i<A[req_node_id].size();i++) //statistic number of known and unknown node about throughput
         {
             if((i%2) && B[i]==0){
                 if(A[req_node_id][i]!=-1)num_know_node++;
                 else num_unknow_node++;
             }
         }
-        //数值矫正
         num_unknow_node-=4;
-        //if(Postoffice::Get()->num_servers() > Postoffice::Get()->num_workers())num_unknow_node-=(Postoffice::Get()->num_servers() - Postoffice::Get()->num_workers());
-        //choose dicision mode
         unsigned seed;
         seed=time(0);
         srand(seed);
@@ -1650,7 +1486,7 @@ void Van::ProcessAskGlobalCommand(Message* msg)
                 }
             }
         }
-        else {//random mode
+        else { //random mode
             rand_number = (rand() % (num_unknow_node+num_know_node))+5;
             int counter = 0;
             for (std::size_t i = 0; i < A[req_node_id].size(); i++){
@@ -1669,57 +1505,48 @@ void Van::ProcessAskGlobalCommand(Message* msg)
     }
     if(rpl.meta.customer_id!=-1){
         B[rpl.meta.customer_id] = 1;
-        //rpl.meta.customer_id +=100;
     }
 
-    //PS_VLOG(2)<<"in van.cc process ask global [iters]: "<<msg->meta.version<<", "<<req_node_id<<" => "<<rpl.meta.customer_id;
     PS_VLOG(2)<<"in global pull, node "<<rpl.meta.sender<<" send to node "<<rpl.meta.customer_id;
     lks.unlock();
     Send(rpl,true);
 }
-//added by vbc
-void Van::ProcessReplyCommand(Message* reply) {
 
-    std::unique_lock<std::mutex> ask_lk(ask_mu);
-    receiver_=reply->meta.customer_id;
-    ask_lk.unlock();
-    ask_cond.notify_one();
+void Van::ProcessReplyCommand(Message* reply) {
+  std::unique_lock<std::mutex> ask_lk(ask_mu);
+  receiver_=reply->meta.customer_id;
+  ask_lk.unlock();
+  ask_cond.notify_one();
 }
+
 void Van::ProcessReplyGlobalCommand(Message* reply) {
-    std::unique_lock<std::mutex> ask_global_lk(ask_global_mu);
-    receiver_global=reply->meta.customer_id;
-    ask_global_lk.unlock();
-    ask_global_cond.notify_one();
+  std::unique_lock<std::mutex> ask_global_lk(ask_global_mu);
+  receiver_global=reply->meta.customer_id;
+  ask_global_lk.unlock();
+  ask_global_cond.notify_one();
 }
-//added by vbc, return receiver id to autopull
-    int Van::GetReceiver(int throughput, int last_recv_id, int version)
-    {
-        //PS_VLOG(2)<<"Here is getreceiver!";
-        Ask(throughput, last_recv_id, version);
-        std::unique_lock<std::mutex> ask_lk(ask_mu);
-        while(receiver_==-2){
-           // PS_VLOG(2)<<"in van.cc getreceiver";
-            ask_cond.wait(ask_lk);
-        }
-        int temp=receiver_;
-        receiver_=-2 ;
-        ask_lk.unlock();
-        return temp;
-    }
-//added by vbc, return receiver id to autopull
-int Van::GetGlobalReceiver(int throughput, int last_recv_id, int version)
-{
-   // PS_VLOG(2)<<"Here is getglobalreceiver!";
-    AskGlobal(throughput, last_recv_id, version);
-    std::unique_lock<std::mutex> ask_global_lk(ask_global_mu);
-    while(receiver_global==-2){
-       // PS_VLOG(2)<<"in van.cc getglobalreceiver";
-        ask_global_cond.wait(ask_global_lk);
-    }
-    int temp=receiver_global;
-    receiver_global=-2 ;
-    ask_global_lk.unlock();
-    return temp;
+
+int Van::GetReceiver(int throughput, int last_recv_id, int version){
+  Ask(throughput, last_recv_id, version);
+  std::unique_lock<std::mutex> ask_lk(ask_mu);
+  while(receiver_==-2){
+    ask_cond.wait(ask_lk);
+  }
+  int temp=receiver_;
+  receiver_=-2 ;
+  ask_lk.unlock();
+  return temp;
+}
+
+int Van::GetGlobalReceiver(int throughput, int last_recv_id, int version){
+  AskGlobal(throughput, last_recv_id, version);
+  std::unique_lock<std::mutex> ask_global_lk(ask_global_mu);
+  while(receiver_global==-2){
+    ask_global_cond.wait(ask_global_lk);
+  }
+  int temp=receiver_global;
+  receiver_global=-2 ;
+  ask_global_lk.unlock();
+  return temp;
 }
 }  // namespace ps
-//
