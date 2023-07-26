@@ -33,7 +33,7 @@ from mxnet.gluon import Trainer
 def main():
     logging.basicConfig(level=logging.DEBUG)
     parser = argparse.ArgumentParser()
-    parser.add_argument("-lr", "--learning_rate", type=float, default=0.01)
+    parser.add_argument("-lr", "--learning-rate", type=float, default=0.01)
     parser.add_argument("-bs", "--batch-size", type=int, default=32)
     parser.add_argument("-ds", "--data-slice-idx", type=int, default=0)
     parser.add_argument("-ep", "--epoch", type=int, default=5)
