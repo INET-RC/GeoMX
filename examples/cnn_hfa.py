@@ -132,6 +132,7 @@ def main():
                         continue
                     kvstore_dist.push(idx, param.data() / num_local_workers, priority=-idx)
                     kvstore_dist.pull(idx, param.data(), priority=-idx)
+                mx.nd.waitall()
 
                 # run evaluation
                 test_acc = eval_acc(test_iter, net, ctx)
