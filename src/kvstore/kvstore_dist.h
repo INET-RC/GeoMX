@@ -87,66 +87,65 @@ class KVStoreDist : public KVStoreLocal {
       delete ps_worker_;
     }
   }
-void WorkersMerge( const ps::KVMeta& req_meta,const ps::KVPairs<char> &req_data, ps::KVWorker<char>* worker) {
-    if(req_meta.num_merge==-1){
-        int key=send_q.front();
-        req_data_buf[key].vals.CopyFrom(static_cast<const char*>(update_buf_[key].merged.data().dptr_), req_data_buf[key].lens[0]);
-        update_buf_[key].merged.WaitToRead();
-       // LOG(INFO)<<"ready to send2()";
-        ps_worker_->Send2(req_meta_buf[key].timestamp, req_meta_buf[key].push, req_meta_buf[key].cmd, req_data_buf[key], req_meta_buf[key].key , req_meta_buf[key].version, req_meta_buf[key].app_id, req_meta_buf[key].customer_id,req_meta_buf[key].num_merge);
-        std::unique_lock<std::mutex> send_lk(send_mu);
-        send_q.pop();
-        send_lk.unlock();
-    }else{
-        CHECK_EQ(req_data.keys.size(), (size_t)1);
-        if (req_meta.push) {
-            CHECK_EQ(req_data.lens.size(), (size_t)1);
-            CHECK_EQ(req_data.vals.size(), (size_t)req_data.lens[0]);
-        }
-        int key = req_data.keys[0];
-        DataHandleType type = DepairDataHandleType(req_meta.cmd);
 
-        std::unique_lock<std::mutex> send_lk(send_mu);
-       // LOG(INFO)<<"myrank is "<<ps::MyRank()<<" and node id is "<<(ps::MyRank()+1)*2-1+100;
-        if(req_meta.sender!=((ps::MyRank()+1)*2-1+100))worker->Response(req_meta);
-        else {
-            send_q.push(key);
-            req_meta_buf[key].cmd       = req_meta.cmd;
-            req_meta_buf[key].push      = req_meta.push;
-            req_meta_buf[key].sender    = req_meta.sender;
-            req_meta_buf[key].timestamp = req_meta.timestamp ;
-            req_meta_buf[key].customer_id = req_meta.customer_id ;
-            req_meta_buf[key].app_id = req_meta.app_id;
-            req_meta_buf[key].key = req_meta.key;
-            req_meta_buf[key].version = req_meta.version;
-            req_meta_buf[key].num_merge = req_meta.num_merge;
+  void WorkersMerge(const ps::KVMeta& req_meta, const ps::KVPairs<char> &req_data, ps::KVWorker<char>* worker) {
+      if(req_meta.num_merge == -1) {
+          int key=send_q.front();
+          req_data_buf[key].vals.CopyFrom(static_cast<const char*>(update_buf_[key].merged.data().dptr_), req_data_buf[key].lens[0]);
+          update_buf_[key].merged.WaitToRead();
+          ps_worker_->Send2(req_meta_buf[key].timestamp, req_meta_buf[key].push, req_meta_buf[key].cmd, req_data_buf[key], req_meta_buf[key].key , req_meta_buf[key].version, req_meta_buf[key].app_id, req_meta_buf[key].customer_id,req_meta_buf[key].num_merge);
+          std::unique_lock<std::mutex> send_lk(send_mu);
+          send_q.pop();
+          send_lk.unlock();
+      } else {
+          CHECK_EQ(req_data.keys.size(), (size_t)1);
+          if (req_meta.push) {
+              CHECK_EQ(req_data.lens.size(), (size_t)1);
+              CHECK_EQ(req_data.vals.size(), (size_t)req_data.lens[0]);
+          }
+          int key = req_data.keys[0];
+          DataHandleType type = DepairDataHandleType(req_meta.cmd);
+  
+          std::unique_lock<std::mutex> send_lk(send_mu);
+          if(req_meta.sender!=((ps::MyRank()+1)*2-1+100))worker->Response(req_meta);
+          else {
+              send_q.push(key);
+              req_meta_buf[key].cmd       = req_meta.cmd;
+              req_meta_buf[key].push      = req_meta.push;
+              req_meta_buf[key].sender    = req_meta.sender;
+              req_meta_buf[key].timestamp = req_meta.timestamp ;
+              req_meta_buf[key].customer_id = req_meta.customer_id ;
+              req_meta_buf[key].app_id = req_meta.app_id;
+              req_meta_buf[key].key = req_meta.key;
+              req_meta_buf[key].version = req_meta.version;
+              req_meta_buf[key].num_merge = req_meta.num_merge;
+              req_data_buf[key].keys = req_data.keys;
+              req_data_buf[key].lens = req_data.lens;
+          }
+          size_t ds[] = {(size_t) req_data.lens[0] / mshadow::mshadow_sizeof(type.dtype)};
+          TShape dshape(ds, ds + 1); //tensor.shape, tensor.shape+tensor.dim
+          TBlob recv_blob;
+          MSHADOW_REAL_TYPE_SWITCH(type.dtype, DType, {
+                  recv_blob = TBlob(reinterpret_cast<DType*>(req_data.vals.data()), dshape, cpu::kDevMask);
+          })
+          NDArray recved = NDArray(recv_blob, 0);
+          auto &updates = update_buf_[key];
+          if (updates.merged.is_none()) {
+              updates.merged = NDArray(dshape, Context(), false,type.dtype);
+          }
+          if(req_meta.sender==((ps::MyRank()+1)*2-1+100)){
+              updates.merged = recved;
+              updates.merged.WaitToRead();
+          }
+          else {
+              updates.merged += recved;
+              updates.merged.WaitToRead();
+              req_meta_buf[key].num_merge+=req_meta.num_merge;
+          }
+          send_lk.unlock();
+      }
+  }
 
-            req_data_buf[key].keys = req_data.keys;
-            req_data_buf[key].lens = req_data.lens;
-        }
-        size_t ds[] = {(size_t) req_data.lens[0] / mshadow::mshadow_sizeof(type.dtype)};
-        TShape dshape(ds, ds + 1); //tensor.shape, tensor.shape+tensor.dim
-        TBlob recv_blob;
-        MSHADOW_REAL_TYPE_SWITCH(type.dtype, DType, {
-                recv_blob = TBlob(reinterpret_cast<DType*>(req_data.vals.data()), dshape, cpu::kDevMask);
-        })
-        NDArray recved = NDArray(recv_blob, 0);
-        auto &updates = update_buf_[key];
-        if (updates.merged.is_none()) {
-            updates.merged = NDArray(dshape, Context(), false,type.dtype);
-        }
-        if(req_meta.sender==((ps::MyRank()+1)*2-1+100)){
-            updates.merged = recved;
-            updates.merged.WaitToRead();
-        }
-        else {
-            updates.merged += recved;
-            updates.merged.WaitToRead();
-            req_meta_buf[key].num_merge+=req_meta.num_merge;
-        }
-        send_lk.unlock();
-    }
-}
   void set_updater(const Updater& updater) override {
     CHECK(updater) << "invalid updater";
     if (IsServerNode()) {
@@ -207,7 +206,7 @@ void WorkersMerge( const ps::KVMeta& req_meta,const ps::KVPairs<char> &req_data,
     auto dead_nodes = ps::Postoffice::Get()->GetDeadNodes(timeout);
     const auto& watch_nodes = ps::Postoffice::Get()->GetNodeIDs(node_id);
     std::unordered_set<int> watch_set(watch_nodes.begin(), watch_nodes.end());
-    for (int r : dead_nodes) {
+    for (int r: dead_nodes) {
       if (watch_set.find(r) != watch_set.end()) number++;
     }
     return number;
@@ -239,10 +238,7 @@ void WorkersMerge( const ps::KVMeta& req_meta,const ps::KVPairs<char> &req_data,
  private:
   static std::atomic<int> customer_id_;
 
-  static int GetNewCustomerId() {
-    return customer_id_++;
-  }
-
+  static int GetNewCustomerId() { return customer_id_++;}
 
   /**
    * \brief struct for ps keys and lens
@@ -257,12 +253,14 @@ void WorkersMerge( const ps::KVMeta& req_meta,const ps::KVPairs<char> &req_data,
     PSKV push;
     PSKV pull;
   };
-struct UpdateBuf {
-    std::vector<ps::KVMeta> request;
-    NDArray merged;
-    // temp_array is used to cast received values as float32 for computation if required
-    NDArray temp_array;
-};
+
+  struct UpdateBuf {
+      std::vector<ps::KVMeta> request;
+      NDArray merged;
+      // temp_array is used to cast received values as float32 for computation if required
+      NDArray temp_array;
+  };
+
   /**
    * \brief cache all key partitions
    *
@@ -275,10 +273,11 @@ struct UpdateBuf {
    */
   std::unordered_map<int, PSKV> ps_kv_;
   std::unordered_map<int, ComprPSKV> compr_ps_kv_;
-    std::unordered_map<int, ps::KVPairs<char>> req_data_buf;
-    std::unordered_map<int, ps::KVMeta> req_meta_buf;
-    std::queue<int> send_q;
-    std::unordered_map<int, UpdateBuf> update_buf_;
+  std::unordered_map<int, ps::KVPairs<char>> req_data_buf;
+  std::unordered_map<int, ps::KVMeta> req_meta_buf;
+  std::queue<int> send_q;
+  std::unordered_map<int, UpdateBuf> update_buf_;
+
   /**
    * \brief serialize access to ps_kv_ or push_ps_kv_/pull_ps_kv_ while encoding keys
    */
@@ -286,15 +285,12 @@ struct UpdateBuf {
   std::mutex send_mu;
   void InitImpl(const std::vector<int>& keys,
                 const std::vector<NDArray>& values) override {
-    // LOG(INFO) << "InitImpl";
     CheckUnique(keys);
     for (size_t i = 0; i < keys.size(); ++i) {
-      // LOG(INFO) << "values[i].dtype() " << values[i].dtype();
       comm_->Init(keys[i], values[i].storage_type(), values[i].shape(), values[i].dtype());
     }
 
     if (get_rank() == 0) {
-      // LOG(INFO) << "get_rank() == 0";
       Push_(keys, values, 0, false);
       // wait until the push is finished
       for (const int key : keys) {
@@ -317,16 +313,13 @@ struct UpdateBuf {
   void PullImpl(const std::vector<int>& keys,
                 const std::vector<NDArray*>& values,
                 int priority, bool ignore_sparse) override {
-    //for(auto it:keys)LOG(INFO)<<"in kd, pullImpl , key is "<<it;
     CHECK(ignore_sparse) << "dist kvstore pull doesn't support ignore_sparse=False";
     std::vector<int> uniq_keys;
     std::vector<std::vector<NDArray*> > grouped_vals;
     GroupKVPairsPull(keys, values, &uniq_keys, &grouped_vals, true);
-   // LOG(INFO)<<"enable_p3 is "<<ps_worker_->enable_p3;
     if(!ps_worker_->enable_p3){
       for (size_t i = 0; i < uniq_keys.size(); ++i) {
         int key = uniq_keys[i];
-        //LOG(INFO)<<"key is "<<key;
         // use the same array for merging to guarantee that pull always happens
         // after the previous push on this key
         auto& recv_buf = comm_buf_[key];
@@ -367,12 +360,10 @@ struct UpdateBuf {
             }
             const int cmd = GetCommandType(mode, dtype);
 
-            //add by cqq
             if(gradient_compression_->get_type() == CompressionType::kNone && ps_worker_->enable_intra_ts){
               CHECK_NOTNULL(ps_worker_)->AutoPull(
                       key, pskv.keys, vals, &pskv.lens, cmd, [vals, cb](){ delete vals; cb(); });
-            }else{
-              //LOG(INFO)<<"come into zpull";
+            } else {
               CHECK_NOTNULL(ps_worker_)->ZPull(
                       pskv.keys, vals, &pskv.lens, cmd, [vals, cb](){ delete vals; cb(); });
             }
@@ -389,7 +380,7 @@ struct UpdateBuf {
 
         comm_->Broadcast(key, recv_buf, grouped_vals[i], priority);
       }
-    }else{
+    } else {
       for (size_t i = 0; i < uniq_keys.size(); ++i) {
         int key = uniq_keys[i];
         // use the same array for merging to guarantee that pull always happens
@@ -399,18 +390,16 @@ struct UpdateBuf {
         CHECK_EQ(storage_type, kDefaultStorage)
                 << "Expected stype of value to be kDefaultStorage";
         if (recv_buf.is_none()) {
-          //LOG(INFO)<<"recv is none";
           // it may happen for the first time a no-rank-0 worker pull the weight.
           recv_buf = NDArray(grouped_vals[i][0]->shape(), pinned_ctx_,
                              true, grouped_vals[i][0]->dtype());
-          //}
+
           auto pull_from_servers = [this, key, recv_buf, priority](
                   RunContext rctx, Engine::CallbackOnComplete cb) {
               // convert to ps keys
               size_t size = recv_buf.shape().Size();
               const int dtype = recv_buf.dtype();
               const int num_bytes = mshadow::mshadow_sizeof(dtype);
-              //LOG(INFO)<<"in pull, before encode, key is "<<key<<" and priority is "<<priority;
               PSKV &pskv = (gradient_compression_->get_type() == CompressionType::kTwoBit) ?
                            EncodeCompressedKey(key, size, false, num_bytes) :
                            P3_EncodeDefaultKey(key, size, num_bytes);
@@ -437,7 +426,6 @@ struct UpdateBuf {
               int len=0;
               auto *counter = new std::atomic<int>(pskv.keys.size());
               for (int i=0; i<pskv.keys.size(); i++) {
-                //LOG(INFO)<<"key is "<<pskv.keys[i]<<" len is "<<pskv.lens[i];
                 auto vs = new ps::SArray<char>(std::move(vals->segment(len, len+pskv.lens[i])));
                 auto ls = new ps::SArray<int>(std::move(pskv.lens.segment(i, i+1)));
                 CHECK_NOTNULL(ps_worker_)->P3_ZPull(
@@ -463,8 +451,7 @@ struct UpdateBuf {
                   FnProperty::kNormal,
                   priority,
                   "KVStoreDistDefaultStoragePull");
-        }else{
-          //LOG(INFO)<<"recv is not none";
+        } else {
           CHECK_NOTNULL(Engine::Get())->PushAsync(
                   [] (RunContext rctx, Engine::CallbackOnComplete cb) { cb(); },
                   pinned_ctx_,
@@ -524,21 +511,18 @@ struct UpdateBuf {
              int priority,
              bool do_merge) {
     // first aggregate the values over keys
-    // LOG(INFO) << "Push_";
     std::vector<int> uniq_keys;
     std::vector<std::vector<NDArray> > grouped_vals;
     GroupKVPairsPush(keys, values, &uniq_keys, &grouped_vals, false);
     for (size_t i = 0; i < uniq_keys.size(); ++i) {
       // merge over devices
-      // LOG(INFO) << "merge over devices";
       int key = uniq_keys[i];
       const auto& vals = grouped_vals[i];
-      NDArray merged = do_merge ? comm_->Reduce(key, vals, priority) : vals[0];
+      NDArray merged = do_merge? comm_->Reduce(key, vals, priority) : vals[0];
 
       const auto storage_type = merged.storage_type();
       auto &comm_buf = comm_buf_[key];
       if (merged.ctx().dev_mask() == cpu::kDevMask) {
-        // LOG(INFO) << "merged.ctx().dev_mask() == cpu::kDevMask";
         // Start of a push doesn't guarantee that the previous pushes are completed.
         // This shouldn't affect training of networks though because training involves
         // a sequence of push, pull, then push. This imposes ordering that the
@@ -546,31 +530,21 @@ struct UpdateBuf {
         comm_buf = merged;  // avoid memory copy
       } else {
         if (comm_buf.is_none()) {
-          // LOG(INFO) << "comm_buf.is_none()";
           if (storage_type == kDefaultStorage) {
-            // LOG(INFO) << "storage_type == kDefaultStorage";
-            // LOG(INFO) << "merged.dtype()" << merged.dtype();
             comm_buf = NDArray(merged.shape(), pinned_ctx_, true, merged.dtype());
           } else {
-            // LOG(INFO) << "storage_type != kDefaultStorage";
-            // LOG(INFO) << "merged.dtype()" << merged.dtype();
             comm_buf = NDArray(storage_type, merged.shape(), pinned_ctx_, true, merged.dtype());
           }
         }
-        // LOG(INFO) << "comm_buf isn't none()";
         CopyFromTo(merged, &comm_buf);
       }
-      // LOG(INFO) << "merged.dtype()" << merged.dtype();
       const int dtype = merged.dtype();
       const int num_bytes = mshadow::mshadow_sizeof(dtype);
       // push to servers
       if (storage_type == kDefaultStorage) {
-        // LOG(INFO) << "storage_type == kDefaultStorage";
-          if (gradient_compression_->get_type() == CompressionType::kNone || gradient_compression_->get_type() == CompressionType::kBiSparseCompression)
-        {
+          if (gradient_compression_->get_type() == CompressionType::kNone || gradient_compression_->get_type() == CompressionType::kBiSparseCompression) {
           PSKV& pskv = ps_worker_->enable_p3?P3_EncodeDefaultKey(key, comm_buf.shape().Size(), num_bytes):
                   EncodeDefaultKey(key, comm_buf.shape().Size(), num_bytes);
-          // LOG(INFO) << "PushDefault";
           PushDefault(key, comm_buf, pskv, priority);
         } else {
           CHECK_EQ(dtype, mshadow::kFloat32) << "Gradient compression is only supported for "
@@ -636,29 +610,18 @@ struct UpdateBuf {
   void PushDefault(int key, const NDArray &send_buf, const PSKV& pskv, int priority) {
     if(!ps_worker_->enable_p3){
       auto push_to_servers =
-              [this, key, pskv, send_buf](RunContext rctx, Engine::CallbackOnComplete cb) {
-                  // LOG(INFO) << "send_buf.dtype() " << send_buf.dtype();
-                  const int dtype = send_buf.dtype();
-                  // convert to ps keys
-                  // LOG(INFO) << "send_buf.shape().Size() " << send_buf.shape().Size();
-                  // LOG(INFO) << "mshadow::mshadow_sizeof(dtype) " << mshadow::mshadow_sizeof(dtype);
-                  const size_t size = send_buf.shape().Size() * mshadow::mshadow_sizeof(dtype);
-                  char* data = static_cast<char *>(send_buf.data().dptr_);
-                  // do push. false means no delete
-                  ps::SArray<char> vals(data, size, false);
-                  int cmd = GetCommandType(RequestType::kDefaultPushPull, dtype);
-                  // LOG(INFO) << "cmd = GetCommandType " << cmd;
-                  //if(ps_worker_->enable_intra_ts){
-                  CHECK_NOTNULL(ps_worker_)->TS_ZPush(
-                          pskv.keys, vals, pskv.lens,
-                          cmd, [cb]() { cb(); }, key, 0);
-                  /*}else{
-                      CHECK_NOTNULL(ps_worker_)->ZPush(
-                              pskv.keys, vals, pskv.lens,
-                              cmd, [cb]() { cb(); });
-                  }*/
-
-              };
+         [this, key, pskv, send_buf](RunContext rctx, Engine::CallbackOnComplete cb) {
+             const int dtype = send_buf.dtype();
+             // convert to ps keys
+             const size_t size = send_buf.shape().Size() * mshadow::mshadow_sizeof(dtype);
+             char* data = static_cast<char *>(send_buf.data().dptr_);
+             // do push. false means no delete
+             ps::SArray<char> vals(data, size, false);
+             int cmd = GetCommandType(RequestType::kDefaultPushPull, dtype);
+             CHECK_NOTNULL(ps_worker_)->TS_ZPush(
+                     pskv.keys, vals, pskv.lens,
+                     cmd, [cb]() { cb(); }, key, 0);
+          };
       Engine::Get()->PushAsync(
               push_to_servers,
               pinned_ctx_,
@@ -667,48 +630,44 @@ struct UpdateBuf {
               FnProperty::kNormal,
               priority,
               "KVStoreDistDefaultPush");
-    }else{
+    } else {
       auto push_to_servers =
-              [this, key, pskv, send_buf, priority](RunContext rctx, Engine::CallbackOnComplete cb) {
-                  // LOG(INFO) << "send_buf.dtype() " << send_buf.dtype();
-                  const int dtype = send_buf.dtype();
-                  // convert to ps keys
-                  // LOG(INFO) << "send_buf.shape().Size() " << send_buf.shape().Size();
-                  // LOG(INFO) << "mshadow::mshadow_sizeof(dtype) " << mshadow::mshadow_sizeof(dtype);
-                  const size_t size = send_buf.shape().Size() * mshadow::mshadow_sizeof(dtype);
-                  char* data = static_cast<char *>(send_buf.data().dptr_);
-                  // do push. false means no delete
-                  ps::SArray<char> vals(data, size, false);
-                  int cmd = GetCommandType(RequestType::kDefaultPushPull, dtype);
-                  // LOG(INFO) << "cmd = GetCommandType " << cmd;
-                  auto *counter = new std::atomic<int>(pskv.keys.size());
-                  int len=0;
-                  for (int i=0; i<pskv.keys.size(); i++) {
-                    LOG(INFO)<<"key is "<<key<<"key son is "<<pskv.keys[i]<<" len is "<<pskv.lens[i]<<" priority is "<<priority;
-                    CHECK_NOTNULL(ps_worker_)->P3_ZPush(
-                            std::move(pskv.keys.segment(i, i+1)),
-                            std::move(vals.segment(len, len+pskv.lens[i])),
-                            std::move(pskv.lens.segment(i, i+1)),
-                            cmd,
-                            [cb, counter]() {
-                                //engine::SetOprEnd(opr_stat);
-                                (*counter)--;
-                                if (counter->load() == 0) {
-                                  delete counter;
-                                  cb();
-                                }
-                            }, priority);
-                    len+=pskv.lens[i];
-                  }
-              };
+          [this, key, pskv, send_buf, priority](RunContext rctx, Engine::CallbackOnComplete cb) {
+              const int dtype = send_buf.dtype();
+              // convert to ps keys
+              const size_t size = send_buf.shape().Size() * mshadow::mshadow_sizeof(dtype);
+              char* data = static_cast<char *>(send_buf.data().dptr_);
+              // do push. false means no delete
+              ps::SArray<char> vals(data, size, false);
+              int cmd = GetCommandType(RequestType::kDefaultPushPull, dtype);
+              auto *counter = new std::atomic<int>(pskv.keys.size());
+              int len=0;
+              for (int i=0; i<pskv.keys.size(); i++) {
+                CHECK_NOTNULL(ps_worker_)->P3_ZPush(
+                    std::move(pskv.keys.segment(i, i+1)),
+                    std::move(vals.segment(len, len+pskv.lens[i])),
+                    std::move(pskv.lens.segment(i, i+1)),
+                    cmd,
+                    [cb, counter]() {
+                        //engine::SetOprEnd(opr_stat);
+                        (*counter)--;
+                        if (counter->load() == 0) {
+                          delete counter;
+                          cb();
+                        }
+                    }, priority);
+                len+=pskv.lens[i];
+              }
+          };
       Engine::Get()->PushAsync(
-              push_to_servers,
-              pinned_ctx_,
-              {send_buf.var()},
-              {},
-              FnProperty::kNormal,
-              priority,
-              "KVStoreDistDefaultPush");
+          push_to_servers,
+          pinned_ctx_,
+          {send_buf.var()},
+          {},
+          FnProperty::kNormal,
+          priority,
+          "KVStoreDistDefaultPush"
+       );
     }
   }
 
@@ -850,65 +809,46 @@ struct UpdateBuf {
     }
     return pskv;
   }
-inline PSKV& P3_EncodeDefaultKey(const int key, const size_t num_arr_elems,
-                              const int num_bytes) {
-  mu_.lock();
-  PSKV& pskv = ps_kv_[key];
-  mu_.unlock();
-  size_t pskv_size = num_arr_elems * num_bytes;
-  if (!pskv.keys.empty()) {
-    CHECK_EQ(static_cast<size_t>(pskv.size), pskv_size)
-            << "The value size cannot be changed " << pskv_size << ". Key is " << key;
-  } else {
-    auto krs = ps::Postoffice::Get()->GetServerKeyRanges();
-    const int num_servers = krs.size();
-    CHECK_GT(num_servers, 0);
-    // a simple heuristic for load balance
-    //LOG(INFO)<<"key is "<<key<<" num arr elems is "<<num_arr_elems;
-    /*
-    if (num_arr_elems < bigarray_bound_) {
-        LOG(INFO)<<"in less than big array";
-      // send it to a single random picked server
-      int server = (key * ((ps::Key)9973)) % num_servers;
-      ps::Key ps_key = krs[server].begin() + (ps::Key)key;
-      CHECK_LT(ps_key, krs[server].end());
-      pskv.keys.push_back(ps_key);
-      const int total_bytes = num_arr_elems * num_bytes;
-      pskv.lens.push_back(total_bytes);
-      pskv.size = total_bytes;
+
+  inline PSKV& P3_EncodeDefaultKey(const int key, const size_t num_arr_elems,
+                                   const int num_bytes) {
+    mu_.lock();
+    PSKV& pskv = ps_kv_[key];
+    mu_.unlock();
+    size_t pskv_size = num_arr_elems * num_bytes;
+    if (!pskv.keys.empty()) {
+      CHECK_EQ(static_cast<size_t>(pskv.size), pskv_size)
+              << "The value size cannot be changed " << pskv_size << ". Key is " << key;
     } else {
-     */
-    //LOG(INFO)<<"in bigger than big array";
-    // parition it to all servers
-    if(key==0) key_temp=0;
-    pskv.size = 0;
-    int s = num_arr_elems;
-    int i=0;
-    while(true) {
-      //ps::Key ps_key = krs[i%num_servers].begin() + (ps::Key)(key*50 + (i/num_servers));
-      ps::Key ps_key=krs[i%num_servers].begin() + (ps::Key)(key_temp);
-      key_temp++;
-      CHECK_LT(ps_key, krs[i%num_servers].end());
-      pskv.keys.push_back(ps_key);
-      //LOG(INFO)<<"from key "<<key<<" ,key son is "<<ps_key;
-      if (s > bigarray_bound_) {
-        pskv.lens.push_back(bigarray_bound_*num_bytes);
-        pskv.size += (bigarray_bound_*num_bytes);
-        //LOG(INFO)<<"len is "<<bigarray_bound_*num_bytes;
-      } else {
-        pskv.lens.push_back(s*num_bytes);
-        pskv.size += (s*num_bytes);
-        //LOG(INFO)<<"len is "<<s*num_bytes;
-        break;
+      auto krs = ps::Postoffice::Get()->GetServerKeyRanges();
+      const int num_servers = krs.size();
+      CHECK_GT(num_servers, 0);
+      // parition to all servers
+      if(key==0) key_temp=0;
+      pskv.size = 0;
+      int s = num_arr_elems;
+      int i=0;
+      while(true) {
+        ps::Key ps_key=krs[i%num_servers].begin() + (ps::Key)(key_temp);
+        key_temp++;
+        CHECK_LT(ps_key, krs[i%num_servers].end());
+        pskv.keys.push_back(ps_key);
+        if (s > bigarray_bound_) {
+          pskv.lens.push_back(bigarray_bound_*num_bytes);
+          pskv.size += (bigarray_bound_*num_bytes);
+        } else {
+          pskv.lens.push_back(s*num_bytes);
+          pskv.size += (s*num_bytes);
+          break;
+        }
+        s -= bigarray_bound_;
+        i++;
       }
-      s -= bigarray_bound_;
-      i++;
+      CHECK_EQ(static_cast<size_t>(pskv.size), pskv_size);
     }
-    //}
-    CHECK_EQ(static_cast<size_t>(pskv.size), pskv_size);
+    return pskv;
   }
-  return pskv;
-}
+
   /**
    * \brief Convert to PSKV for pushes and pulls when gradient compression is used.
    * Divides original array into equal parts for each server.
@@ -1017,7 +957,6 @@ inline PSKV& P3_EncodeDefaultKey(const int key, const size_t num_arr_elems,
     mu_.unlock();
     pskv.keys.clear();
     pskv.lens.clear();
-    // TODO(haibin) cache this information
     auto krs = ps::Postoffice::Get()->GetServerKeyRanges();
     const int num_servers = krs.size();
     CHECK_GT(num_servers, 0);
@@ -1093,10 +1032,10 @@ inline PSKV& P3_EncodeDefaultKey(const int key, const size_t num_arr_elems,
    */
   std::unordered_map<int, NDArray> compr_buf_;
 
-    /**
-     * \brief add by cqq, data version map
-     */
-    std::unordered_map<int, int> data_version_;
+  /**
+   * \brief data version map
+   */
+  std::unordered_map<int, int> data_version_;
 
   /**
    * \brief residual buffer to accumulate quantization error
@@ -1109,6 +1048,5 @@ inline PSKV& P3_EncodeDefaultKey(const int key, const size_t num_arr_elems,
 
 }  // namespace kvstore
 }  // namespace mxnet
-
 
 #endif  // MXNET_KVSTORE_KVSTORE_DIST_H_
