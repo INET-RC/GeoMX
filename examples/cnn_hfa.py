@@ -19,7 +19,7 @@
 # under the License.
 
 """
-CNN_HFA.py contains code that trains a simple network with HierFAVG-styled synchronous algorithm.
+cnn_hfa.py contains code that trains a simple network with HierFAVG-styled synchronous algorithm.
 """
 
 import time
