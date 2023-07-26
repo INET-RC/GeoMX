@@ -39,6 +39,7 @@ def main():
     parser.add_argument("-ds", "--data-slice-idx", type=int, default=0)
     parser.add_argument("-ep", "--epoch", type=int, default=5)
     parser.add_argument("-sc", "--split-by-class", type=int, default=0)
+    parser.add_argument("-c", "--cpu", type=int, default=0)
     args = parser.parse_args()
 
     learning_rate = args.learning_rate
@@ -46,7 +47,7 @@ def main():
     data_slice_idx = args.data_slice_idx
     epochs = args.epoch
     split_by_class = args.split_by_class
-    ctx = try_gpu()
+    ctx = mx.cpu() if args.cpu else try_gpu()
     use_hfa = int(os.getenv('MXNET_KVSTORE_USE_HFA'))
     period_k1 = int(os.getenv('MXNET_KVSTORE_HFA_K1'))
     period_k2 = int(os.getenv('MXNET_KVSTORE_HFA_K2'))
