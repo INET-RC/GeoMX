@@ -82,6 +82,7 @@ def main():
             kvstore_dist.set_optimizer(mx.optimizer.DCASGD(learning_rate=learning_rate))
     elif run_local:
         kvstore_dist = mx.kv.create("local")
+        is_master_worker = False
         kvstore_dist.set_optimizer(mx.optimizer.Adam(learning_rate=learning_rate))
     else:
         kvstore_dist = mx.kv.create("dist_sync")
