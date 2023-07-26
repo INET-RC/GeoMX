@@ -135,10 +135,7 @@ def main():
                 if param.grad_req == "null":
                     continue
                 kvstore_dist.push(idx, param.grad() / num_samples, priority=-idx)
-                temp = mx.nd.zeros(param.shape, ctx=ctx).astype('float32', copy=False)
                 kvstore_dist.pull(idx, param.data(), priority=-idx)
-                # temp.wait_to_read()
-                # param.set_data(temp)
             mx.nd.waitall()
             
             global_iters += 1
