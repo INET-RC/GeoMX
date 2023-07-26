@@ -12,7 +12,7 @@ import mxnet as mx
 kvstore_dist = mx.kv.create("dist_sync")
 ```
 
-### Mix-synchronous Algorithm
+### Mixed-synchronous Algorithm
 
 Likewise, create a `dist_async` KVStore.
 
