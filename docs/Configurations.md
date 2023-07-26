@@ -22,7 +22,7 @@ import mxnet as mx
 kvstore_dist = mx.kv.create("dist_async")
 ```
 
-### HierFAVG-styled Synchronous Algorithm
+### HierFAVG Synchronous Algorithm
 
 HierFAVG-styled Synchronous Algorithm is generally identical with Fully-synchronous Algorithm while the former adds a few loops before an local iteration or a global iteration.
 
