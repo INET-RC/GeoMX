@@ -147,7 +147,7 @@ def main():
             mx.nd.waitall()
             eval_time += (time.time() - _)
             now = time.time() - begin_time - eval_time
-            print("[Time %.3f][Epoch %d][Iteration %d] Test Acc %.4f IterTime %.3f\n"
+            print("[Time %.3f][Epoch %d][Iteration %d] Test Acc %.4f IterTime %.3f"
                   % (now,
                      epoch,
                      global_iters,
