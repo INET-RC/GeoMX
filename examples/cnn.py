@@ -19,7 +19,7 @@
 # under the License.
 
 """
-CNN.py contains code that trains a simple network with fully-synchronous algorithm,
+cnn.py contains code that trains a simple network with fully-synchronous algorithm,
 mix-synchronous algorithm or DC-ASGD asynchronous algorithm
 """
 
