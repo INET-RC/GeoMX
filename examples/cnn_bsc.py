@@ -19,7 +19,7 @@
 # under the License.
 
 """
-CNN_BSC.py contains code that trains a simple network with BSC.
+cnn_bsc.py contains code that trains a simple network with BSC.
 """
 
 import time
