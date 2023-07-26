@@ -41,6 +41,7 @@ def main():
     parser.add_argument('-dc', '--dcasgd', action="store_true")
     parser.add_argument("-sc", "--split-by-class", action="store_true")
     parser.add_argument("-c", "--cpu", action="store_true")
+    parser.add_argument("--local", action="store_true")
     args = parser.parse_args()
 
     learning_rate = args.learning_rate
@@ -51,6 +52,7 @@ def main():
     is_dcasgd = args.dcasgd
     split_by_class = args.split_by_class
     ctx = mx.cpu() if args.cpu else try_gpu()
+    run_local = args.local
     data_type = "mnist"
     data_dir = "/root/data"
     shape = (batch_size, 1, 28, 28)
@@ -78,6 +80,9 @@ def main():
         is_master_worker = kvstore_dist.is_master_worker
         if is_master_worker:
             kvstore_dist.set_optimizer(mx.optimizer.DCASGD(learning_rate=learning_rate))
+    elif run_local:
+        kvstore_dist = mx.kv.create("local")
+        kvstore_dist.set_optimizer(mx.optimizer.Adam(learning_rate=learning_rate))
     else:
         kvstore_dist = mx.kv.create("dist_sync")
         is_master_worker = kvstore_dist.is_master_worker
