@@ -38,8 +38,8 @@ def main():
     parser.add_argument("-bs", "--batch-size", type=int, default=32)
     parser.add_argument("-ds", "--data-slice-idx", type=int, default=0)
     parser.add_argument("-ep", "--epoch", type=int, default=5)
-    parser.add_argument("-sc", "--split-by-class", type=int, default=0)
-    parser.add_argument("-c", "--cpu", type=int, default=0)
+    parser.add_argument("-sc", "--split-by-class", action="store_true")
+    parser.add_argument("-c", "--cpu", action="store_true")
     args = parser.parse_args()
 
     learning_rate = args.learning_rate
