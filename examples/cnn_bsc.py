@@ -125,13 +125,15 @@ def main():
             for idx, param in enumerate(params):
                 if param.grad_req == "null":
                     continue
-                kvstore_dist.push(idx, param.grad(), priority=-idx)
+                kvstore_dist.push(idx, param.grad() / num_samples, priority=-idx)
                 kvstore_dist.pull(idx, param.grad(), priority=-idx)
-            trainer.step(num_samples)
+            mx.nd.waitall()
+            
+            trainer.step(num_all_workers)
+            
             # put gradients back to zero
             for param in params:
                 param.zero_grad()
-            mx.nd.waitall()
 
             # run evaluation
             test_acc = eval_acc(test_iter, net, ctx)
