@@ -41,7 +41,7 @@ DMLC_NUM_WORKER=1 \
 DMLC_NUM_ALL_WORKER=4 \
 PS_VERBOSE=1 \
 DMLC_INTERFACE=eth0 \
-nohup python ${EXAMPLE_PYTHON_SCRIPT} > /dev/null &
+nohup python ${EXAMPLE_PYTHON_SCRIPT} --cpu > /dev/null &
 
 # run scheduler in deamon process
 DMLC_ROLE=scheduler \
@@ -88,7 +88,7 @@ DMLC_NUM_WORKER=2 \
 DMLC_NUM_ALL_WORKER=4 \
 PS_VERBOSE=1 \
 DMLC_INTERFACE=eth0 \
-nohup python ${EXAMPLE_PYTHON_SCRIPT} > /dev/null &
+nohup python ${EXAMPLE_PYTHON_SCRIPT} --cpu > /dev/null &
 
 DMLC_ROLE=worker \
 DMLC_PS_ROOT_URI=127.0.0.1 \
@@ -98,7 +98,7 @@ DMLC_NUM_WORKER=2 \
 DMLC_NUM_ALL_WORKER=4 \
 PS_VERBOSE=1 \
 DMLC_INTERFACE=eth0 \
-nohup python ${EXAMPLE_PYTHON_SCRIPT} > /dev/null &
+nohup python ${EXAMPLE_PYTHON_SCRIPT} --cpu > /dev/null &
 
 # run the following nodes in party B:
 # scheduler, server, and two workers
@@ -135,7 +135,7 @@ DMLC_NUM_WORKER=2 \
 DMLC_NUM_ALL_WORKER=4 \
 PS_VERBOSE=1 \
 DMLC_INTERFACE=eth0 \
-nohup python ${EXAMPLE_PYTHON_SCRIPT} > /dev/null &
+nohup python ${EXAMPLE_PYTHON_SCRIPT} --cpu > /dev/null &
 
 DMLC_ROLE=worker \
 DMLC_PS_ROOT_URI=127.0.0.1 \
@@ -145,4 +145,4 @@ DMLC_NUM_WORKER=2 \
 DMLC_NUM_ALL_WORKER=4 \
 PS_VERBOSE=1 \
 DMLC_INTERFACE=eth0 \
-python ${EXAMPLE_PYTHON_SCRIPT}
+python -u ${EXAMPLE_PYTHON_SCRIPT} --cpu
