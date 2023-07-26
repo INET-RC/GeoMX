@@ -136,24 +136,20 @@ def main():
                     continue
                 kvstore_dist.push(idx, param.grad() / num_samples, priority=-idx)
                 temp = mx.nd.zeros(param.shape, ctx=ctx).astype('float32', copy=False)
-                kvstore_dist.pull(idx, temp, priority=-idx)
-                temp.wait_to_read()
-                param.set_data(temp)
+                kvstore_dist.pull(idx, param.data(), priority=-idx)
+                # temp.wait_to_read()
+                # param.set_data(temp)
             mx.nd.waitall()
 
             # run evaluation
-            _ = time.time()
             test_acc = eval_acc(test_iter, net, ctx)
-            mx.nd.waitall()
-            eval_time += (time.time() - _)
-            now = time.time() - begin_time - eval_time
             print("[Time %.3f][Epoch %d][Iteration %d] Test Acc %.4f IterTime %.3f"
-                  % (now,
+                  % (time.time() - begin_time,
                      epoch,
                      global_iters,
                      test_acc,
                      now / global_iters))
-        global_iters += 1
+            global_iters += 1
 
 
 if __name__ == "__main__":
