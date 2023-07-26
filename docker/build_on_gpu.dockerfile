@@ -54,5 +54,5 @@ RUN conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pk
 RUN pip install pandas opencv-python -i https://mirrors.aliyun.com/pypi/simple
 
 RUN git clone https://ghproxy.com/https://github.com/INET-RC/GeoMX.git
-RUN cd GeoMX && make -j$(nproc) && \
+RUN cd GeoMX && cp make/config.mk ./config.mk && make -j$(nproc) && \
     cd python && pip install -e .
