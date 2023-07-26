@@ -37,7 +37,7 @@ def main():
     parser.add_argument("-bs", "--batch-size", type=int, default=32)
     parser.add_argument("-ds", "--data-slice-idx", type=int, default=0)
     parser.add_argument("-ep", "--epoch", type=int, default=5)
-    parser.add_argument('-ms', '--mix-sync', action="store_true")
+    parser.add_argument('-ms', '--mixed-sync', action="store_true")
     parser.add_argument('-dc', '--dcasgd', action="store_true")
     parser.add_argument("-sc", "--split-by-class", action="store_true")
     parser.add_argument("-c", "--cpu", action="store_true")
@@ -47,7 +47,7 @@ def main():
     batch_size = args.batch_size
     data_slice_idx = args.data_slice_idx
     epochs = args.epoch
-    is_mix_sync = args.mix_sync
+    is_mixed_sync = args.mixed_sync
     is_dcasgd = args.dcasgd
     split_by_class = args.split_by_class
     ctx = mx.cpu() if args.cpu else try_gpu()
@@ -68,7 +68,7 @@ def main():
     net.initialize(force_reinit=True, ctx=ctx, init=mx.init.Xavier())
     net(mx.nd.random.uniform(shape=shape, ctx=ctx))
 
-    if is_mix_sync:
+    if is_mixed_sync:
         kvstore_dist = mx.kv.create("dist_async")
         is_master_worker = kvstore_dist.is_master_worker
         if is_master_worker:
