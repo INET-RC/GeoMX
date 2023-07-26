@@ -25,3 +25,11 @@
 # build files
 *.a
 *.o
+build/
+*.egg-info
+
+gen_*
+deps/
+lib/
+bin/
+config.mk
