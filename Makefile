@@ -515,7 +515,6 @@ $(BIN) :
 	$(CXX) $(CFLAGS) -std=c++11  -o $@ $(filter %.cpp %.o %.c %.a %.cc, $^) $(LDFLAGS)
 
 include mkldnn.mk
-include tests/cpp/unittest.mk
 
 extra-packages: $(EXTRA_PACKAGES)
 
@@ -524,7 +523,7 @@ test: $(TEST)
 lint: cpplint rcpplint jnilint pylint
 
 cpplint:
-	3rdparty/dmlc-core/scripts/lint.py mxnet cpp include src plugin cpp-package tests \
+	3rdparty/dmlc-core/scripts/lint.py mxnet cpp include src plugin cpp-package \
 	--exclude_path src/operator/contrib/ctc_include
 
 pylint:
