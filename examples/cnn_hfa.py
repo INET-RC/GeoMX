@@ -82,6 +82,7 @@ def main():
 
     num_all_workers = kvstore_dist.num_all_workers
     num_local_workers = kvstore_dist.num_workers
+    my_rank = kvstore_dist.rank
     # waiting for configurations to complete
     time.sleep(1)
 
@@ -113,6 +114,7 @@ def main():
     global_iters = 1
     local_iters = 1
 
+    print(f"Start training on {num_all_workers} workers, my rank is {my_rank}.")
     for epoch in range(epochs):
         for _, batch in enumerate(train_iter):
             Xs, ys, num_samples = get_batch(batch, ctx)
@@ -128,26 +130,15 @@ def main():
                     if param.grad_req == "null":
                         continue
                     kvstore_dist.push(idx, param.data() / num_local_workers, priority=-idx)
-                    temp = mx.nd.zeros(param.shape, ctx=ctx)
-                    kvstore_dist.pull(idx, temp, priority=-idx)
-                    temp.wait_to_read()
-                    param.set_data(temp)
+                    kvstore_dist.pull(idx, param.data(), priority=-idx)
             mx.nd.waitall()
 
-            if data_slice_idx == 0 and local_iters % (period_k1 * period_k2) == 0:
-                _ = time.time()
-                test_acc = eval_acc(test_iter, net, ctx)
-                mx.nd.waitall()
-                eval_time += (time.time() - _)
-                now = time.time() - begin_time - eval_time
-                print("[Time %.3f][Epoch %d][Iteration %d] Test Acc %.4f IterTime %.3f\n"
-                      % (now,
-                         epoch,
-                         local_iters,
-                         test_acc,
-                         now / local_iters))
-                global_iters += 1
-            local_iters += 1
+            global_iters += 1
+
+            # run evaluation
+            test_acc = eval_acc(test_iter, net, ctx)
+            print("[Time %.3f][Epoch %d][Iteration %d] Test Acc %.4f"
+                  % (time.time() - begin_time, epoch, global_iters, test_acc))
 
 
 if __name__ == "__main__":
