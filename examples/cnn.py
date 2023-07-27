@@ -97,9 +97,6 @@ def main():
             continue
         kvstore_dist.pull(idx, param.data(), priority=-idx)
     mx.nd.waitall()
-    
-    if is_master_worker:
-        return
 
     train_iter, test_iter, _, _ = load_data(
         batch_size,
@@ -110,6 +107,9 @@ def main():
         resize=shape[-2:],
         root=data_dir
     )
+    
+    if is_master_worker:
+        return
 
     begin_time = time.time()
     eval_time = 0
