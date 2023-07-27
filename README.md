@@ -92,7 +92,7 @@ sudo docker run -it --rm --name geomx lizonghango00o1/geomx:cpu-only bash
 The script files in the ``scripts`` folder are provided to help users quickly run GeoMX on a demo task. Here's a general guide on how to use GeoMX with the provided scripts:
 
 ```shell
-cd scripts/cpu && bash run_vanilla_hips.sh
+cd GeoMX/scripts/cpu && bash run_vanilla_hips.sh
 ```
 
 Errors can happen because the dataset file might be missing. However, it is not a problem since some worker nodes have already automatically downloaded the dataset files, and they are stored in the default location ``/root/data``. Just terminate the existing process by ``killall python`` and rerun the training script.
