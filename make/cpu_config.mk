@@ -113,7 +113,7 @@ ADD_LDFLAGS = -I/usr/local/opt/openblas/lib
 ADD_CFLAGS =  -I/usr/local/opt/openblas/include
 else
 # USE_BLAS = atlas
-USE_BLAS=openblas
+USE_BLAS = openblas
 endif
 
 # whether use lapack during compilation
