@@ -45,10 +45,6 @@ DMLC_NUM_WORKER=1 \
 DMLC_NUM_ALL_WORKER=4 \
 PS_VERBOSE=1 \
 DMLC_INTERFACE=eth0 \
-ENABLE_DGT=2 \
-DMLC_UDP_CHANNEL_NUM=3 \
-DMLC_K=0.8 \
-ADAPTIVE_K_FLAG=1 \
 nohup python ${EXAMPLE_PYTHON_SCRIPT} --cpu > /dev/null &
 
 # run scheduler in deamon process
@@ -100,10 +96,6 @@ DMLC_NUM_WORKER=2 \
 DMLC_NUM_ALL_WORKER=4 \
 PS_VERBOSE=1 \
 DMLC_INTERFACE=eth0 \
-ENABLE_DGT=2 \
-DMLC_UDP_CHANNEL_NUM=3 \
-DMLC_K=0.8 \
-ADAPTIVE_K_FLAG=1 \
 nohup python ${EXAMPLE_PYTHON_SCRIPT} --data-slice-idx 0 --cpu > /dev/null &
 
 DMLC_ROLE=worker \
@@ -114,10 +106,6 @@ DMLC_NUM_WORKER=2 \
 DMLC_NUM_ALL_WORKER=4 \
 PS_VERBOSE=1 \
 DMLC_INTERFACE=eth0 \
-ENABLE_DGT=2 \
-DMLC_UDP_CHANNEL_NUM=3 \
-DMLC_K=0.8 \
-ADAPTIVE_K_FLAG=1 \
 nohup python ${EXAMPLE_PYTHON_SCRIPT} --data-slice-idx 1 --cpu > /dev/null &
 
 # run the following nodes in party B:
@@ -159,10 +147,6 @@ DMLC_NUM_WORKER=2 \
 DMLC_NUM_ALL_WORKER=4 \
 PS_VERBOSE=1 \
 DMLC_INTERFACE=eth0 \
-ENABLE_DGT=2 \
-DMLC_UDP_CHANNEL_NUM=3 \
-DMLC_K=0.8 \
-ADAPTIVE_K_FLAG=1 \
 nohup python ${EXAMPLE_PYTHON_SCRIPT} --data-slice-idx 2 --cpu > /dev/null &
 
 DMLC_ROLE=worker \
@@ -173,8 +157,4 @@ DMLC_NUM_WORKER=2 \
 DMLC_NUM_ALL_WORKER=4 \
 PS_VERBOSE=1 \
 DMLC_INTERFACE=eth0 \
-ENABLE_DGT=2 \
-DMLC_UDP_CHANNEL_NUM=3 \
-DMLC_K=0.8 \
-ADAPTIVE_K_FLAG=1 \
 python -u ${EXAMPLE_PYTHON_SCRIPT} --data-slice-idx 3 --cpu
