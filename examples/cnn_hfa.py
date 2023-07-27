@@ -51,13 +51,22 @@ def main():
     use_hfa = int(os.getenv('MXNET_KVSTORE_USE_HFA'))
     period_k1 = int(os.getenv('MXNET_KVSTORE_HFA_K1'))
     period_k2 = int(os.getenv('MXNET_KVSTORE_HFA_K2'))
-    assert use_hfa == 1, 'MXNET_KVSTORE_USE_HFA is not properly set'
-    assert period_k1 >= 1, 'MXNET_KVSTORE_HFA_K1 is not properly set'
-    assert period_k2 >= 1, 'MXNET_KVSTORE_HFA_K2 is not properly set'
-
+    assert use_hfa == 1, 'MXNET_KVSTORE_USE_HFA is not properly set.'
+    assert period_k1 >= 1, 'MXNET_KVSTORE_HFA_K1 is not properly set.'
+    assert period_k2 >= 1, 'MXNET_KVSTORE_HFA_K2 is not properly set.'
     data_type = "mnist"
     data_dir = "/root/data"
     shape = (batch_size, 1, 28, 28)
+
+    train_iter, test_iter, _, _ = load_data(
+        batch_size,
+        num_all_workers,
+        data_slice_idx,
+        data_type=data_type,
+        split_by_class=split_by_class,
+        resize=shape[-2:],
+        root=data_dir
+    )
 
     net = mx.gluon.nn.Sequential()
     net.add(mx.gluon.nn.Conv2D(channels=6, kernel_size=5, activation='relu'),
@@ -98,16 +107,6 @@ def main():
     
     if is_master_worker:
         return
-
-    train_iter, test_iter, _, _ = load_data(
-        batch_size,
-        num_all_workers,
-        data_slice_idx,
-        data_type=data_type,
-        split_by_class=split_by_class,
-        resize=shape[-2:],
-        root=data_dir
-    )
     
     begin_time = time.time()
     eval_time = 0
