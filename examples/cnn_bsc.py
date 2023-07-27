@@ -50,7 +50,6 @@ def main():
     compression_ratio = args.bisparse_compression_ratio
     ctx = mx.cpu() if args.cpu else try_gpu()
     assert 0 < compression_ratio < 1, 'bisparse_compression_ratio is not properly set'
-
     data_type = "mnist"
     data_dir = "/root/data"
     shape = (batch_size, 1, 28, 28)
