@@ -33,3 +33,6 @@ deps/
 lib/
 bin/
 config.mk
+
+# make
+cmake-build-debug/
