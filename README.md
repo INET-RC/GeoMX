@@ -73,20 +73,27 @@ cd docker && sudo docker build -f build_on_cpu.dockerfile -t geomx:cpu-only .
 This will automatically install dependent third-party libraries, download the source code of GeoMX, compile and install GeoMX. However, it may fail due to possible network failure. If that happens, try a few more times, or compile GeoMX inside the Docker container.
 
 ### Download Pre-built Docker Image from DockerHub
-Alternatively, if you prefer not to build the Docker image yourself, you can download a [pre-built Docker image for GeoMX from DockerHub](https://hub.docker.com/repository/docker/lizonghango00o1/geomx/general).
+Alternatively, if you prefer not to build the Docker image yourself, you can download a [pre-built Docker image](https://hub.docker.com/repository/docker/lizonghango00o1/geomx/general) for GeoMX from DockerHub.
 
 The command to pull the pre-built Docker image from DockerHub is as follows:
 ```shell
+# If run on CPUs
 sudo docker pull lizonghango00o1/geomx:cpu-only
+
+# If run on GPUs with CUDA 8.0
+sudo docker pull lizonghango00o1/geomx:cu80
+
+# If run on GPUs with CUDA 10.1
+sudo docker pull lizonghango00o1/geomx:cu101
 ```
 
-> Please note that a demo dataset is already included in [this Docker image](https://hub.docker.com/repository/docker/lizonghango00o1/geomx/general). If you use the other two ways to install GeoMX, please manually download the demo dataset.
+> Please note that a demo dataset has been included in these Docker images. If you use the other two ways to install GeoMX, please manually download the demo dataset.
 
 ## How to Use GeoMX?
 If we were using a pre-built Docker image, run it as a container:
 
 ```shell
-sudo docker run -it --rm --name geomx lizonghango00o1/geomx:cpu-only bash
+sudo docker run -it --rm --name geomx-cpu lizonghango00o1/geomx:cpu-only bash
 ```
 
 The script files in the ``scripts`` folder are provided to help users quickly run GeoMX on a demo task. Here's a general guide on how to use GeoMX with the provided scripts:
@@ -97,7 +104,14 @@ cd GeoMX/scripts/cpu && bash run_vanilla_hips.sh
 
 Errors can happen because the dataset file might be missing. However, it is not a problem since some worker nodes have already automatically downloaded the dataset files, and they are stored in the default location ``/root/data``. Just terminate the existing process by ``killall python`` and rerun the training script.
 
-> Initializing GeoMX for the first time might take a few minutes if we were running on a GPU, but after that, everything should work fine. This problem occurs from time to time on both PyTorch and MXNET due to incompatible CUDA versions.
+To run GeoMX on GPUs, similarly, we run a pre-built Docker image, for example, ``geomx:cu101``, as follows:
+
+```shell
+sudo docker run -it --rm --name geomx-gpu lizonghango00o1/geomx:cu101 bash
+cd GeoMX/scripts/gpu && bash run_vanilla_hips.sh
+```
+
+Please note that initializing GeoMX for the first time might take a few minutes if we are running on GPUs, but after that, everything should work fine. This problem occurs from time to time on both PyTorch and MXNET.
 
 ## Documentation
 
