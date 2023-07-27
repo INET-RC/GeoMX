@@ -72,6 +72,16 @@ cd docker && sudo docker build -f build_on_cpu.dockerfile -t geomx:cpu-only .
 
 This will automatically install dependent third-party libraries, download source code of GeoMX, compile and install GeoMX. However, it may fail due to possible network failure. If that happens, try a few more times, or compile GeoMX inside the Docker container.
 
+### Download Pre-built Docker Image from DockerHub
+Alternatively, if you prefer not to build the Docker image yourself, you can download a [pre-built Docker image for GeoMX from DockerHub](https://hub.docker.com/repository/docker/lizonghango00o1/geomx/general).
+
+The command to pull the pre-built Docker image from DockerHub is as follows:
+```shell
+sudo docker pull lizonghango00o1/geomx:cpu-only
+```
+
+> Please note that a demo dataset is already included in [this Docker image](https://hub.docker.com/repository/docker/lizonghango00o1/geomx/general). If you use the other two ways to install GeoMX, please manually download the demo dataset.
+
 ## Documentation
 
 - [Deployment](./docs/Deployment.md): How to run GeoMX on multiple machines with Docker.
