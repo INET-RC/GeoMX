@@ -53,6 +53,7 @@ USE_OPENCV=1
 USE_BLAS=openblas
 USE_CUDA=1
 USE_CUDA_PATH=/usr/local/cuda
+USE_OPENMP = 1
 ```
 
 Visit [usage-example](https://mxnet.apache.org/versions/1.4.1/install/build_from_source.html#usage-examples) for other compilation options. You can edit it and then run `make -j$(nproc)`
