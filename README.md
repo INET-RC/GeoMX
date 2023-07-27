@@ -89,6 +89,8 @@ The script files in the ``scripts`` folder are provided to help users quickly ru
 cd scripts/cpu && bash run_vanilla_hips.sh
 ```
 
+Errors can happen because the dataset file might be missing. However, it is not a problem since some worker nodes have already automatically downloaded the dataset files, and they are stored in the default location ``/root/data``. Just terminate the existing process by ``killall python`` and rerun the training script.
+
 ## Documentation
 
 - [Deployment](./docs/Deployment.md): How to run GeoMX on multiple machines with Docker.
