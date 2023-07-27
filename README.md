@@ -127,20 +127,4 @@ sudo systemctl restart docker
 - [Configurations](./docs/Configurations.md): How to use GeoMX's communication-efficient strategies.
 - [System Design](./docs/System%20Design.md): How and why GeoMX and its modifications make better.
 
-## Communication
-
-- [Github Issues](https://github.com/INET-RC/GeoMX/issues) is welcomed.
-
-## Contributors and Institutions
-
-**Contributors**:
-- Intelligent Network and Application Research Center¹
-- DataMiningLab¹
-
-**Institutions**:
-
-1. University of Electronic Science and Technology of China
-
-## Copyright and License
-
-GeoMX is provided under the [Apache-2.0 license](https://github.com/INET-RC/GeoMX/blob/main/LICENSE).
+[Github Issues](https://github.com/INET-RC/GeoMX/issues) is welcomed.
