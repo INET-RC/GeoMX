@@ -82,6 +82,13 @@ sudo docker pull lizonghango00o1/geomx:cpu-only
 
 > Please note that a demo dataset is already included in [this Docker image](https://hub.docker.com/repository/docker/lizonghango00o1/geomx/general). If you use the other two ways to install GeoMX, please manually download the demo dataset.
 
+## How to Use GeoMX?
+The script files in the ``scripts`` folder are provided to help users quickly run GeoMX on a demo task. Here's a general guide on how to use GeoMX with the provided scripts:
+
+```shell
+cd scripts/cpu && bash run_vanilla_hips.sh
+```
+
 ## Documentation
 
 - [Deployment](./docs/Deployment.md): How to run GeoMX on multiple machines with Docker.
