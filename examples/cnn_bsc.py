@@ -57,12 +57,12 @@ def main():
     shape = (batch_size, 1, 28, 28)
 
     net = mx.gluon.nn.Sequential()
-    net.add(mx.gluon.nn.Conv2D(channels=6, kernel_size=5, activation='sigmoid'),
+    net.add(mx.gluon.nn.Conv2D(channels=6, kernel_size=5, activation='relu'),
             mx.gluon.nn.MaxPool2D(pool_size=2, strides=2),
-            mx.gluon.nn.Conv2D(channels=16, kernel_size=5, activation='sigmoid'),
+            mx.gluon.nn.Conv2D(channels=16, kernel_size=5, activation='relu'),
             mx.gluon.nn.MaxPool2D(pool_size=2, strides=2),
-            mx.gluon.nn.Dense(120, activation='sigmoid'),
-            mx.gluon.nn.Dense(84, activation='sigmoid'),
+            mx.gluon.nn.Dense(120, activation='relu'),
+            mx.gluon.nn.Dense(84, activation='relu'),
             mx.gluon.nn.Dense(10))
 
     loss = mx.gluon.loss.SoftmaxCrossEntropyLoss()
