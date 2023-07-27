@@ -62,7 +62,7 @@ Note that the `-e` flag is optional. It is equivalent to `--editable` and means 
 
 ### Build from Dockerfile
 
-we highly recommend running GeoMX within a Docker container for effortless deployment and streamlined setup. To achieve that, please make sure you have Docker (and Nvidia-Docker) installed. Then, you can use the docker files provided in ``docker`` to build our required Docker image.
+We highly recommend running GeoMX within a Docker container for effortless deployment and streamlined setup. To achieve that, please make sure you have Docker (and Nvidia-Docker) installed. Then, you can use the docker files provided in ``docker`` to build our required Docker image.
 
 For example, here we use ``docker/build_on_cpu.dockerfile`` to build a Docker image that runs on CPUs.
 
