@@ -55,6 +55,16 @@ def main():
     data_dir = "/root/data"
     shape = (batch_size, 1, 28, 28)
 
+    train_iter, test_iter, _, _ = load_data(
+        batch_size,
+        num_all_workers,
+        data_slice_idx,
+        data_type=data_type,
+        split_by_class=split_by_class,
+        resize=shape[-2:],
+        root=data_dir
+    )
+
     net = mx.gluon.nn.Sequential()
     net.add(mx.gluon.nn.Conv2D(channels=6, kernel_size=5, activation='relu'),
             mx.gluon.nn.MaxPool2D(pool_size=2, strides=2),
@@ -97,16 +107,6 @@ def main():
             continue
         kvstore_dist.pull(idx, param.data(), priority=-idx)
     mx.nd.waitall()
-
-    train_iter, test_iter, _, _ = load_data(
-        batch_size,
-        num_all_workers,
-        data_slice_idx,
-        data_type=data_type,
-        split_by_class=split_by_class,
-        resize=shape[-2:],
-        root=data_dir
-    )
     
     if is_master_worker:
         return
