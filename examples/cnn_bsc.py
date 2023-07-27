@@ -49,12 +49,21 @@ def main():
     split_by_class = args.split_by_class
     compression_ratio = args.bisparse_compression_ratio
     ctx = mx.cpu() if args.cpu else try_gpu()
-
     assert 0 < compression_ratio < 1, 'bisparse_compression_ratio is not properly set'
 
     data_type = "mnist"
     data_dir = "/root/data"
     shape = (batch_size, 1, 28, 28)
+
+    train_iter, test_iter, _, _ = load_data(
+        batch_size,
+        num_all_workers,
+        data_slice_idx,
+        data_type=data_type,
+        split_by_class=split_by_class,
+        resize=shape[-2:],
+        root=data_dir
+    )
 
     net = mx.gluon.nn.Sequential()
     net.add(mx.gluon.nn.Conv2D(channels=6, kernel_size=5, activation='relu'),
@@ -97,16 +106,6 @@ def main():
     
     if is_master_worker:
         return
-
-    train_iter, test_iter, _, _ = load_data(
-        batch_size,
-        num_all_workers,
-        data_slice_idx,
-        data_type=data_type,
-        split_by_class=split_by_class,
-        resize=shape[-2:],
-        root=data_dir
-    )
     
     begin_time = time.time()
     eval_time = 0
