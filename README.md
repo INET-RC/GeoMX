@@ -42,17 +42,17 @@ There is a configuration file for make, `make/config.mk` compilation options.
 If building on CPU and using OpenBLAS:
 
 ```makefile
-USE_OPENCV=1
-USE_BLAS=openblas
+USE_OPENCV = 1
+USE_BLAS = openblas
 ```
 
 If building on GPU and you want OpenCV and OpenBLAS:
 
 ```makefile
-USE_OPENCV=1
-USE_BLAS=openblas
-USE_CUDA=1
-USE_CUDA_PATH=/usr/local/cuda
+USE_OPENCV = 1
+USE_BLAS = openblas
+USE_CUDA = 1
+USE_CUDA_PATH = /usr/local/cuda
 USE_OPENMP = 1
 ```
 
