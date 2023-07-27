@@ -95,7 +95,7 @@ USE_LIBJPEG_TURBO = 0
 USE_LIBJPEG_TURBO_PATH = NONE
 
 # use openmp for parallelization
-USE_OPENMP = 1
+USE_OPENMP = 0
 
 # whether use MKL-DNN library
 USE_MKLDNN = 0
@@ -112,7 +112,6 @@ USE_BLAS = apple
 ADD_LDFLAGS = -I/usr/local/opt/openblas/lib
 ADD_CFLAGS =  -I/usr/local/opt/openblas/include
 else
-# USE_BLAS = atlas
 USE_BLAS = openblas
 endif
 
