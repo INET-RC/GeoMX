@@ -60,13 +60,17 @@ $ cd python && pip install -e .
 
 Note that the `-e` flag is optional. It is equivalent to `--editable` and means that if you edit the source files, these changes will be reflected in the package installed.
 
-### Docker
+### Build from Dockerfile
 
-It's highly recommended to run GeoMX in a Docker container. To build such a Docker image, use the provided Dockerfile.
+we highly recommend running GeoMX within a Docker container for effortless deployment and streamlined setup. To achieve that, please make sure you have Docker (and Nvidia-Docker) installed. Then, you can use the docker files provided in ``docker`` to build our required Docker image.
+
+For example, here we use ``docker/build_on_cpu.dockerfile`` to build a Docker image that runs on CPUs.
 
 ```shell
-docker build -f docker/build_on_cpu.dockerfile -t GeoMX .
+cd docker && sudo docker build -f build_on_cpu.dockerfile -t geomx:cpu-only .
 ```
+
+This will automatically install dependent third-party libraries, download source code of GeoMX, compile and install GeoMX. However, it may fail due to possible network failure. If that happens, try a few more times, or compile GeoMX inside the Docker container.
 
 ## Documentation
 
