@@ -79,10 +79,10 @@ Note that the `-e` flag is optional. It is equivalent to `--editable` and means 
 
 ### Docker
 
-It's highly recommended to run GeoMX in a Docker container. To build such a Docker image, use the provided `Dockerfile`.
+It's highly recommended to run GeoMX in a Docker container. To build such a Docker image, use the provided Dockerfile.
 
 ```shell
-docker build -t GeoMX -f Dockerfile .
+docker build -f docker/build_on_cpu.dockerfile -t GeoMX .
 ```
 
 #### GPU Backend
