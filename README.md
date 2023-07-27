@@ -18,61 +18,44 @@ Furthermore, GeoMX supports:
 
 ## Installation
 
-### Build from source
+You can install GeoMX by building it from the source code, or building a Docker image using the provided dockerfile, or downloading the pre-built Docker image directly from DockerHub.
 
-#### clone the GeoMX project
+### Build from Source Code
+
+Download the source code of GeoMX from this repo:
 
 ```shell
 git clone https://github.com/INET-RC/GeoMX.git
-cd GeoMX
 ```
 
-#### Install a Math Library and OpenCV
+Install dependencies:
 
 ```shell
-# e.g. OpenBLAS
-sudo apt-get install -y libopenblas-dev
-sudo apt-get install -y libopencv-dev
+sudo apt install -y build-essential cmake libopencv-dev libopenblas-dev libsnappy-dev autogen autoconf automake libtool
 ```
 
-#### Build core shared library
-
-There is a configuration file for make, `make/config.mk` compilation options. 
-
-If building on CPU and using OpenBLAS:
-
-```makefile
-USE_OPENCV = 1
-USE_BLAS = openblas
-```
-
-If building on GPU and you want OpenCV and OpenBLAS:
-
-```makefile
-USE_OPENCV = 1
-USE_BLAS = openblas
-USE_CUDA = 1
-USE_CUDA_PATH = /usr/local/cuda
-USE_OPENMP = 1
-```
-
-Visit [usage-example](https://mxnet.apache.org/versions/1.4.1/install/build_from_source.html#usage-examples) for other compilation options. You can edit it and then run `make -j$(nproc)`
-
-Building from source creates a library called `libmxnet.so` in the `lib` folder in your project root.
-
-You may also want to add the shared library to your `LD_LIBRARY_PATH`:
+Copy the configuration file to ``GeoMX/config.mk`` and edit its content as you wish. If you prefer to run GeoMX on CPUs, using:
 
 ```shell
-export LD_LIBRARY_PATH=$PWD/lib
+cp make/cpu_config.mk ./config.mk
 ```
 
-#### Install Python bindings
+If you prefer to run GeoMX on GPUs, copy ``make/gpu_config.mk`` instead of ``make/cpu_config.mk``. Please refer to [cpu_config.mk](https://github.com/INET-RC/GeoMX/blob/main/make/cpu_config.mk) and [gpu_config.mk](https://github.com/INET-RC/GeoMX/blob/main/make/gpu_config.mk) for more detailed configurations.
 
-Navigate to the root of the GeoMX folder then run the following:
+Then, we make the source code using:
 
 ```shell
-$ cd python
-$ pip install -e .
+make -j$(nproc)
+```
+
+Please note that this could fail due to network problems. If that occurs, please try to make it again, or at a latter time. 
+
+Once it is done, we will see a folder named ``lib`` with a library file `libmxnet.so` in it. 
+
+Finally, we bind GeoMX to Python, run:
+
+```shell
+$ cd python && pip install -e .
 ```
 
 Note that the `-e` flag is optional. It is equivalent to `--editable` and means that if you edit the source files, these changes will be reflected in the package installed.
