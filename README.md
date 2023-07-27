@@ -48,11 +48,11 @@ Then, we make the source code using:
 make -j$(nproc)
 ```
 
-Please note that this could fail due to network problems. If that occurs, please try to make it again, or at a latter time. 
+Please note that this could fail due to network problems. If that occurs, please try to make it again, or at a later time. 
 
 Once it is done, we will see a folder named ``lib`` with a library file `libmxnet.so` in it. 
 
-Finally, we bind GeoMX to Python, run:
+Finally, we bind GeoMX to Python, by running:
 
 ```shell
 $ cd python && pip install -e .
@@ -70,7 +70,7 @@ For example, here we use ``docker/build_on_cpu.dockerfile`` to build a Docker im
 cd docker && sudo docker build -f build_on_cpu.dockerfile -t geomx:cpu-only .
 ```
 
-This will automatically install dependent third-party libraries, download source code of GeoMX, compile and install GeoMX. However, it may fail due to possible network failure. If that happens, try a few more times, or compile GeoMX inside the Docker container.
+This will automatically install dependent third-party libraries, download the source code of GeoMX, compile and install GeoMX. However, it may fail due to possible network failure. If that happens, try a few more times, or compile GeoMX inside the Docker container.
 
 ### Download Pre-built Docker Image from DockerHub
 Alternatively, if you prefer not to build the Docker image yourself, you can download a [pre-built Docker image for GeoMX from DockerHub](https://hub.docker.com/repository/docker/lizonghango00o1/geomx/general).
@@ -91,10 +91,12 @@ cd scripts/cpu && bash run_vanilla_hips.sh
 
 Errors can happen because the dataset file might be missing. However, it is not a problem since some worker nodes have already automatically downloaded the dataset files, and they are stored in the default location ``/root/data``. Just terminate the existing process by ``killall python`` and rerun the training script.
 
+> Initializing GeoMX for the first time might take a few minutes if we were running on a GPU, but after that, everything should work fine. This problem occurs from time to time on both PyTorch and MXNET due to incompatible CUDA versions.
+
 ## Documentation
 
 - [Deployment](./docs/Deployment.md): How to run GeoMX on multiple machines with Docker.
 - [Configurations](./docs/Configurations.md): How to use GeoMX's communication-efficient strategies.
-- [System Design](./docs/System%20Design.md): How and why GeoMX and its modifications make better.
+- [System Design](./docs/System%20Design.md): How and why GeoMX and its modifications make it better.
 
 [Github Issues](https://github.com/INET-RC/GeoMX/issues) is welcomed.
