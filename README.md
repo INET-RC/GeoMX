@@ -85,42 +85,6 @@ It's highly recommended to run GeoMX in a Docker container. To build such a Dock
 docker build -f docker/build_on_cpu.dockerfile -t GeoMX .
 ```
 
-#### GPU Backend
-
-Please make sure `NVIDIA Container Toolkit` is installed. Here are some install for `Ubuntu` users:
-
-```shell
-distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
-   && curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add - \
-   && curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-```
-
-restart the Docker daemon to complete the installation:
-
-```shell
-sudo systemctl restart docker
-```
-
-Then edit  `daemon.json` to set the default runtime:
-
-```shell
-$ vim /etc/docker/daemon.json
-{
-    "runtimes": {
-        "nvidia": {
-            "path": "nvidia-container-runtime",
-            "runtimeArgs": []
-        }
-    }
-}
-```
-
-Finally, restart the Docker daemon:
-
-```shell
-sudo systemctl restart docker
-```
-
 ## Documentation
 
 - [Deployment](./docs/Deployment.md): How to run GeoMX on multiple machines with Docker.
