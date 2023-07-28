@@ -42,7 +42,7 @@ sudo apt install -y build-essential cmake libopencv-dev libopenblas-dev libsnapp
 * Step 3: Copy the configuration file. Based on your preference for running GeoMX on CPUs or GPUs, copy the corresponding configuration file to `GeoMX/config.mk`. For CPU, use:
 
 ```shell
-cp make/cpu_config.mk ./config.mk
+cd GeoMX && cp make/cpu_config.mk ./config.mk
 ```
 
 And for GPU, copy `make/gpu_config.mk` instead. Refer to [cpu_config.mk](https://github.com/INET-RC/GeoMX/blob/main/make/cpu_config.mk) and [gpu_config.mk](https://github.com/INET-RC/GeoMX/blob/main/make/gpu_config.mk) for detailed configuration instructions.
