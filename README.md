@@ -81,7 +81,7 @@ cd docker && sudo docker build -f build_on_gpu.dockerfile -t geomx:cu101 .
 
 > This step may also fail due to network issues. If this happens, retry or opt to compile GeoMX inside the Docker container.
 
-### Download Pre-built Docker Image from DockerHub
+### 3. Download Pre-built Docker Image from DockerHub
 If you prefer not to build the Docker image yourself, you can download a [pre-built Docker image](https://hub.docker.com/repository/docker/lizonghango00o1/geomx/general) for GeoMX from DockerHub using the following command:
 
 ```shell
