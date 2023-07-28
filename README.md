@@ -18,70 +18,72 @@ Furthermore, GeoMX supports:
 
 ## Installation
 
-You can install GeoMX by building it from the source code, or building a Docker image using the provided dockerfile, or downloading the pre-built Docker image directly from DockerHub.
+GeoMX provides three methods for installation:
+1. Build it from the source code.
+2. Build a Docker image using the provided Dockerfile.
+3. Download the pre-built Docker image directly from DockerHub.
 
-### Build from Source Code
+### 1. Build from Source Code 
 
-Download the source code of GeoMX from this repo:
+To install GeoMX from the source code, follow the steps below:
+* Step 1: Download the source code. Git clone the GeoMX repository using the following command:
 
 ```shell
 git clone https://github.com/INET-RC/GeoMX.git
 ```
 
-Install dependencies:
+* Step 2: Install third-party dependencies. Ensure you have the necessary dependencies installed. Use the following command to do so:
 
 ```shell
 sudo apt install -y build-essential cmake libopencv-dev libopenblas-dev libsnappy-dev autogen autoconf automake libtool
 ```
 
-Copy the configuration file to ``GeoMX/config.mk`` and edit its content as you wish. If you prefer to run GeoMX on CPUs, using:
+* Step 3: Copy the configuration file. Based on your preference for running GeoMX on CPUs or GPUs, copy the corresponding configuration file to `GeoMX/config.mk`. For CPU, use:
 
 ```shell
 cp make/cpu_config.mk ./config.mk
 ```
 
-If you prefer to run GeoMX on GPUs, copy ``make/gpu_config.mk`` instead of ``make/cpu_config.mk``. Please refer to [cpu_config.mk](https://github.com/INET-RC/GeoMX/blob/main/make/cpu_config.mk) and [gpu_config.mk](https://github.com/INET-RC/GeoMX/blob/main/make/gpu_config.mk) for more detailed configurations.
+And for GPU, copy `make/gpu_config.mk` instead. Refer to [cpu_config.mk](https://github.com/INET-RC/GeoMX/blob/main/make/cpu_config.mk) and [gpu_config.mk](https://github.com/INET-RC/GeoMX/blob/main/make/gpu_config.mk) for detailed configuration instructions.
 
-Then, we make the source code using:
+* Step 4: Build the source code. Use the following command to build the source code:
 
 ```shell
+# Here all CPU cores are used to build GeoMX faster. You can decrease its value to avoid CPU overload.
 make -j$(nproc)
 ```
 
-Please note that this could fail due to network problems. If that occurs, please try to make it again, or at a later time. 
+> This step may fail due to network issues. If that happens, retry or wait to run the command again at a later time. Once the build is successful, you will see a new folder `lib` containing the library file `libmxnet.so`.
 
-Once it is done, we will see a folder named ``lib`` with a library file `libmxnet.so` in it. 
-
-Finally, we bind GeoMX to Python, by running:
+* Step 5: Bind GeoMX to Python, using the following command:
 
 ```shell
 $ cd python && pip install -e .
 ```
 
-Note that the `-e` flag is optional. It is equivalent to `--editable` and means that if you edit the source files, these changes will be reflected in the package installed.
+> The `-e` flag is optional. It is equivalent to `--editable` and means that if you edit the source files, these changes will be reflected in the package installed.
 
-### Build from Dockerfile
+### 2. Build from Dockerfile
 
-We highly recommend running GeoMX within a Docker container for effortless deployment and streamlined setup. To achieve that, please make sure you have Docker (and Nvidia-Docker) installed. Then, you can use the docker files provided in ``docker`` to build our required Docker image.
+For an effortless deployment and streamlined setup, we highly recommend running GeoMX within a Docker container. Please ensure [Docker](https://docs.docker.com/get-docker/) and [Nvidia-Docker](https://github.com/NVIDIA/nvidia-docker) are correctly installed on your machine before proceeding. Then use the Dockerfiles provided in the `docker` folder to build your Docker image.
 
-For example, here we use ``docker/build_on_cpu.dockerfile`` to build a Docker image that runs on CPUs.
+For a CPU-based Docker image, run:
 
 ```shell
 cd docker && sudo docker build -f build_on_cpu.dockerfile -t geomx:cpu-only .
 ```
 
-This will automatically install dependent third-party libraries, download the source code of GeoMX, compile and install GeoMX. However, it may fail due to possible network failure. If that happens, try a few more times, or compile GeoMX inside the Docker container.
-
-This is similar for the GPU version:
+And for a GPU-based Docker image, run:
 
 ```shell
 cd docker && sudo docker build -f build_on_gpu.dockerfile -t geomx:cu101 .
 ```
 
-### Download Pre-built Docker Image from DockerHub
-Alternatively, if you prefer not to build the Docker image yourself, you can download a [pre-built Docker image](https://hub.docker.com/repository/docker/lizonghango00o1/geomx/general) for GeoMX from DockerHub.
+> This step may also fail due to network issues. If this happens, retry or opt to compile GeoMX inside the Docker container.
 
-The command to pull the pre-built Docker image from DockerHub is as follows:
+### Download Pre-built Docker Image from DockerHub
+If you prefer not to build the Docker image yourself, you can download a [pre-built Docker image](https://hub.docker.com/repository/docker/lizonghango00o1/geomx/general) for GeoMX from DockerHub using the following command:
+
 ```shell
 # If run on CPUs
 sudo docker pull lizonghango00o1/geomx:cpu-only
@@ -93,31 +95,31 @@ sudo docker pull lizonghango00o1/geomx:cu80
 sudo docker pull lizonghango00o1/geomx:cu101
 ```
 
-> Please note that a demo dataset has been included in these Docker images. If you use the other two ways to install GeoMX, please manually download the demo dataset.
+> These Docker images include a demo dataset, so we can run demo scripts without much trouble. However, if we install GeoMX using other methods, please download the demo dataset manually.
 
 ## How to Use GeoMX?
-If we were using a pre-built Docker image, run it as a container:
+If we are using a pre-built Docker image, run it as a container using the following command:
 
 ```shell
 sudo docker run -it --rm --name geomx-cpu lizonghango00o1/geomx:cpu-only bash
 ```
 
-The script files in the ``scripts`` folder are provided to help users quickly run GeoMX on a demo task. Here's a general guide on how to use GeoMX with the provided scripts:
+Then we can use the script files provided in the `scripts` folder to execute demo tasks. For example:
 
 ```shell
 cd GeoMX/scripts/cpu && bash run_vanilla_hips.sh
 ```
 
-Errors can happen because the dataset file might be missing. However, it is not a problem since some worker nodes have already automatically downloaded the dataset files, and they are stored in the default location ``/root/data``. Just terminate the existing process by ``killall python`` and rerun the training script.
+> We may encounter errors if the dataset file is missing. However, don't worry as some worker nodes will automatically download the dataset files and store them in the default location `/root/data`. If you face this issue, terminate the existing process using `killall python` and rerun the training script.
 
-To run GeoMX on GPUs, similarly, we run a pre-built Docker image, for example, ``geomx:cu101``, as follows:
+To run GeoMX on GPUs, use a pre-built Docker image, for example, `geomx:cu101`, as follows:
 
 ```shell
 sudo docker run -it --rm --name geomx-gpu lizonghango00o1/geomx:cu101 bash
 cd GeoMX/scripts/gpu && bash run_vanilla_hips.sh
 ```
 
-Please note that initializing GeoMX for the first time might take a few minutes if we are running on GPUs, but after that, everything should work fine. This problem occurs from time to time on both PyTorch and MXNET.
+> The first-time initialization of GeoMX on GPUs may take a few minutes. However, subsequent runs should proceed without delay. This issue is common and can occur with other frameworks like PyTorch and MXNET as well.
 
 ## Documentation
 
