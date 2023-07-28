@@ -35,6 +35,7 @@ git clone https://github.com/INET-RC/GeoMX.git
 * Step 2: Install third-party dependencies. Ensure you have the necessary dependencies installed. Use the following command to do so:
 
 ```shell
+sudo apt update
 sudo apt install -y build-essential cmake libopencv-dev libopenblas-dev libsnappy-dev autogen autoconf automake libtool
 ```
 
