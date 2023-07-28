@@ -38,6 +38,8 @@ git clone https://github.com/INET-RC/GeoMX.git
 ```shell
 sudo apt update
 sudo apt install -y build-essential cmake libopencv-dev libopenblas-dev libsnappy-dev autogen autoconf automake libtool
+pip install --upgrade pip
+pip install numpy==1.17.3 pandas opencv-python
 ```
 
 * Step 3: Copy the configuration file. Based on your preference for running GeoMX on CPUs or GPUs, copy the corresponding configuration file to `GeoMX/config.mk`. For CPU, use:
