@@ -1,3 +1,15 @@
+  - [Synchronization Algorithms](#synchronization-algorithms)
+    - [Fully-Synchronous Algorithm](#fully-synchronous-algorithm)
+    - [Mixed-Synchronous Algorithm](#mixed-synchronous-algorithm)
+    - [Use DCASGD Optimizer in MixedSync](#use-dcasgd-optimizer-in-mixedsync)
+    - [Hierarchical Frequency Aggregation](#hierarchical-frequency-aggregation)
+  - [Communication Optimization Techniques](#communication-optimization-techniques)
+    - [Bidirectional Gradient Sparsification](#bidirectional-gradient-sparsification)
+    - [Mixed-Precision Quantization](#mixed-precision-quantization)
+    - [Differential Gradient Transmission](#differential-gradient-transmission)
+    - [TSEngine](#tsengine)
+    - [Priority-based Parameter Propagation](#priority-based-parameter-propagation)
+
 # Configuration Guide
 This guidance describes the environmental variables and hyperparameters needed to launch each optimization technique in our GeoMX system.
 
