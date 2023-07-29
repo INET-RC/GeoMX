@@ -119,9 +119,10 @@ MXNET_KVSTORE_HFA_K2 = 10  # number of loops before a global synchronization
 
 The demo code can be found in [`examples/cnn_hfa.py`](https://github.com/INET-RC/GeoMX/blob/main/examples/cnn_hfa.py). You can run this demo by simply `bash scripts/xpu/run_hfa_sync.sh`, where `xpu` should be `cpu` or `gpu`.
 
-## Communication-efficient Strategies
+## Communication Optimization Techniques
+Given the often limited and varied network conditions in WANs, distributed training across data centers can potentially create communication bottlenecks. To mitigate these issues, GeoMX employs a variety of optimization techniques. These include gradient sparsification, mixed-precision quantization, advanced transmission protocols, synchronization algorithms, flow scheduling, and priority scheduling, among others (e.g., overlay scheduling, currently in development). These techniques comprehensively tackle communication issues, further enhancing the efficiency and robustness of distributed machine learning training in GeoMX.
 
-> Caution: Strategies mentioned below are only compatible with `Fully-synchronous Algorithm`
+> NOTE: Please try these optimized techniques with the default fully-synchronous mode.
 
 ### BSC
 
