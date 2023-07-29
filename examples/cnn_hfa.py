@@ -18,10 +18,6 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""
-cnn_hfa.py contains code that trains a simple network with HierFAVG-styled synchronous algorithm.
-"""
-
 import time
 import os
 import mxnet as mx
