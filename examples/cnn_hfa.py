@@ -44,14 +44,14 @@ def main():
     epochs = args.epoch
     split_by_class = args.split_by_class
     ctx = mx.cpu() if args.cpu else try_gpu()
-    use_hfa = int(os.getenv('MXNET_KVSTORE_USE_HFA'))
-    period_k1 = int(os.getenv('MXNET_KVSTORE_HFA_K1'))
-    period_k2 = int(os.getenv('MXNET_KVSTORE_HFA_K2'))
+    use_hfa = int(os.getenv('MXNET_KVSTORE_USE_HFA', 0))
+    period_k1 = int(os.getenv('MXNET_KVSTORE_HFA_K1', 0))
+    period_k2 = int(os.getenv('MXNET_KVSTORE_HFA_K2', 0))
     assert use_hfa == 1, 'MXNET_KVSTORE_USE_HFA is not properly set.'
     assert period_k1 >= 1, 'MXNET_KVSTORE_HFA_K1 is not properly set.'
     assert period_k2 >= 1, 'MXNET_KVSTORE_HFA_K2 is not properly set.'
-    enable_tsengine = int(os.getenv('ENABLE_INTER_TS')) \
-                          or int(os.getenv('ENABLE_INTRA_TS'))
+    enable_tsengine = int(os.getenv('ENABLE_INTER_TS', 0)) \
+                          or int(os.getenv('ENABLE_INTRA_TS', 0))
     data_type = "mnist"
     data_dir = "/root/data"
     shape = (batch_size, 1, 28, 28)
