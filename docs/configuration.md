@@ -170,7 +170,11 @@ MXNET_KVSTORE_SIZE_LOWER_BOUND = 200000
 
 The demo code can be found in [`examples/cnn_bsc.py`](https://github.com/INET-RC/GeoMX/blob/main/examples/cnn_bsc.py). You can run this demo by simply `bash scripts/xpu/run_bisparse_compression.sh`, where `xpu` should be `cpu` or `gpu`.
 
-### DGT
+### Mixed-Precision Quantization
+This technique quantifies the parameter and gradient tensors set for transmission into FP16 format, which effectively halves the data traffic volume over both LANs and WANs. However, if bidirectional gradient sparsification is enabled, the communication between the intra-domain parameter servers and the global parameter server remains in FP32 format. This precaution is taken to minimize the loss of crucial information and avoid significant degradation to model performance.
+
+### Differential Gradient Transmission
+This advanced transmission protocol is optimized for distributed machine learning tasks. Leveraging the tolerance of gradient descent algorithms towards partial parameter loss, this protocol transfers gradients across multiple channels, each with distinct levels of reliability and priority, contingent on their respective contributions to model convergence. Through these prioritized channels, critical gradients receive precedence in transmission, while other non-important gradients are transmitted with lower priority and reliability. This helps to reduce tail latency and thus reduce the end-to-end transmission delay of parameter synchronization. (Refer to [this paper](https://drive.google.com/file/d/1IbmpFybX_qXZM2g_8BrcD9IF080qci94/view) for more details and [this repo](https://github.com/zhouhuaman/dgt) for individual use.)
 
 Only a few Environment Variables are needed here.
 
