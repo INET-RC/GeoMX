@@ -161,7 +161,7 @@ If this repo is helpful to you, please kindly cite us:
 ```
 
 ## References
-[1] Li, Zonghang, Hongfang Yu, and Yi Wang. "[Geo-Distributed Machine Learning: Framework and Technology Exceeding LAN Speed.](https://www.zte.com.cn/content/dam/zte-site/res-www-zte-com-cn/mediares/magazine/publication/com_cn/article/202005/cn202005004.pdf)" ZTE Technology Journal 26, no. 5 (2020): 16-22.
-[2] Zhou, Huaman, Zonghang Li, Qingqing Cai, Hongfang Yu, Shouxi Luo, Long Luo, and Gang Sun. "[DGT: A contribution-aware differential gradient transmission mechanism for distributed machine learning.](https://drive.google.com/file/d/1IbmpFybX_qXZM2g_8BrcD9IF080qci94/view)" Future Generation Computer Systems 121 (2021): 35-47.
-[3] Zhou, Huaman, Weibo Cai, Zonghang Li, Hongfang Yu, Ling Liu, Long Luo, and Gang Sun. "[TSEngine: Enable Efficient Communication Overlay in Distributed Machine Learning in WANs.](https://drive.google.com/file/d/1ELfApVoCA8WCdOe3iBe-VreLJCSD7r8r/view)" IEEE Transactions on Network and Service Management 18, no. 4 (2021): 4846-4859.
-[4] 虞红芳, 李宗航, 孙罡, 罗龙. 《跨数据中心机器学习：赋能多云智能数算融合》. 电子工业出版社, 人工智能前沿理论与技术应用丛书, (2023).
+1. Li, Zonghang, Hongfang Yu, and Yi Wang. "[Geo-Distributed Machine Learning: Framework and Technology Exceeding LAN Speed.](https://www.zte.com.cn/content/dam/zte-site/res-www-zte-com-cn/mediares/magazine/publication/com_cn/article/202005/cn202005004.pdf)" ZTE Technology Journal 26, no. 5 (2020): 16-22.
+2. Zhou, Huaman, Zonghang Li, Qingqing Cai, Hongfang Yu, Shouxi Luo, Long Luo, and Gang Sun. "[DGT: A contribution-aware differential gradient transmission mechanism for distributed machine learning.](https://drive.google.com/file/d/1IbmpFybX_qXZM2g_8BrcD9IF080qci94/view)" Future Generation Computer Systems 121 (2021): 35-47.
+3. Zhou, Huaman, Weibo Cai, Zonghang Li, Hongfang Yu, Ling Liu, Long Luo, and Gang Sun. "[TSEngine: Enable Efficient Communication Overlay in Distributed Machine Learning in WANs.](https://drive.google.com/file/d/1ELfApVoCA8WCdOe3iBe-VreLJCSD7r8r/view)" IEEE Transactions on Network and Service Management 18, no. 4 (2021): 4846-4859.
+4. 虞红芳, 李宗航, 孙罡, 罗龙. 《跨数据中心机器学习：赋能多云智能数算融合》. 电子工业出版社, 人工智能前沿理论与技术应用丛书, (2023).
