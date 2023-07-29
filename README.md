@@ -5,7 +5,6 @@
   - [2. Build from Dockerfile](#2-build-from-dockerfile)
   - [3. Download Pre-built Docker Image from DockerHub](#3-download-pre-built-docker-image-from-dockerhub)
 - [How to Use GeoMX?](#how-to-use-geomx)
-- [Documentation](#documentation)
 - [Contributors](#contributors)
 - [Cite Us](#cite-us)
 - [References](#references)
@@ -151,14 +150,6 @@ cd GeoMX/scripts/gpu && bash run_vanilla_hips.sh
 ```
 
 > The first-time initialization of GeoMX on GPUs may take a few minutes. However, subsequent runs should proceed without delay. This issue is common and can occur with other frameworks like PyTorch and MXNET as well.
-
-## Documentation
-
-- [Deployment](./docs/Deployment.md): How to run GeoMX on multiple machines with Docker.
-- [Configurations](./docs/Configurations.md): How to use GeoMX's communication-efficient strategies.
-- [System Design](./docs/System%20Design.md): How and why GeoMX and its modifications make it better.
-
-[Github Issues](https://github.com/INET-RC/GeoMX/issues) is welcomed.
 
 ## Contributors
 * **Li, Zonghang** - *Initial work with equal contribution* - [Homepage](https://github.com/Lizonghang)
