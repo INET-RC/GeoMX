@@ -52,21 +52,51 @@ python examples/cnn.py --mixed-sync
 You can also run this demo by executing `bash scripts/xpu/run_mixed_sync.sh`, where `xpu` should be `cpu` or `gpu`.
 
 ### Hierarchical Frequency Aggregation
-Inspired by [this paper](https://ieeexplore.ieee.org/abstract/document/9148862), our HFA algorithm first performs $K_1$ steps of local updates at the training nodes, followed by $K_2$ steps of synchronizations at the local parameter server. Finally, a global synchronization is performed at the global parameter server. This approach effectively reduces the frequency of model synchronization across data centers, thereby boosting distributed training.
+Inspired by [this paper](https://ieeexplore.ieee.org/abstract/document/9148862), our Hierarchical Frequency Aggregation (HFA) algorithm first performs $K_1$ steps of local updates at the training nodes, followed by $K_2$ steps of synchronizations at the local parameter server. Finally, a global synchronization is performed at the global parameter server. This approach effectively reduces the frequency of model synchronization across data centers, thereby boosting distributed training.
+
+To enable HFA, we initialize `kvstore` in `dist_sync` mode and make a simple modification to the training loop:
 
 ```python
 import mxnet as mx
 
+# Initialize distributed kvstore in synchronous mode.
 kvstore_dist = mx.kv.create("dist_sync")
-``` 
 
-Some Environment Variables should be additionally set.
+# Obtain K1 from environmental variables.
+period_k1 = int(os.getenv('MXNET_KVSTORE_HFA_K1'))
+
+# Obtain the number of training nodes in each data center.
+num_local_workers = kvstore_dist.num_workers
+
+# Define local trainer to use Adam optimizer.
+optimizer = mx.optimizer.Adam(learning_rate=lr)
+trainer = Trainer(net.collect_params(), optimizer=optimizer)
+
+global_iters = 1
+for epoch in range(num_epochs):
+    for _, batch in enumerate(train_iter):
+        # Perform forward and backward propagation to calculate gradients.
+        ...
+        # Update local model parameters.
+        trainer.step(num_samples)
+        # Synchronize model parameters every K1 round.
+        if global_iters % period_k1 == 0:
+            for idx, param in enumerate(net_params):
+                kvstore_dist.push(idx, param.data() / num_local_workers, priority=-idx)
+                kvstore_dist.pull(idx, param.data(), priority=-idx)
+        # Update the iteration counter
+        global_iters += 1
+```
+
+Then, let's set three environmental variables:
 
 ```shell
-MXNET_KVSTORE_USE_HFA=0 # whether HierFAVG is enabled
-MXNET_KVSTORE_HFA_K1=20 # loops before a local iteration
-MXNET_KVSTORE_HFA_K2=10 # loops before a global iteration
+MXNET_KVSTORE_USE_HFA=1  # whether HFA is enabled
+MXNET_KVSTORE_HFA_K1=20  # number of loops before a local synchronization
+MXNET_KVSTORE_HFA_K2=10  # number of loops before a global synchronization
 ```
+
+The demo code can be found in [`examples/cnn_hfa.py`](https://github.com/INET-RC/GeoMX/blob/main/examples/cnn_hfa.py). You can run this demo by simply `bash scripts/xpu/run_hfa_sync.sh`, where `xpu` should be `cpu` or `gpu`.
 
 ### DC-ASGD Asynchronous Algorithm
 
