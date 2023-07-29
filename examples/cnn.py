@@ -130,8 +130,9 @@ def main():
                 kvstore_dist.pull(idx, param.data(), priority=-idx)
                 if enable_tsengine: mx.nd.waitall()
 
-            # run evaluation
             mx.nd.waitall()
+            
+            # run evaluation
             test_acc = eval_acc(test_iter, net, ctx)
             print("[Time %.3f][Epoch %d][Iteration %d] Test Acc %.4f"
                   % (time.time() - begin_time, epoch, global_iters, test_acc))
