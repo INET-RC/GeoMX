@@ -137,3 +137,11 @@ cd GeoMX/scripts/gpu && bash run_vanilla_hips.sh
 - [System Design](./docs/System%20Design.md): How and why GeoMX and its modifications make it better.
 
 [Github Issues](https://github.com/INET-RC/GeoMX/issues) is welcomed.
+
+## Contributors
+* **Yu, Hongfang** - *Project instructor*
+* **Li, Zonghang** - *Initial work with equal contribution* - [Homepage](https://github.com/Lizonghang)
+* **Zhang, Zhaofeng** - *Initial work with equal contribution* - [Homepage](https://github.com/vcfgv)
+* **Zhou, Huaman** - *Initial work with equal contribution* - [Homepage](https://github.com/zhouhuaman)
+* **Cai, Weibo** - *Initial work with equal contribution*
+* Other contributors: Cai, Qingqing; Wang, Jigang; Zhang, Zhihao.
