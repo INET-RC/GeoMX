@@ -30,7 +30,7 @@ for epoch in range(num_epochs):
             kvstore_dist.pull(idx, param.data(), priority=-idx)
 ```
 
-> The code can be found in `examples/`
+The demo code can be found in [`examples/cnn.py`](https://github.com/INET-RC/GeoMX/blob/main/examples/cnn.py). You can run this demo by simply `bash scripts/xpu/run_vanilla_hips.sh`, here `xpu` should be `cpu` or `gpu`.
 
 ### Mixed-synchronous Algorithm
 
