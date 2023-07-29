@@ -125,7 +125,7 @@ def main():
             
             trainer.step(num_all_workers)
             
-            # put gradients back to zero
+            # put gradients to zero manually
             for param in params:
                 param.zero_grad()
 
