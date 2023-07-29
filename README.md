@@ -30,9 +30,9 @@ Building upon the two aforementioned fundamental algorithms, GeoMX also offers t
 
 3. **Hierarchical Frequency Aggregation (HFA):** Inspired by [this paper](https://ieeexplore.ieee.org/abstract/document/9148862), our HFA algorithm first performs $K_1$ steps of local updates at the training nodes, followed by $K_2$ steps of synchronizations at the local parameter server. Finally, a global synchronization is performed at the global parameter server. This approach effectively reduces the frequency of model synchronization across data centers, thereby boosting distributed training.
 
-1. **4 communication algorithms**, including fully-synchronous algorithm, mix-synchronous algorithm, HierFAVG-styled synchronous algorithm and DC-ASGD asynchronous algorithm. 
+4. **ESync:** Applying asynchronous algorithms to strongly heterogeneous clusters can lead to severe stale gradient issues. To address this, we can adopt an optimized algorithm known as ESync. ESync is a synchronous parallel algorithm designed to save stragglers under conditions of strong resource heterogeneity. It introduces a state server to orchestrate the local iteration steps of each training node, in order to balance their reach-server time (including computational and transmission time). (To be integrated, refer to [this paper](https://drive.google.com/file/d/1bvK0EeO5vjkXveU_ccBp4Uxl-qmbmcfn/view) for more details and [this repo](https://github.com/Lizonghang/ESync) for individual use.)
 
-2. (6 categories) **25 machine learning algorithms**, including 9 gradient descent algorithms, 7 ensemble learning algorithms, 3 support vector algorithms, 2 MapReduce algorithms, 2 online learning algorithms, 2 incremental learning algorithms.
+(6 categories) **25 machine learning algorithms**, including 9 gradient descent algorithms, 7 ensemble learning algorithms, 3 support vector algorithms, 2 MapReduce algorithms, 2 online learning algorithms, 2 incremental learning algorithms.
 
 ## Installation
 
