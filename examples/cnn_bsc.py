@@ -18,6 +18,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import os
 import time
 import mxnet as mx
 import argparse
@@ -44,8 +45,10 @@ def main():
     epochs = args.epoch
     split_by_class = args.split_by_class
     compression_ratio = args.bisparse_compression_ratio
-    ctx = mx.cpu() if args.cpu else try_gpu()
     assert 0 < compression_ratio < 1, 'bisparse_compression_ratio is not properly set'
+    ctx = mx.cpu() if args.cpu else try_gpu()
+    enable_tsengine = int(os.getenv('ENABLE_INTER_TS')) \
+                          or int(os.getenv('ENABLE_INTRA_TS'))
     data_type = "mnist"
     data_dir = "/root/data"
     shape = (batch_size, 1, 28, 28)
@@ -121,6 +124,8 @@ def main():
                     continue
                 kvstore_dist.push(idx, param.grad() / num_samples, priority=-idx)
                 kvstore_dist.pull(idx, param.grad(), priority=-idx)
+                if enable_tsengine: mx.nd.waitall()
+            
             mx.nd.waitall()
             
             trainer.step(num_all_workers)
