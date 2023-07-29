@@ -51,6 +51,27 @@ python examples/cnn.py --mixed-sync
 
 You can also run this demo by executing `bash scripts/xpu/run_mixed_sync.sh`, where `xpu` should be `cpu` or `gpu`.
 
+### Use DCASGD Optimizer in MixedSync
+To alleviate the issue of stale gradients in asynchronous parallel operations, the global parameter server can be configured to use the [DCASGD](http://proceedings.mlr.press/v70/zheng17b/zheng17b.pdf) optimizer. This adjustment aids in improving training convergence while preserving model accuracy.
+
+The way to enable DCASGD in MixedSync is the same as in MXNET: simply replace the `Adam` optimizer with the `DCASGD` optimizer:
+
+```python
+import mxnet as mx
+
+kvstore_dist = mx.kv.create("dist_async")
+if kvstore_dist.is_master_worker:
+    kvstore_dist.set_optimizer(mx.optimizer.DCASGD(learning_rate=lr))
+```
+
+We can use the following command to enable the DCASGD optimizer in MixedSync:
+
+```shell
+python examples/cnn.py --mixed-sync --dcasgd
+```
+
+Just modify `scripts/xpu/run_mixed_sync.sh` and try it!
+
 ### Hierarchical Frequency Aggregation
 Inspired by [this paper](https://ieeexplore.ieee.org/abstract/document/9148862), our Hierarchical Frequency Aggregation (HFA) algorithm first performs $K_1$ steps of local updates at the training nodes, followed by $K_2$ steps of synchronizations at the local parameter server. Finally, a global synchronization is performed at the global parameter server. This approach effectively reduces the frequency of model synchronization across data centers, thereby boosting distributed training.
 
@@ -97,17 +118,6 @@ MXNET_KVSTORE_HFA_K2 = 10  # number of loops before a global synchronization
 ```
 
 The demo code can be found in [`examples/cnn_hfa.py`](https://github.com/INET-RC/GeoMX/blob/main/examples/cnn_hfa.py). You can run this demo by simply `bash scripts/xpu/run_hfa_sync.sh`, where `xpu` should be `cpu` or `gpu`.
-
-### DC-ASGD Asynchronous Algorithm
-
-To mitigate straggler problems brought by the asynchronous pattern, DCASGD optimizer is introduced.
-
-```python
-import mxnet as mx
-
-kvstore_dist = mx.kv.create("dist_async")
-kvstore_dist.set_optimizer(mx.optimizer.DCASGD(learning_rate=learning_rate))
-```
 
 ## Communication-efficient Strategies
 
