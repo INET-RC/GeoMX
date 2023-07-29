@@ -91,9 +91,9 @@ for epoch in range(num_epochs):
 Then, let's set three environmental variables:
 
 ```shell
-MXNET_KVSTORE_USE_HFA=1  # whether HFA is enabled
-MXNET_KVSTORE_HFA_K1=20  # number of loops before a local synchronization
-MXNET_KVSTORE_HFA_K2=10  # number of loops before a global synchronization
+MXNET_KVSTORE_USE_HFA = 1  # whether HFA is enabled
+MXNET_KVSTORE_HFA_K1 = 20  # number of loops before a local synchronization
+MXNET_KVSTORE_HFA_K2 = 10  # number of loops before a global synchronization
 ```
 
 The demo code can be found in [`examples/cnn_hfa.py`](https://github.com/INET-RC/GeoMX/blob/main/examples/cnn_hfa.py). You can run this demo by simply `bash scripts/xpu/run_hfa_sync.sh`, where `xpu` should be `cpu` or `gpu`.
