@@ -164,7 +164,7 @@ cd GeoMX/scripts/gpu && bash run_vanilla_hips.sh
 * **Zhou, Huaman** - *Initial work with equal contribution* - [Homepage](https://github.com/zhouhuaman)
 * **Cai, Weibo** - *Initial work with equal contribution* - [Homepage](https://github.com/CaiWeibo)
 * **Yu, Hongfang** - *Project instructor* - [Homepage](https://scholar.google.com/citations?user=GmEdMqwAAAAJ&hl=en&oi=ao)
-* Other contributors: Cai, Qingqing; Wang, Jigang; Zhang, Zhihao; AND YOU.
+* Other contributors: Cai, Qingqing; Wang, Jigang; Zhang, Zhihao; Xu, Zenglin; Shao, Junming; AND YOU.
 
 ## Cite Us
 If this repo is helpful to you, please kindly cite us:
@@ -172,7 +172,7 @@ If this repo is helpful to you, please kindly cite us:
 ```bibtex
 @misc{li2020geomx,
   author = {Li, Zonghang and Zhang, Zhaofeng and Zhou, Huaman and Cai, Weibo},
-  title = {GeoMX: Fast and unified distributed system for training machine learning algorithms over geographically dispersed data centers.},
+  title = {GeoMX: Fast and unified distributed system for training machine learning algorithms over geographical data centers.},
   year = {2020},
   howpublished = {GitHub},
   url = {https://github.com/INET-RC/GeoMX}
