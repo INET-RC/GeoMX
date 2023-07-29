@@ -135,18 +135,40 @@ import mxnet as mx
 # Initialize distributed kvstore in synchronous mode.
 kvstore_dist = mx.kv.create("dist_sync")
 
+# Obtain the total number of training nodes.
+num_all_workers = kvstore_dist.num_all_workers
+
 # Master worker enables bidirectional gradient sparsification on the global parameter server.
 if kvstore_dist.is_master_worker:
     kvstore_dist.set_gradient_compression({"type": "bsc", "threshold": 0.01})
 
-TODO.
+# Define local trainer to use Adam optimizer.
+optimizer = mx.optimizer.Adam(learning_rate=lr)
+trainer = Trainer(net.collect_params(), optimizer=optimizer)
+
+for epoch in range(num_epochs):
+    for _, batch in enumerate(train_iter):
+        # Perform forward and backward propagation to calculate gradients.
+        ...
+        # Synchronize gradients for gradient aggregation.
+        for idx, param in enumerate(net_params):
+            if param.grad_req == "null": continue
+            kvstore_dist.push(idx, param.grad(), priority=-idx)
+            kvstore_dist.pull(idx, param.grad(), priority=-idx)
+        # Use aggregated gradients to update local model parameters.
+        trainer.step(num_all_workers * batch_size)
+        # Put gradients to zero manually.
+        for param in net_params:
+            param.zero_grad()
 ```
 
-Remember to set the compression lower bound according to your deep neural networks as a Environment Variable.
+Note that gradient tensors are classified into large and tiny tensors based on their size, and only the large tensors will be sparsified for transmission. The threshold for classifying large and tiny tensors can be set through the environmental variable `MXNET_KVSTORE_SIZE_LOWER_BOUND`. For example:
 
 ```shell
-MXNET_KVSTORE_SIZE_LOWER_BOUND=200000
+MXNET_KVSTORE_SIZE_LOWER_BOUND = 200000
 ```
+
+The demo code can be found in [`examples/cnn_bsc.py`](https://github.com/INET-RC/GeoMX/blob/main/examples/cnn_bsc.py). You can run this demo by simply `bash scripts/xpu/run_bisparse_compression.sh`, where `xpu` should be `cpu` or `gpu`.
 
 ### DGT
 
