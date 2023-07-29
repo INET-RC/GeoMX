@@ -15,9 +15,16 @@ Next, let's delve into each optimization technique in brief:
 4. **TSEngine<sup>3</sup>**: To solve the communication in-cast issue typically associated with centralized parameter servers, GeoMX incorporates TSEngine, an adaptive communication scheduler designed for efficient communication overlay in WANs. TSEngine dynamically optimizes the topology overlay and communication logic among the training nodes in response to real-time network conditions. This adaptive scheduler shows significant advantages over existing communication patterns in terms of system efficiency, communication, as well as scalability. (Refer to [this paper](https://drive.google.com/file/d/1ELfApVoCA8WCdOe3iBe-VreLJCSD7r8r/view) for more details and [this repo](https://github.com/zhouhuaman/TSEngine) for individual use.)
 5. **Priority-based Parameter Propagation (P3):** In conventional implementations, the gradient synchronization at round $r$ does not overlap with the forward propagation at round $r+1$, because the forward propagation relies on the completion of gradient synchronization. To improve system efficiency, GeoMX integrates the P3 scheduler, which prioritizes the transmission of shallow-layer gradients. This setup enables overlapping between forward propagation and gradient synchronization, allowing earlier execution of forward propagation for the next round, thereby accelerating distributed training. (See [this paper](https://arxiv.org/pdf/1905.03960.pdf) for more details and [this repo](https://github.com/anandj91/p3) for individual use.)
 
-### Synchronization Protocols
+### Synchronization Algorithms
 
-Furthermore, GeoMX supports:
+GeoMX supports two fundamental synchronization protocols: a fully-synchronous algorithm and a mixed-synchronous algorithm.
+1. **Fully-Synchronous Algorithm (FSA):** In this synchronous algorithm, training nodes synchronize their model data (can be parameters or gradients) each round, and both parameter server systems within and between data centers run in a synchronous parallel mode. This means all training nodes are synchronized to ensure a consistent model.
+
+> FSA is highly effective in maintaining model accuracy and consistency, but at the expense of training speed, as it necessitates waiting for all computations and communications to complete at every iteration.
+
+2. **Mixed-Synchronous Algorithm (MixedSync):** This algorithm is an asynchronous version of FSA, where the difference is that the parameter server system between data centers runs in an asynchronous parallel mode. This setup is particularly suitable for scenarios where intra-data center training nodes display high homogeneity, yet there is significant resource heterogeneity between different data centers. This asynchronous method resolves the problem of straggling data centers, thereby accelerating distributed training across WANs.
+
+> To alleviate the issue of stale gradients in asynchronous parallel operations, the global parameter server can be configured to use the DCASGD optimizer. This adjustment aids in improving training convergence while preserving model accuracy.
 
 1. **4 communication algorithms**, including fully-synchronous algorithm, mix-synchronous algorithm, HierFAVG-styled synchronous algorithm and DC-ASGD asynchronous algorithm. 
 
