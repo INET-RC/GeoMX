@@ -181,21 +181,24 @@ To enable DGT, set the following environment variables:
 ```shell
 ENABLE_DGT = 2  # whether to enable DGT, use value 2 for DGT instead of value 1
 DMLC_UDP_CHANNEL_NUM = 3  # number of transmission channels
-DMLC_K = 0.8 # compression ratio
-ADAPTIVE_K_FLAG = 1 # set value K adaptively
+DMLC_K = 0.8  # compression ratio
+ADAPTIVE_K_FLAG = 1  # set value K adaptively
 ```
 
 Use the demo script `scripts/xpu/run_dgt.sh` to try it!
 
 ### TSEngine
+To solve the communication in-cast issue typically associated with centralized parameter servers, GeoMX incorporates TSEngine, an adaptive communication scheduler designed for efficient communication overlay in WANs. TSEngine dynamically optimizes the topology overlay and communication logic among the training nodes in response to real-time network conditions. This adaptive scheduler shows significant advantages over existing communication patterns in terms of system efficiency, communication, as well as scalability. (Refer to [this paper](https://drive.google.com/file/d/1ELfApVoCA8WCdOe3iBe-VreLJCSD7r8r/view) for more details and [this repo](https://github.com/zhouhuaman/TSEngine) for individual use.)
 
-Only a few Environment Variables are needed here.
+Similar to DGT, only a few environment variables are required to enable TSEngine:
 
 ```shell
-ENABLE_INTER_TS=0 # whether to enable locally
-ENABLE_INTRA_TS=0 # whether to enable globally
-MAX_GREED_RATE_TS=0.9
+ENABLE_INTER_TS = 1  # whether to enable TSEngine within the data center
+ENABLE_INTRA_TS = 1  # whether to enable TSEngine between data centers
+MAX_GREED_RATE_TS = 0.9  # perform exploration with a probability of 10%
 ```
+
+> We notice that some users may get stuck with TSEngine enabled. We are trying to reproduce and fix this bug. If you, unfortunately, encounter this issue, please try the [standalone version of TSEngine](https://github.com/zhouhuaman/TSEngine).
 
 ### P3
 
