@@ -4,8 +4,8 @@ This guidance describes the environmental variables and hyperparameters needed t
 ## Synchronization Algorithms
 GeoMX currently supports two fundamental synchronization algorithms, i.e., the fully-synchronous algorithm, the mixed-synchronous algorithm, and an advanced algorithm, i.e., hierarchical frequency aggregation.
 
-### Fully Synchronous Algorithm
-Fully Synchronous Algorithm (FSA) is the default strategy for model synchronization. In this synchronous algorithm, training nodes synchronize their model data (can be parameters or gradients) each round, and both parameter server systems within and between data centers run in a synchronous parallel mode. All training nodes are synchronized to ensure a consistent model. However, this comes at the expense of training speed, as it requires waiting for all computations and communications to complete at every iteration.
+### Fully-Synchronous Algorithm
+Fully-Synchronous Algorithm (FSA) is the default strategy for model synchronization. In this synchronous algorithm, training nodes synchronize their model data (can be parameters or gradients) each round, and both parameter server systems within and between data centers run in a synchronous parallel mode. All training nodes are synchronized to ensure a consistent model. However, this comes at the expense of training speed, as it requires waiting for all computations and communications to complete at every iteration.
 
 To use FSA, all that's required is to set `dist_sync` as a hyperparameter during the initialization of `kvstore`. For example:
 
@@ -30,17 +30,26 @@ for epoch in range(num_epochs):
             kvstore_dist.pull(idx, param.data(), priority=-idx)
 ```
 
-The demo code can be found in [`examples/cnn.py`](https://github.com/INET-RC/GeoMX/blob/main/examples/cnn.py). You can run this demo by simply `bash scripts/xpu/run_vanilla_hips.sh`, here `xpu` should be `cpu` or `gpu`.
+The demo code can be found in [`examples/cnn.py`](https://github.com/INET-RC/GeoMX/blob/main/examples/cnn.py). You can run this demo by simply `bash scripts/xpu/run_vanilla_hips.sh`, where `xpu` should be `cpu` or `gpu`.
 
-### Mixed-synchronous Algorithm
+### Mixed-Synchronous Algorithm
+Mixed-Synchronous Algorithm (MixedSync) is an asynchronous version of FSA, where the difference is that the parameter server system between data centers runs in an asynchronous parallel mode. This setup is particularly suitable for scenarios where intra-data center training nodes display high homogeneity, yet there is significant resource heterogeneity between different data centers. This asynchronous method resolves the problem of straggling data centers, thereby accelerating distributed training across WANs.
 
-Likewise, create a `dist_async` KVStore.
+To use MixedSync, all that's required is to set `dist_async` instead of `dist_sync` when initializing `kvstore`. The rest of the setup remains the same:
 
 ```python
 import mxnet as mx
 
 kvstore_dist = mx.kv.create("dist_async")
 ```
+
+Alternatively, you can enable MixedSync by using the `--mixed-sync` option in our provided python script:
+
+```shell
+python examples/cnn.py --mixed-sync
+```
+
+You can also run this demo by executing `bash scripts/xpu/run_mixed_sync.sh`, where `xpu` should be `cpu` or `gpu`.
 
 ### HierFAVG Synchronous Algorithm
 
