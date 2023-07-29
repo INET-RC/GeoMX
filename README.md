@@ -28,7 +28,7 @@ GeoMX supports two fundamental synchronization algorithms: a fully-synchronous a
 
 Building upon the two aforementioned fundamental algorithms, GeoMX also offers two advanced synchronization algorithms. These two advanced algorithms are specifically designed to address the challenges of bandwidth scarcity and resource heterogeneity in WANs.
 
-3. **Hierarchical FedAvg (HierFAVG):** 
+3. **Hierarchical Frequency Aggregation (HFA):** Inspired by [this paper](https://ieeexplore.ieee.org/abstract/document/9148862), our HFA algorithm first performs $K_1$ steps of local updates at the training nodes, followed by $K_2$ steps of synchronizations at the local parameter server. Finally, a global synchronization is performed at the global parameter server. This approach effectively reduces the frequency of model synchronization across data centers, thereby boosting distributed training.
 
 1. **4 communication algorithms**, including fully-synchronous algorithm, mix-synchronous algorithm, HierFAVG-styled synchronous algorithm and DC-ASGD asynchronous algorithm. 
 
