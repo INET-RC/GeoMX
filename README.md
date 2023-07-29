@@ -164,7 +164,7 @@ cd GeoMX/scripts/gpu && bash run_vanilla_hips.sh
 * **Zhou, Huaman** - *Initial work with equal contribution* - [Homepage](https://github.com/zhouhuaman)
 * **Cai, Weibo** - *Initial work with equal contribution* - [Homepage](https://github.com/CaiWeibo)
 * **Yu, Hongfang** - *Project instructor* - [Homepage](https://scholar.google.com/citations?user=GmEdMqwAAAAJ&hl=en&oi=ao)
-* Other contributors: Cai, Qingqing; Wang, Jigang; Zhang, Zhihao.
+* Other contributors: Cai, Qingqing; Wang, Jigang; Zhang, Zhihao; AND YOU.
 
 ## Cite Us
 If this repo is helpful to you, please kindly cite us:
