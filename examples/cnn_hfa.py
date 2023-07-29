@@ -18,8 +18,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import time
 import os
+import time
 import mxnet as mx
 import argparse
 import logging
@@ -50,6 +50,8 @@ def main():
     assert use_hfa == 1, 'MXNET_KVSTORE_USE_HFA is not properly set.'
     assert period_k1 >= 1, 'MXNET_KVSTORE_HFA_K1 is not properly set.'
     assert period_k2 >= 1, 'MXNET_KVSTORE_HFA_K2 is not properly set.'
+    enable_tsengine = int(os.getenv('ENABLE_INTER_TS')) \
+                          or int(os.getenv('ENABLE_INTRA_TS'))
     data_type = "mnist"
     data_dir = "/root/data"
     shape = (batch_size, 1, 28, 28)
@@ -127,9 +129,12 @@ def main():
                         continue
                     kvstore_dist.push(idx, param.data() / num_local_workers, priority=-idx)
                     kvstore_dist.pull(idx, param.data(), priority=-idx)
-                mx.nd.waitall()
+                    if enable_tsengine: mx.nd.waitall()
 
-                # run evaluation
+            mx.nd.waitall()
+            
+            # run evaluation
+            if global_iters % (period_k1 * period_k2) == 0:
                 test_acc = eval_acc(test_iter, net, ctx)
                 print("[Time %.3f][Epoch %d][Iteration %d] Test Acc %.4f"
                       % (time.time() - begin_time, epoch, global_iters, test_acc))
