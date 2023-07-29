@@ -218,7 +218,7 @@ In conventional implementations, the gradient synchronization at round $r$ does 
 To enable P3, only one environment variable is required:
 
 ```shell
-ENABLE_P3 = 0  # whether to enable P3
+ENABLE_P3 = 1  # whether to enable P3
 ```
 
 Use the demo script `scripts/xpu/run_p3.sh` to try it!
