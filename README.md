@@ -5,7 +5,9 @@ GeoMX employs the [Hierarchical Parameter Server (HiPS)](https://www.zte.com.cn/
 
 But it's far from enough, given the often limited and varied network conditions in WANs, distributed training across data centers can potentially create communication bottlenecks. To mitigate these issues, GeoMX employs a variety of optimization techniques. These include gradient sparsification, mixed-precision quantization, advanced transmission protocols, synchronization algorithms, flow scheduling, and priority scheduling, among others (e.g., overlay scheduling, currently in development). These techniques comprehensively tackle communication issues, further enhancing the efficiency and robustness of distributed machine learning training in GeoMX.
 
-**TODO:** To be updated.
+Next, let's delve into each optimization technique in brief:
+
+1. **[Bidirectional Gradient Sparsification](https://www.zte.com.cn/content/dam/zte-site/res-www-zte-com-cn/mediares/magazine/publication/com_cn/article/202005/cn202005004.pdf):** Traditional approaches such as [Deep Gradient Compression](https://arxiv.org/pdf/1712.01887.pdf) sparsify the pushed gradient tensors. For further compression, we also sparsify the pulled (aggregated) gradient tensors rather than pulling full parameters. This technique is enabled between the global parameter server and the intra-domain parameter servers of different data centers.
 
 These include Bilateral Sparse Compression (BSC) and Differential Gradient Transmission (DGT) for efficient gradient communication, TSEngine for adaptive scheduling in parameter server systems across DML-WANs, and P3 for overlapping computation and parameter synchronization.
 
