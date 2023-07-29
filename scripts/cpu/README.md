@@ -5,7 +5,8 @@ This folder contains some scripts for running examples in <code>examples/</code>
 3. To try the **Hierarchical Frequency Aggregation** algorithm (i.e., **HFA**), run <code>bash run_hfa_sync.sh</code>
 4. To try the **Bidirectional Gradient Compression** technique (i.e., **Bi-Sparse Compression** or **BSC**), run <code>bash run_bisparse_compression.sh</code>
 5. To try the **Differentiated Gradient Transmission** protocol (i.e., **DGT**), run <code>bash run_dgt.sh</code>
-6. To try **Priority-based Parameter Propagation** scheduler (i.e., **P3**), run <code>bash run_p3.sh</code>
+6. To try the **Priority-based Parameter Propagation** scheduler (i.e., **P3**), run <code>bash run_p3.sh</code>
+7. To try the **TSEngine** scheduler, run <code>bash run_tsengine.sh</code>
 
 These scripts will start 12 nodes, including: 
 
