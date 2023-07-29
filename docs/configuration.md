@@ -200,10 +200,13 @@ MAX_GREED_RATE_TS = 0.9  # perform exploration with a probability of 10%
 
 > We notice that some users may get stuck with TSEngine enabled. We are trying to reproduce and fix this bug. If you, unfortunately, encounter this issue, please try the [standalone version of TSEngine](https://github.com/zhouhuaman/TSEngine).
 
-### P3
+### Priority-based Parameter Propagation
+In conventional implementations, the gradient synchronization at round $r$ does not overlap with the forward propagation at round $r+1$, because the forward propagation relies on the completion of gradient synchronization. To improve system efficiency, GeoMX integrates the Priority-based Parameter Propagation (P3) scheduler, which prioritizes the transmission of shallow-layer gradients. This setup enables overlapping between forward propagation and gradient synchronization, allowing earlier execution of forward propagation for the next round, thereby accelerating distributed training. (See [this paper](https://arxiv.org/pdf/1905.03960.pdf) for more details and [this repo](https://github.com/anandj91/p3) for individual use.)
 
-Only an Environment Variables are needed here.
+To enable P3, only one environment variable is required:
 
 ```shell
-ENABLE_P3=0 # whether to enable P3
+ENABLE_P3 = 0  # whether to enable P3
 ```
+
+Use the demo script `scripts/xpu/run_p3.sh` to try it!
