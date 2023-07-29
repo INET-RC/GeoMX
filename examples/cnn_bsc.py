@@ -18,10 +18,6 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""
-cnn_bsc.py contains code that trains a simple network with BSC.
-"""
-
 import time
 import mxnet as mx
 import argparse
