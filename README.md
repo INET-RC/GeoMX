@@ -1,4 +1,4 @@
-# GeoMX: Fast and unified distributed system for training machine learning algorithms over geographical data centers
+# GeoMX: Fast and unified distributed system for training ML algorithms over geographical data centers
 
 ## Table of Contents
 - [Introduction](#introduction)
