@@ -1,6 +1,8 @@
-## Communication algorithms
+# Configuration Guide
+This guidance describes the environmental variables and hyperparameters needed to launch each optimization technique in our GeoMX system.
 
-As mentioned before, GeoMX supports 4 communication algorithms, including fully-synchronous algorithm, mix-synchronous algorithm, HierFAVG-styled synchronous algorithm and DC-ASGD asynchronous algorithm. Let's first look into two basic algorithms: fully-synchronous algorithm and mix-synchronous algorithm. The main difference is whether `Global Server` and `Servers` communicate in a synchronous way or not, while `Server` and `Workers` are always communicating synchronously within.
+## Synchronization Algorithms
+GeoMX currently supports two fundamental synchronization algorithms, i.e., the fully-synchronous algorithm, the mixed-synchronous algorithm, and an advanced algorithm, i.e., hierarchical frequency aggregation.
 
 ### Fully-synchronous Algorithm
 
