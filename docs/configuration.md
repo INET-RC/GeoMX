@@ -127,10 +127,19 @@ Given the often limited and varied network conditions in WANs, distributed train
 ### Bidirectional Gradient Sparsification
 Traditional approaches such as [Deep Gradient Compression](https://arxiv.org/pdf/1712.01887.pdf) sparsify the pushed gradient tensors. For further compression, we also sparsify the pulled (aggregated) gradient tensors rather than pulling full parameters. This technique is enabled between the global parameter server and the intra-domain parameter servers of different data centers. (Refer to [this paper](https://www.zte.com.cn/content/dam/zte-site/res-www-zte-com-cn/mediares/magazine/publication/com_cn/article/202005/cn202005004.pdf) for more details.)
 
-In `.py` files, define the correct gradient compression type and an appropriate compression ratio.
+To enable bidirectional gradient sparsification, define it in `kvstore_dist.set_gradient_compression` and set the compression ratio:
 
 ```python
-kvstore_dist.set_gradient_compression({"type": "bsc", "threshold": ratio})
+import mxnet as mx
+
+# Initialize distributed kvstore in synchronous mode.
+kvstore_dist = mx.kv.create("dist_sync")
+
+# Master worker enables bidirectional gradient sparsification on the global parameter server.
+if kvstore_dist.is_master_worker:
+    kvstore_dist.set_gradient_compression({"type": "bsc", "threshold": 0.01})
+
+TODO.
 ```
 
 Remember to set the compression lower bound according to your deep neural networks as a Environment Variable.
