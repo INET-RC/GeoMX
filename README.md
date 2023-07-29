@@ -7,7 +7,7 @@
 
 ## Table of Contents
 - [Introduction](#introduction)
-- [Installation Guidance](#installation)
+- [Installation Guidance](#installation-guidance)
   - [1. Build from Source Code](#1-build-from-source-code)
   - [2. Build from Dockerfile](#2-build-from-dockerfile)
   - [3. Download Pre-built Docker Image from DockerHub](#3-download-pre-built-docker-image-from-dockerhub)
