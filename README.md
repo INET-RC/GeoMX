@@ -32,8 +32,6 @@ Building upon the two aforementioned fundamental algorithms, GeoMX also offers t
 
 4. **ESync<sup>4</sup>:** Applying asynchronous algorithms to strongly heterogeneous clusters can lead to severe stale gradient issues. To address this, we can adopt an optimized algorithm known as ESync. ESync is a synchronous parallel algorithm designed to save stragglers under conditions of strong resource heterogeneity. It introduces a state server to orchestrate the local iteration steps of each training node, in order to balance their reach-server time (including computational and transmission time). (To be integrated, refer to [this paper](https://drive.google.com/file/d/1bvK0EeO5vjkXveU_ccBp4Uxl-qmbmcfn/view) for more details and [this repo](https://github.com/Lizonghang/ESync) for individual use.)
 
-(6 categories) **25 machine learning algorithms**, including 9 gradient descent algorithms, 7 ensemble learning algorithms, 3 support vector algorithms, 2 MapReduce algorithms, 2 online learning algorithms, 2 incremental learning algorithms.
-
 ## Installation
 
 GeoMX provides three methods for installation:
