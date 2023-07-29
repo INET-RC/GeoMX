@@ -1,3 +1,14 @@
+- [Introduction](#Introduction)
+- [Installation](#Installation)
+  - [1. Build from Source Code](#1-Build-from-Source-Code)
+  - [2. Build from Dockerfile](#2-Build-from-Dockerfile)
+  - [3. Download Pre-built Docker Image from DockerHub](#3-Download-Pre-built-Docker-Image-from-DockerHub)
+- [How to Use GeoMX?](#How-to-Use-GeoMX)
+- [Documentation](#Documentation)
+- [Contributors](#Contributors)
+- [Cite Us](#Cite-Us)
+- [References](#References)
+  
 ## Introduction
 GeoMX is an optimized distributed machine learning system that operates across multiple geographically dispersed data centers. Built upon the [MXNET](https://github.com/apache/mxnet) framework, GeoMX integrates several sophisticated optimization techniques to enhance its training efficiency. These strategic enhancements result in a significant performance boost compared to the original MXNET system, offering 20x acceleration under identical network bandwidth conditions. This superior efficiency propels GeoMX to the forefront of training systems used for geographically dispersed data centers, showcasing satisfying performance and effectiveness.
 
