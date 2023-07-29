@@ -122,9 +122,10 @@ The demo code can be found in [`examples/cnn_hfa.py`](https://github.com/INET-RC
 ## Communication Optimization Techniques
 Given the often limited and varied network conditions in WANs, distributed training across data centers can potentially create communication bottlenecks. To mitigate these issues, GeoMX employs a variety of optimization techniques. These include gradient sparsification, mixed-precision quantization, advanced transmission protocols, synchronization algorithms, flow scheduling, and priority scheduling, among others (e.g., overlay scheduling, currently in development). These techniques comprehensively tackle communication issues, further enhancing the efficiency and robustness of distributed machine learning training in GeoMX.
 
-> NOTE: Please try these optimized techniques with the default fully-synchronous mode.
+> NOTE: Please try these optimization techniques in the default fully-synchronous mode.
 
-### BSC
+### Bidirectional Gradient Sparsification
+Traditional approaches such as [Deep Gradient Compression](https://arxiv.org/pdf/1712.01887.pdf) sparsify the pushed gradient tensors. For further compression, we also sparsify the pulled (aggregated) gradient tensors rather than pulling full parameters. This technique is enabled between the global parameter server and the intra-domain parameter servers of different data centers. (Refer to [this paper](https://www.zte.com.cn/content/dam/zte-site/res-www-zte-com-cn/mediares/magazine/publication/com_cn/article/202005/cn202005004.pdf) for more details.)
 
 In `.py` files, define the correct gradient compression type and an appropriate compression ratio.
 
