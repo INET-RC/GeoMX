@@ -24,7 +24,7 @@ GeoMX supports two fundamental synchronization protocols: a fully-synchronous al
 
 2. **Mixed-Synchronous Algorithm (MixedSync):** This algorithm is an asynchronous version of FSA, where the difference is that the parameter server system between data centers runs in an asynchronous parallel mode. This setup is particularly suitable for scenarios where intra-data center training nodes display high homogeneity, yet there is significant resource heterogeneity between different data centers. This asynchronous method resolves the problem of straggling data centers, thereby accelerating distributed training across WANs.
 
-> To alleviate the issue of stale gradients in asynchronous parallel operations, the global parameter server can be configured to use the DCASGD optimizer. This adjustment aids in improving training convergence while preserving model accuracy.
+> To alleviate the issue of stale gradients in asynchronous parallel operations, the global parameter server can be configured to use the [DCASGD](http://proceedings.mlr.press/v70/zheng17b/zheng17b.pdf) optimizer. This adjustment aids in improving training convergence while preserving model accuracy.
 
 1. **4 communication algorithms**, including fully-synchronous algorithm, mix-synchronous algorithm, HierFAVG-styled synchronous algorithm and DC-ASGD asynchronous algorithm. 
 
