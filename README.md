@@ -1,7 +1,6 @@
 # GeoMX: Fast and unified distributed system for training ML algorithms over geographical data centers
 
-[![GitHub stars](https://img.shields.io/github/stars/INET-RC/GeoMX)](https://img.shields.io/github/stars/INET-RC/GeoMX)
-
+[![GitHub stars](https://img.shields.io/github/stars/INET-RC/GeoMX)](https://img.shields.io/github/stars/INET-RC/GeoMX) [![GitHub license](https://img.shields.io/github/license/INET-RC/GeoMX)](https://github.com/apache/mxnet/blob/master/LICENSE)
 
 ## Table of Contents
 - [Introduction](#introduction)
