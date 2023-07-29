@@ -17,7 +17,7 @@ Next, let's delve into each optimization technique in brief:
 
 ### Synchronization Algorithms
 
-GeoMX supports two fundamental synchronization protocols: a fully-synchronous algorithm and a mixed-synchronous algorithm.
+GeoMX supports two fundamental synchronization algorithms: a fully-synchronous algorithm and a mixed-synchronous algorithm.
 1. **Fully-Synchronous Algorithm (FSA):** In this synchronous algorithm, training nodes synchronize their model data (can be parameters or gradients) each round, and both parameter server systems within and between data centers run in a synchronous parallel mode. This means all training nodes are synchronized to ensure a consistent model.
 
 > FSA is highly effective in maintaining model accuracy and consistency, but at the expense of training speed, as it necessitates waiting for all computations and communications to complete at every iteration.
@@ -25,6 +25,10 @@ GeoMX supports two fundamental synchronization protocols: a fully-synchronous al
 2. **Mixed-Synchronous Algorithm (MixedSync):** This algorithm is an asynchronous version of FSA, where the difference is that the parameter server system between data centers runs in an asynchronous parallel mode. This setup is particularly suitable for scenarios where intra-data center training nodes display high homogeneity, yet there is significant resource heterogeneity between different data centers. This asynchronous method resolves the problem of straggling data centers, thereby accelerating distributed training across WANs.
 
 > To alleviate the issue of stale gradients in asynchronous parallel operations, the global parameter server can be configured to use the [DCASGD](http://proceedings.mlr.press/v70/zheng17b/zheng17b.pdf) optimizer. This adjustment aids in improving training convergence while preserving model accuracy.
+
+Building upon the two aforementioned fundamental algorithms, GeoMX also offers two advanced synchronization algorithms. These two advanced algorithms are specifically designed to address the challenges of bandwidth scarcity and resource heterogeneity in WANs.
+
+3. **Hierarchical FedAvg (HierFAVG):** 
 
 1. **4 communication algorithms**, including fully-synchronous algorithm, mix-synchronous algorithm, HierFAVG-styled synchronous algorithm and DC-ASGD asynchronous algorithm. 
 
