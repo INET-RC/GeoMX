@@ -47,8 +47,8 @@ def main():
     is_dcasgd = args.dcasgd
     split_by_class = args.split_by_class
     ctx = mx.cpu() if args.cpu else try_gpu()
-    enable_tsengine = int(os.getenv('ENABLE_INTER_TS')) \
-                          or int(os.getenv('ENABLE_INTRA_TS'))
+    enable_tsengine = int(os.getenv('ENABLE_INTER_TS', 0)) \
+                          or int(os.getenv('ENABLE_INTRA_TS', 0))
     data_type = "mnist"
     data_dir = "/root/data"
     shape = (batch_size, 1, 28, 28)
