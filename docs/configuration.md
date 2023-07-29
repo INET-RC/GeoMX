@@ -212,6 +212,8 @@ MAX_GREED_RATE_TS = 0.9  # perform exploration with a probability of 10%
 
 Use the demo script `scripts/xpu/run_tsengine.sh` to try it!
 
+> If `ENABLE_INTER_TS` is used, then TSEngine is enabled across data centers. Instead, if `ENABLE_INTRA_TS` is used, then TSEngine is enabled inside the data center. In this example, both `ENABLE_INTER_TS` and `ENABLE_INTRA_TS` are enabled, but we can also choose to enable only one. 
+
 ### Priority-based Parameter Propagation
 In conventional implementations, the gradient synchronization at round $r$ does not overlap with the forward propagation at round $r+1$, because the forward propagation relies on the completion of gradient synchronization. To improve system efficiency, GeoMX integrates the Priority-based Parameter Propagation (P3) scheduler, which prioritizes the transmission of shallow-layer gradients. This setup enables overlapping between forward propagation and gradient synchronization, allowing earlier execution of forward propagation for the next round, thereby accelerating distributed training. (See [this paper](https://arxiv.org/pdf/1905.03960.pdf) for more details and [this repo](https://github.com/anandj91/p3) for individual use.)
 
