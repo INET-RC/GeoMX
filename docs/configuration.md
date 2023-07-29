@@ -4,15 +4,33 @@ This guidance describes the environmental variables and hyperparameters needed t
 ## Synchronization Algorithms
 GeoMX currently supports two fundamental synchronization algorithms, i.e., the fully-synchronous algorithm, the mixed-synchronous algorithm, and an advanced algorithm, i.e., hierarchical frequency aggregation.
 
-### Fully-synchronous Algorithm
+### Fully Synchronous Algorithm
+Fully Synchronous Algorithm (FSA) is the default strategy for model synchronization. In this synchronous algorithm, training nodes synchronize their model data (can be parameters or gradients) each round, and both parameter server systems within and between data centers run in a synchronous parallel mode. All training nodes are synchronized to ensure a consistent model. However, this comes at the expense of training speed, as it requires waiting for all computations and communications to complete at every iteration.
 
-Simply creating a `dist_sync` KVStore will make it.
+To use FSA, all that's required is to set `dist_sync` as a hyperparameter during the initialization of `kvstore`. For example:
 
 ```python
 import mxnet as mx
 
+# Initialize distributed kvstore in synchronous mode.
 kvstore_dist = mx.kv.create("dist_sync")
+
+# Master worker sets the optimizer of the global parameter server to Adam.
+if kvstore_dist.is_master_worker:
+    kvstore_dist.set_optimizer(mx.optimizer.Adam(learning_rate=lr))
+
+for epoch in range(num_epochs):
+    for _, batch in enumerate(train_iter):
+        # Perform forward and backward propagation to calculate gradients.
+        ...
+        # Synchronize gradients to obtain updated parameters.
+        for idx, param in enumerate(net_params):
+            if param.grad_req == "null": continue
+            kvstore_dist.push(idx, param.grad(), priority=-idx)
+            kvstore_dist.pull(idx, param.data(), priority=-idx)
 ```
+
+> The code can be found in `examples/`
 
 ### Mixed-synchronous Algorithm
 
