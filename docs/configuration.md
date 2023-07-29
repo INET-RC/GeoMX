@@ -174,16 +174,18 @@ The demo code can be found in [`examples/cnn_bsc.py`](https://github.com/INET-RC
 This technique quantifies the parameter and gradient tensors set for transmission into FP16 format, which effectively halves the data traffic volume over both LANs and WANs. However, if bidirectional gradient sparsification is enabled, the communication between the intra-domain parameter servers and the global parameter server remains in FP32 format. This precaution is taken to minimize the loss of crucial information and avoid significant degradation to model performance.
 
 ### Differential Gradient Transmission
-This advanced transmission protocol is optimized for distributed machine learning tasks. Leveraging the tolerance of gradient descent algorithms towards partial parameter loss, this protocol transfers gradients across multiple channels, each with distinct levels of reliability and priority, contingent on their respective contributions to model convergence. Through these prioritized channels, critical gradients receive precedence in transmission, while other non-important gradients are transmitted with lower priority and reliability. This helps to reduce tail latency and thus reduce the end-to-end transmission delay of parameter synchronization. (Refer to [this paper](https://drive.google.com/file/d/1IbmpFybX_qXZM2g_8BrcD9IF080qci94/view) for more details and [this repo](https://github.com/zhouhuaman/dgt) for individual use.)
+Differential Gradient Transmission (DGT) is an optimized transmission protocol for distributed machine learning tasks. Leveraging the tolerance of gradient descent algorithms towards partial parameter loss, this protocol transfers gradients across multiple channels, each with distinct levels of reliability and priority, contingent on their respective contributions to model convergence. Through these prioritized channels, critical gradients receive precedence in transmission, while other non-important gradients are transmitted with lower priority and reliability. This helps to reduce tail latency and thus reduce the end-to-end transmission delay of parameter synchronization. (Refer to [this paper](https://drive.google.com/file/d/1IbmpFybX_qXZM2g_8BrcD9IF080qci94/view) for more details and [this repo](https://github.com/zhouhuaman/dgt) for individual use.)
 
-Only a few Environment Variables are needed here.
+To enable DGT, set the following environment variables:
 
 ```shell
-ENABLE_DGT=0 # whether to enable DGT. Attention, 2 is for enabled, not 1
-DMLC_UDP_CHANNEL_NUM=3 # Channels
-DMLC_K=0.8 # compression ratio
-ADAPTIVE_K_FLAG=1 # set K adaptively
+ENABLE_DGT = 2  # whether to enable DGT, use value 2 for DGT instead of value 1
+DMLC_UDP_CHANNEL_NUM = 3  # number of transmission channels
+DMLC_K = 0.8 # compression ratio
+ADAPTIVE_K_FLAG = 1 # set value K adaptively
 ```
+
+Use the demo script `scripts/xpu/run_dgt.sh` to try it!
 
 ### TSEngine
 
