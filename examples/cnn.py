@@ -18,11 +18,6 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""
-cnn.py contains code that trains a simple network with fully-synchronous algorithm,
-mix-synchronous algorithm or DC-ASGD asynchronous algorithm
-"""
-
 import time
 import mxnet as mx
 import argparse
