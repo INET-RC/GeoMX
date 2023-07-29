@@ -7,7 +7,7 @@
 
 ## Table of Contents
 - [Introduction](#introduction)
-- [Installation](#installation)
+- [Installation Guidance](#installation)
   - [1. Build from Source Code](#1-build-from-source-code)
   - [2. Build from Dockerfile](#2-build-from-dockerfile)
   - [3. Download Pre-built Docker Image from DockerHub](#3-download-pre-built-docker-image-from-dockerhub)
@@ -50,7 +50,7 @@ Building upon the two aforementioned fundamental algorithms, GeoMX also offers t
 
 4. **ESync<sup>4</sup>:** Applying asynchronous algorithms to strongly heterogeneous clusters can lead to severe stale gradient issues. To address this, we can adopt an optimized algorithm known as ESync. ESync is a synchronous parallel algorithm designed to save stragglers under conditions of strong resource heterogeneity. It introduces a state server to orchestrate the local iteration steps of each training node, in order to balance their reach-server time (including computational and transmission time). (To be integrated, refer to [this paper](https://drive.google.com/file/d/1bvK0EeO5vjkXveU_ccBp4Uxl-qmbmcfn/view) for more details and [this repo](https://github.com/Lizonghang/ESync) for individual use.)
 
-## Installation
+## Installation Guidance
 
 GeoMX provides three methods for installation:
 1. Build it from the source code.
@@ -171,7 +171,7 @@ If this repo is helpful to you, please kindly cite us:
 
 ```bibtex
 @misc{li2020geomx,
-  author = {Li, Zonghang and Zhang, Zhaofeng and Zhou, Huaman and Cai, Weibo},
+  author = {Li, Zonghang and Zhang, Zhaofeng and Zhou, Huaman and Cai, Weibo and Yu, Hongfang},
   title = {GeoMX: Fast and unified distributed system for training machine learning algorithms over geographical data centers.},
   year = {2020},
   howpublished = {GitHub},
