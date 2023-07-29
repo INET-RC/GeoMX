@@ -36,7 +36,7 @@ Next, let's delve into each optimization technique in brief:
 ### Synchronization Algorithms
 
 GeoMX supports two fundamental synchronization algorithms: a fully-synchronous algorithm and a mixed-synchronous algorithm.
-1. **Fully-Synchronous Algorithm (FSA):** In this synchronous algorithm, training nodes synchronize their model data (can be parameters or gradients) each round, and both parameter server systems within and between data centers run in a synchronous parallel mode. This means all training nodes are synchronized to ensure a consistent model.
+1. **Fully-Synchronous Algorithm (FSA):** In this synchronous algorithm, training nodes synchronize their model data (can be parameters or gradients) each round, and both parameter server systems within and between data centers run in a synchronous parallel mode. This means all training nodes are synchronized to ensure a consistent model. (Default)
 
 > FSA is highly effective in maintaining model accuracy and consistency, but at the expense of training speed, as it necessitates waiting for all computations and communications to complete at every iteration.
 
