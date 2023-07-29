@@ -51,9 +51,8 @@ python examples/cnn.py --mixed-sync
 
 You can also run this demo by executing `bash scripts/xpu/run_mixed_sync.sh`, where `xpu` should be `cpu` or `gpu`.
 
-### HierFAVG Synchronous Algorithm
-
-HierFAVG-styled Synchronous Algorithm is generally identical with Fully-synchronous Algorithm while the former adds a few loops before an local iteration or a global iteration.
+### Hierarchical Frequency Aggregation
+Inspired by [this paper](https://ieeexplore.ieee.org/abstract/document/9148862), our HFA algorithm first performs $K_1$ steps of local updates at the training nodes, followed by $K_2$ steps of synchronizations at the local parameter server. Finally, a global synchronization is performed at the global parameter server. This approach effectively reduces the frequency of model synchronization across data centers, thereby boosting distributed training.
 
 ```python
 import mxnet as mx
