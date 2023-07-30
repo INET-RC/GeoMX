@@ -54,17 +54,15 @@ def main():
     shape = (batch_size, 1, 28, 28)
 
     net = mx.gluon.nn.Sequential()
-    net.add(mx.gluon.nn.Conv2D(channels=6, kernel_size=5, activation='relu'),
+    net.add(mx.gluon.nn.Conv2D(channels=32, kernel_size=5, activation='relu'),
             mx.gluon.nn.MaxPool2D(pool_size=2, strides=2),
-            mx.gluon.nn.Conv2D(channels=16, kernel_size=5, activation='relu'),
+            mx.gluon.nn.Conv2D(channels=64, kernel_size=5, activation='relu'),
             mx.gluon.nn.MaxPool2D(pool_size=2, strides=2),
-            mx.gluon.nn.Dense(120, activation='relu'),
-            mx.gluon.nn.Dense(84, activation='relu'),
+            mx.gluon.nn.Dense(1024, activation='relu'),
+            mx.gluon.nn.Dense(1024, activation='relu'),
             mx.gluon.nn.Dense(10))
     net.initialize(force_reinit=True, ctx=ctx, init=mx.init.Xavier())
     net(mx.nd.random.uniform(shape=shape, ctx=ctx))
-
-    loss = mx.gluon.loss.SoftmaxCrossEntropyLoss()
 
     if is_mixed_sync:
         kvstore_dist = mx.kv.create("dist_async")
@@ -86,18 +84,16 @@ def main():
     # waiting for configurations to complete
     time.sleep(1)
 
+    loss = mx.gluon.loss.SoftmaxCrossEntropyLoss()
+
     params = list(net.collect_params().values())
     for idx, param in enumerate(params):
-        if param.grad_req == "null":
-            continue
         kvstore_dist.init(idx, param.data())
-        if is_master_worker:
-            continue
-        kvstore_dist.pull(idx, param.data(), priority=-idx)
+        if is_master_worker: continue
+        kvstore_dist.pull(idx, param.data())
     mx.nd.waitall()
     
-    if is_master_worker:
-        return
+    if is_master_worker: return
 
     train_iter, test_iter, _, _ = load_data(
         batch_size,
@@ -123,12 +119,10 @@ def main():
                 l.backward()
 
             for idx, param in enumerate(params):
-                if param.grad_req == "null":
-                    continue
+                if param.grad_req == "null": continue
                 kvstore_dist.push(idx, param.grad() / num_samples, priority=-idx)
                 kvstore_dist.pull(idx, param.data(), priority=-idx)
                 if enable_tsengine: mx.nd.waitall()
-
             mx.nd.waitall()
             
             # run evaluation

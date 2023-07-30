@@ -57,44 +57,39 @@ def main():
     shape = (batch_size, 1, 28, 28)
 
     net = mx.gluon.nn.Sequential()
-    net.add(mx.gluon.nn.Conv2D(channels=6, kernel_size=5, activation='relu'),
+    net.add(mx.gluon.nn.Conv2D(channels=32, kernel_size=5, activation='relu'),
             mx.gluon.nn.MaxPool2D(pool_size=2, strides=2),
-            mx.gluon.nn.Conv2D(channels=16, kernel_size=5, activation='relu'),
+            mx.gluon.nn.Conv2D(channels=64, kernel_size=5, activation='relu'),
             mx.gluon.nn.MaxPool2D(pool_size=2, strides=2),
-            mx.gluon.nn.Dense(120, activation='relu'),
-            mx.gluon.nn.Dense(84, activation='relu'),
+            mx.gluon.nn.Dense(1024, activation='relu'),
+            mx.gluon.nn.Dense(1024, activation='relu'),
             mx.gluon.nn.Dense(10))
     net.initialize(force_reinit=True, ctx=ctx, init=mx.init.Xavier())
     net(mx.nd.random.uniform(shape=shape, ctx=ctx))
 
-    loss = mx.gluon.loss.SoftmaxCrossEntropyLoss()
-
     kvstore_dist = mx.kv.create("dist_sync")
     is_master_worker = kvstore_dist.is_master_worker
-    adam_optimizer = mx.optimizer.Adam(learning_rate=learning_rate)
-    trainer = Trainer(net.collect_params(),
-                      optimizer=adam_optimizer,
-                      kvstore=None,
-                      update_on_kvstore=False)
-
     num_all_workers = kvstore_dist.num_all_workers
     num_local_workers = kvstore_dist.num_workers
     my_rank = kvstore_dist.rank
     # waiting for configurations to complete
     time.sleep(1)
 
+    adam_optimizer = mx.optimizer.Adam(learning_rate=learning_rate)
+    trainer = Trainer(net.collect_params(),
+                      optimizer=adam_optimizer,
+                      kvstore=None,
+                      update_on_kvstore=False)
+    loss = mx.gluon.loss.SoftmaxCrossEntropyLoss()
+
     params = list(net.collect_params().values())
     for idx, param in enumerate(params):
-        if param.grad_req == "null":
-            continue
         kvstore_dist.init(idx, param.data())
-        if is_master_worker:
-            continue
-        kvstore_dist.pull(idx, param.data(), priority=-idx)
+        if is_master_worker: continue
+        kvstore_dist.pull(idx, param.data())
     mx.nd.waitall()
     
-    if is_master_worker:
-        return
+    if is_master_worker: return
 
     train_iter, test_iter, _, _ = load_data(
         batch_size,
@@ -124,12 +119,10 @@ def main():
             if global_iters % period_k1 == 0:
                 # run synchronization
                 for idx, param in enumerate(params):
-                    if param.grad_req == "null":
-                        continue
+                    if param.grad_req == "null": continue
                     kvstore_dist.push(idx, param.data() / num_local_workers, priority=-idx)
                     kvstore_dist.pull(idx, param.data(), priority=-idx)
                     if enable_tsengine: mx.nd.waitall()
-
             mx.nd.waitall()
             
             # run evaluation
