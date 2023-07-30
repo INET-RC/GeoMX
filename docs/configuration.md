@@ -185,6 +185,44 @@ The demo code can be found in [`examples/cnn_bsc.py`](https://github.com/INET-RC
 ### Mixed-Precision Quantization
 This technique quantifies the parameter and gradient tensors set for transmission into FP16 format, which effectively halves the data traffic volume over both LANs and WANs. However, if bidirectional gradient sparsification is enabled, the communication between the intra-domain parameter servers and the global parameter server remains in FP32 format. This precaution is taken to minimize the loss of crucial information and avoid significant degradation to model performance.
 
+```python
+import os
+import mxnet as mx
+
+size_lower_bound = int(os.getenv('MXNET_KVSTORE_SIZE_LOWER_BOUND', 2e5))
+
+kvstore_dist = mx.kv.create("dist_sync")
+is_master_worker = kvstore_dist.is_master_worker
+if is_master_worker:
+    kvstore_dist.set_gradient_compression({"type": "bsc", "threshold": compression_ratio})
+
+for idx, param in enumerate(net_params):
+    init_buff = param.data() if param.data().size > size_lower_bound \
+        else param.data().astype('float16')
+    kvstore_dist.init(idx, init_buff)
+    if is_master_worker:  continue
+    kvstore_dist.pull(idx, init_buff)
+    param.set_data(init_buff.astype('float32'))
+
+for epoch in range(num_epochs):
+    for _, batch in enumerate(train_iter):
+        # Perform forward and backward propagation to calculate gradients.
+        ...
+        # Synchronize gradients for gradient aggregation.
+        for idx, param in enumerate(net_params):
+            if param.grad_req == "null": continue
+            grad_buff = param.grad() if param.grad().size > size_lower_bound \
+                else param.grad().astype('float16')
+            kvstore_dist.push(idx, grad_buff, priority=-idx)
+            kvstore_dist.pull(idx, grad_buff, priority=-idx)
+            param.grad()[:] = grad_buff.astype('float32')
+        # Use aggregated gradients to update local model parameters.
+        trainer.step(num_all_workers * batch_size)
+        # Put gradients to zero manually.
+        for param in net_params:
+            param.zero_grad()
+```
+
 ### Differential Gradient Transmission
 Differential Gradient Transmission (DGT) is an optimized transmission protocol for distributed machine learning tasks. Leveraging the tolerance of gradient descent algorithms towards partial parameter loss, this protocol transfers gradients across multiple channels, each with distinct levels of reliability and priority, contingent on their respective contributions to model convergence. Through these prioritized channels, critical gradients receive precedence in transmission, while other non-important gradients are transmitted with lower priority and reliability. This helps to reduce tail latency and thus reduce the end-to-end transmission delay of parameter synchronization. (Refer to [this paper](https://drive.google.com/file/d/1IbmpFybX_qXZM2g_8BrcD9IF080qci94/view) for more details and [this repo](https://github.com/zhouhuaman/dgt) for individual use.)
 
