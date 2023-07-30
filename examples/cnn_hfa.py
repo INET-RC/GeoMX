@@ -57,12 +57,12 @@ def main():
     shape = (batch_size, 1, 28, 28)
 
     net = mx.gluon.nn.Sequential()
-    net.add(mx.gluon.nn.Conv2D(channels=32, kernel_size=5, activation='relu'),
+    net.add(mx.gluon.nn.Conv2D(channels=16, kernel_size=5, activation='relu'),
             mx.gluon.nn.MaxPool2D(pool_size=2, strides=2),
-            mx.gluon.nn.Conv2D(channels=64, kernel_size=5, activation='relu'),
+            mx.gluon.nn.Conv2D(channels=32, kernel_size=5, activation='relu'),
             mx.gluon.nn.MaxPool2D(pool_size=2, strides=2),
-            mx.gluon.nn.Dense(1024, activation='relu'),
-            mx.gluon.nn.Dense(1024, activation='relu'),
+            mx.gluon.nn.Dense(256, activation='relu'),
+            mx.gluon.nn.Dense(128, activation='relu'),
             mx.gluon.nn.Dense(10))
     net.initialize(force_reinit=True, ctx=ctx, init=mx.init.Xavier())
     net(mx.nd.random.uniform(shape=shape, ctx=ctx))
