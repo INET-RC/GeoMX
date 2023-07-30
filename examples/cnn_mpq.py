@@ -65,34 +65,29 @@ def main():
     net.initialize(force_reinit=True, ctx=ctx, init=mx.init.Xavier())
     net(mx.nd.random.uniform(shape=shape, ctx=ctx))
 
-    loss = mx.gluon.loss.SoftmaxCrossEntropyLoss()
-
     kvstore_dist = mx.kv.create("dist_sync")
     is_master_worker = kvstore_dist.is_master_worker
     if is_master_worker:
         kvstore_dist.set_gradient_compression({"type": "bsc", "threshold": compression_ratio})
+    num_all_workers = kvstore_dist.num_all_workers
+    my_rank = kvstore_dist.rank
+    # waiting for configurations to complete
+    time.sleep(1)
 
     adam_optimizer = mx.optimizer.Adam(learning_rate=learning_rate)
     trainer = Trainer(net.collect_params(),
                       optimizer=adam_optimizer,
                       kvstore=None,
                       update_on_kvstore=False)
-
-    num_all_workers = kvstore_dist.num_all_workers
-    my_rank = kvstore_dist.rank
-    # waiting for configurations to complete
-    time.sleep(1)
+    loss = mx.gluon.loss.SoftmaxCrossEntropyLoss()
 
     params = list(net.collect_params().values())
     for idx, param in enumerate(params):
-        if param.grad_req == "null":
-            continue
         init_buff = param.data() if param.data().size > size_lower_bound \
             else param.data().astype('float16')
         kvstore_dist.init(idx, init_buff)
-        if is_master_worker:
-            continue
-        kvstore_dist.pull(idx, init_buff, priority=-idx)
+        if is_master_worker: continue
+        kvstore_dist.pull(idx, init_buff)
         param.set_data(init_buff.astype('float32'))
     mx.nd.waitall()
 
@@ -123,15 +118,13 @@ def main():
                 l.backward()
 
             for idx, param in enumerate(params):
-                if param.grad_req == "null":
-                    continue
+                if param.grad_req == "null": continue
                 grad_buff = param.grad() if param.grad().size > size_lower_bound \
                     else param.grad().astype('float16')
                 kvstore_dist.push(idx, grad_buff / num_samples, priority=-idx)
                 kvstore_dist.pull(idx, grad_buff, priority=-idx)
                 param.grad()[:] = grad_buff.astype('float32')
                 if enable_tsengine: mx.nd.waitall()
-
             mx.nd.waitall()
 
             trainer.step(num_all_workers)
