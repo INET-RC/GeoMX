@@ -5,6 +5,7 @@
     - [Hierarchical Frequency Aggregation](#hierarchical-frequency-aggregation)
   - [Communication Optimization Techniques](#communication-optimization-techniques)
     - [Bidirectional Gradient Sparsification](#bidirectional-gradient-sparsification)
+    - [Low-Precision Quantization](#low-precision-quantization)
     - [Mixed-Precision Quantization](#mixed-precision-quantization)
     - [Differential Gradient Transmission](#differential-gradient-transmission)
     - [TSEngine](#tsengine)
@@ -183,7 +184,9 @@ MXNET_KVSTORE_SIZE_LOWER_BOUND = 200000
 The demo code can be found in [`examples/cnn_bsc.py`](https://github.com/INET-RC/GeoMX/blob/main/examples/cnn_bsc.py). You can run this demo by simply `bash scripts/xpu/run_bisparse_compression.sh`, where `xpu` should be `cpu` or `gpu`.
 
 ### Low-Precision Quantization
-TODO.
+GeoMX also supports quantifying model data at lower precision for transmission, such as in FP16 format. In this scheme, GeoMX computes the model using FP32, but during transmission, it converts the model data tensor into FP16. Once the pulling data is received, GeoMX reverts it back into FP32 and continues model computing. This effectively halves the data traffic volume over both LANs and WANs.
+
+To quantify model data for transmission in FP16 format, we can simply convert the numerical precision of tensors in our Python code using `astype('float16')`:
 
 ```python
 import mxnet as mx
@@ -220,8 +223,12 @@ for epoch in range(num_epochs):
             param.zero_grad()
 ```
 
+The demo code is provided in [`examples/cnn_fp16.py`](https://github.com/INET-RC/GeoMX/blob/main/examples/cnn_fp16.py), we can run it using `bash scripts/xpu/run_fp16.sh`, where `xpu` should be `cpu` or `gpu`.
+
 ### Mixed-Precision Quantization
-This Mixed-Precision Quantization (MPQ) technique quantifies the parameter and gradient tensors set for transmission into FP16 format, which effectively halves the data traffic volume over both LANs and WANs. However, if bidirectional gradient sparsification is enabled, the communication between the intra-domain parameter servers and the global parameter server remains in FP32 format. This precaution is taken to minimize the loss of crucial information and avoid significant degradation to model performance.
+The technology of Mixed-Precision Quantization (MPQ) leverages both Bi-Sparse and FP16. In this scheme, tiny tensors are quantified into FP16 format for transmission, while large tensors persist in the FP32 format. Moreover, these large sensors will undergo a sparsification process before transmission. This precaution is taken to minimize the loss of crucial information and avoid significant degradation to model performance.
+
+For details on how to classify large and tiny tensors, please refer to the [instruction of Bi-Sparse](#bidirectional-gradient-sparsification). The demo code for using MPQ is given below:
 
 ```python
 import os
@@ -269,6 +276,8 @@ for epoch in range(num_epochs):
         for param in net_params:
             param.zero_grad()
 ```
+
+You can also find them in [`examples/cnn_mpq.py`](https://github.com/INET-RC/GeoMX/blob/main/examples/cnn_mpq.py) and run this demo by executing `scripts/xpu/run_mixed_precision.sh`, where `xpu` should be `cpu` or `gpu`.
 
 ### Differential Gradient Transmission
 Differential Gradient Transmission (DGT) is an optimized transmission protocol for distributed machine learning tasks. Leveraging the tolerance of gradient descent algorithms towards partial parameter loss, this protocol transfers gradients across multiple channels, each with distinct levels of reliability and priority, contingent on their respective contributions to model convergence. Through these prioritized channels, critical gradients receive precedence in transmission, while other non-important gradients are transmitted with lower priority and reliability. This helps to reduce tail latency and thus reduce the end-to-end transmission delay of parameter synchronization. (Refer to [this paper](https://drive.google.com/file/d/1IbmpFybX_qXZM2g_8BrcD9IF080qci94/view) for more details and [this repo](https://github.com/zhouhuaman/dgt) for individual use.)
