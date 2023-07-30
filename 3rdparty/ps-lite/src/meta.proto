@@ -17,7 +17,7 @@ message PBNode {
   //added by huaman
   repeated int32 udp_port = 5;
   // whether this node is created by failover
-  optional bool is_recovery = 6; //modified by huaman
+  optional bool is_recovery = 6;
   // the locally unique id of an customer
   optional int32 customer_id = 10;
 }
@@ -53,35 +53,27 @@ message PBMeta {
   optional bool push = 5;
   // whether or not it's for SimpleApp
   optional bool simple_app = 6 [default = false];
-//begin, added by huaman
-   //record msg's sender
-   optional int32 sender = 11;
-   //record msg's recver
-   optional int32 recver = 12;
-   //record the data's msg's first_key, used for calculate resender_key
-   optional int32 first_key = 13;
-   optional int32 seq = 14;
-   optional int32 seq_begin = 15;
-   optional int32 seq_end = 16;
-   optional int32 channel = 17;
-   optional int32 msg_type = 18;
-   optional int32 push_op = 19;
-   optional int32 val_bytes = 20;
-   optional int32 total_bytes = 21;
-   optional int32 keys_len = 22;
-   optional int32 vals_len = 23;
-   optional int32 lens_len = 24;
-   repeated float compr = 25;
-   optional int32 bits_num = 26;
-  //end, added by huaman
-  //added by vbc
-  optional int32 priority =27 [default = 0];
-  // add by cqq
+  //record msg's sender
+  optional int32 sender = 11;
+  //record msg's recver
+  optional int32 recver = 12;
+  //record the data's msg's first_key, used for calculate resender_key
+  optional int32 first_key = 13;
+  optional int32 seq = 14;
+  optional int32 seq_begin = 15;
+  optional int32 seq_end = 16;
+  optional int32 channel = 17;
+  optional int32 msg_type = 18;
+  optional int32 push_op = 19;
+  optional int32 val_bytes = 20;
+  optional int32 total_bytes = 21;
+  optional int32 keys_len = 22;
+  optional int32 vals_len = 23;
+  optional int32 lens_len = 24;
+  repeated float compr = 25;
+  optional int32 bits_num = 26;
+  optional int32 priority = 27 [default = 0];
   optional int32 key = 28;
   optional int32 version = 29;
-  //added by vbc
   optional int32 iters = 30;
-
-
-
 }
