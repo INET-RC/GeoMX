@@ -182,25 +182,21 @@ MXNET_KVSTORE_SIZE_LOWER_BOUND = 200000
 
 The demo code can be found in [`examples/cnn_bsc.py`](https://github.com/INET-RC/GeoMX/blob/main/examples/cnn_bsc.py). You can run this demo by simply `bash scripts/xpu/run_bisparse_compression.sh`, where `xpu` should be `cpu` or `gpu`.
 
-### Mixed-Precision Quantization
-This technique quantifies the parameter and gradient tensors set for transmission into FP16 format, which effectively halves the data traffic volume over both LANs and WANs. However, if bidirectional gradient sparsification is enabled, the communication between the intra-domain parameter servers and the global parameter server remains in FP32 format. This precaution is taken to minimize the loss of crucial information and avoid significant degradation to model performance.
+### Low-Precision Quantization
+TODO.
 
 ```python
-import os
 import mxnet as mx
 
-size_lower_bound = int(os.getenv('MXNET_KVSTORE_SIZE_LOWER_BOUND', 2e5))
-
+# Initialize distributed kvstore in synchronous mode.
 kvstore_dist = mx.kv.create("dist_sync")
 is_master_worker = kvstore_dist.is_master_worker
-if is_master_worker:
-    kvstore_dist.set_gradient_compression({"type": "bsc", "threshold": compression_ratio})
 
+# Initialize 16-bit kvstore space on parameter servers to store model parameters or gradients.
 for idx, param in enumerate(net_params):
-    init_buff = param.data() if param.data().size > size_lower_bound \
-        else param.data().astype('float16')
+    init_buff = param.data().astype('float16')
     kvstore_dist.init(idx, init_buff)
-    if is_master_worker:  continue
+    if is_master_worker: continue
     kvstore_dist.pull(idx, init_buff)
     param.set_data(init_buff.astype('float32'))
 
@@ -211,10 +207,61 @@ for epoch in range(num_epochs):
         # Synchronize gradients for gradient aggregation.
         for idx, param in enumerate(net_params):
             if param.grad_req == "null": continue
+            # Push / pull large tensors in 16 bits.
+            grad_buff = param.grad().astype('float16')
+            kvstore_dist.push(idx, grad_buff, priority=-idx)
+            kvstore_dist.pull(idx, grad_buff, priority=-idx)
+            # Convert received gradient tensors back to 32 bits.
+            param.grad()[:] = grad_buff.astype('float32')
+        # Use aggregated gradients to update local model parameters.
+        trainer.step(num_all_workers * batch_size)
+        # Put gradients to zero manually.
+        for param in net_params:
+            param.zero_grad()
+```
+
+### Mixed-Precision Quantization
+This Mixed-Precision Quantization (MPQ) technique quantifies the parameter and gradient tensors set for transmission into FP16 format, which effectively halves the data traffic volume over both LANs and WANs. However, if bidirectional gradient sparsification is enabled, the communication between the intra-domain parameter servers and the global parameter server remains in FP32 format. This precaution is taken to minimize the loss of crucial information and avoid significant degradation to model performance.
+
+```python
+import os
+import mxnet as mx
+
+# Define the threshold to classify large and tiny tensors, here, the threshold
+# is the same as that in Bidirectional Gradient Sparsification.
+size_lower_bound = int(os.getenv('MXNET_KVSTORE_SIZE_LOWER_BOUND', 2e5))
+
+# Initialize distributed kvstore in synchronous mode.
+kvstore_dist = mx.kv.create("dist_sync")
+is_master_worker = kvstore_dist.is_master_worker
+
+# Master worker enables bidirectional gradient sparsification on the global parameter server.
+if is_master_worker:
+    kvstore_dist.set_gradient_compression({"type": "bsc", "threshold": compression_ratio})
+
+# Initialize kvstore space on parameter servers to store model parameters or gradients.
+# Create 32-bit space for large tensors and 16-bit space for tiny tensors.
+for idx, param in enumerate(net_params):
+    init_buff = param.data() if param.data().size > size_lower_bound \
+        else param.data().astype('float16')
+    kvstore_dist.init(idx, init_buff)
+    if is_master_worker: continue
+    kvstore_dist.pull(idx, init_buff)
+    param.set_data(init_buff.astype('float32'))
+
+for epoch in range(num_epochs):
+    for _, batch in enumerate(train_iter):
+        # Perform forward and backward propagation to calculate gradients.
+        ...
+        # Synchronize gradients for gradient aggregation.
+        for idx, param in enumerate(net_params):
+            if param.grad_req == "null": continue
+            # Push / pull large tensors in 32 bits, but tiny tensors in 16 bits.
             grad_buff = param.grad() if param.grad().size > size_lower_bound \
                 else param.grad().astype('float16')
             kvstore_dist.push(idx, grad_buff, priority=-idx)
             kvstore_dist.pull(idx, grad_buff, priority=-idx)
+            # Convert received gradient tensors back to 32 bits.
             param.grad()[:] = grad_buff.astype('float32')
         # Use aggregated gradients to update local model parameters.
         trainer.step(num_all_workers * batch_size)
