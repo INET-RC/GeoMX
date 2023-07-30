@@ -64,10 +64,10 @@ def main():
             mx.gluon.nn.Dense(120, activation='relu'),
             mx.gluon.nn.Dense(84, activation='relu'),
             mx.gluon.nn.Dense(10))
-
-    loss = mx.gluon.loss.SoftmaxCrossEntropyLoss()
     net.initialize(force_reinit=True, ctx=ctx, init=mx.init.Xavier())
     net(mx.nd.random.uniform(shape=shape, ctx=ctx))
+
+    loss = mx.gluon.loss.SoftmaxCrossEntropyLoss()
 
     kvstore_dist = mx.kv.create("dist_sync")
     is_master_worker = kvstore_dist.is_master_worker
@@ -107,7 +107,6 @@ def main():
     )
     
     begin_time = time.time()
-    eval_time = 0
     global_iters = 1
 
     print(f"Start training on {num_all_workers} workers, my rank is {my_rank}.")
