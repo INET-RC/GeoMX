@@ -356,3 +356,30 @@ ENABLE_P3 = 1  # whether to enable P3
 ```
 
 Use the demo script `scripts/xpu/run_p3.sh` to try it!
+
+### Multi-Server Load Balancing
+GeoMX supports a balanced distribution of workload, including traffic, storage, and computation, across multiple global parameter servers. By preventing any single server from becoming a bottleneck, Multi-Server Load Balancing (MultiGPS) significantly enhances efficiency, scalability, and overall performance of our GeoMX system.
+
+To enable MultiGPS, set `DMLC_NUM_GLOBAL_SERVER` and some `DMLC_NUM_SERVER` to an integer greater than 1.
+
+```shell
+# In the central party:
+# For the global scheduler
+DMLC_NUM_GLOBAL_SERVER = 2
+# For the global server 0
+DMLC_NUM_GLOBAL_SERVER = 2
+DMLC_NUM_SERVER = 2
+# For the global server 1
+DMLC_NUM_GLOBAL_SERVER = 2
+DMLC_NUM_SERVER = 2
+# For the master worker
+DMLC_NUM_SERVER = 2
+# For the local scheduler in the central party
+DMLC_NUM_SERVER = 2
+
+# In the other parties:
+# For the local server
+DMLC_NUM_GLOBAL_SERVER = 2
+```
+
+Use the demo script `scripts/xpu/run_multi_gps.sh` to try it!

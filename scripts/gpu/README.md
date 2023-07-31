@@ -7,8 +7,9 @@ This folder contains some scripts for running examples in <code>examples/</code>
 5. To try the **Differentiated Gradient Transmission** protocol (i.e., **DGT**), run <code>bash run_dgt.sh</code>
 6. To try the **Priority-based Parameter Propagation** scheduler (i.e., **P3**), run <code>bash run_p3.sh</code>
 7. To try the **TSEngine** scheduler, run <code>bash run_tsengine.sh</code>
-8. To try the **Mixed-Precision Quantization** technique (i.e., MPQ), run <code>bash run_mixed_precision.sh</code>
-9. To try the **Low-Precision Quantization** technique (i.e., FP16), run <code>bash run_fp16.sh</code>
+8. To try the **Mixed-Precision Quantization** technique (i.e., **MPQ**), run <code>bash run_mixed_precision.sh</code>
+9. To try the **Low-Precision Quantization** technique (i.e., **FP16**), run <code>bash run_fp16.sh</code>
+10. Tro try the **Multi-Server Load Balancing** technique (i.e., **MultiGPS**), run <code>bash run_multi_gps.sh</code>
 
 These scripts will start 12 nodes, including: 
 
