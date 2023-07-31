@@ -10,6 +10,7 @@
     - [Differential Gradient Transmission](#differential-gradient-transmission)
     - [TSEngine](#tsengine)
     - [Priority-based Parameter Propagation](#priority-based-parameter-propagation)
+    - [Multi-Server Load Balancing](#multi-server-load-balancing)
 
 # Configuration Guide
 This guidance describes the environmental variables and hyperparameters needed to launch each optimization technique in our GeoMX system.
