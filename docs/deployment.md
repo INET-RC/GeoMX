@@ -305,7 +305,7 @@ By setting up SNAT with iptables this way, we enable seamless communication betw
 > 
 > 1. Install Weave on each of the host machines:
 > ```commandline
-> sudo curl -L git.io/weave -o /usr/local/bin/weave
+> sudo curl -L https://raw.githubusercontent.com/weaveworks/weave/master/weave -o /usr/local/bin/weave
 > sudo chmod a+x /usr/local/bin/weave
 > ```
 > 2. Launch Weave on each host:
@@ -316,11 +316,7 @@ By setting up SNAT with iptables this way, we enable seamless communication betw
 > ```commandline
 > weave attach <container_id>
 > ```
-> 4. When you run new Docker containers, you can add it to the Weave network via:
-> ```commandline
-> weave run <image>
-> ```
-> This will start the container and automatically attach it to the Weave network. Now, all containers connected via Weave can communicate seamlessly, regardless of the host they're on. If you encounter any problems using weave, please refer to the latest [weave docs](https://www.weave.works/docs/net/latest/install/installing-weave/) for the latest deployment guide.
+> This will attach the specified container to the Weave network. Now, all containers connected via Weave can communicate seamlessly, regardless of the host they're on. If you encounter any problems using weave, please refer to the latest [weave docs](https://www.weave.works/docs/net/latest/install/installing-weave/) for the latest deployment guide.
 > 
 > Keep in mind that while Weave is an excellent tool, it's best suited for small to medium-sized networks. For larger networks or for networks with specific performance requirements, the Klonet platform might be more appropriate.
 
@@ -358,7 +354,7 @@ DMLC_NUM_WORKER=1 \
 DMLC_ENABLE_CENTRAL_WORKER=0 \
 DMLC_NUM_ALL_WORKER=4 \
 PS_VERBOSE=1 \
-DMLC_INTERFACE=weave \                 # Name of Weave's default network interface card
+DMLC_INTERFACE=ethwe \                 # Name of network interface, the default is ethwe if Weave is used
 nohup python -c "import mxnet" > /dev/null &
 ```
 
