@@ -1,3 +1,14 @@
+- [Deployment Guide](#deployment-guide)
+  - [Installation](#installation)
+    - [Use Pre-built Docker Image](#use-pre-built-docker-image)
+    - [Build from Dockerfile](#build-from-dockerfile)
+    - [Build from Source Code](#build-from-source-code)
+  - [Deployment](#deployment)
+    - [Pseudo-distributed Deployment](#pseudo-distributed-deployment)
+    - [Multi-host Deployment](#multi-host-deployment)
+    - [Klonet-based Deployment](#klonet-based-deployment)
+  - [Summary of Environment Variables](#summary-of-environment-variables)
+
 # Deployment Guide
 This guide will walk you through the process of installing and deploying GeoMX. It also explains the meaning of the environment variables used in the accompanying shell scripts.
 
@@ -313,6 +324,8 @@ By setting up SNAT with iptables this way, we enable seamless communication betw
 > 
 > Keep in mind that while Weave is an excellent tool, it's best suited for small to medium-sized networks. For larger networks or for networks with specific performance requirements, the Klonet platform might be more appropriate.
 
+> NOTE: If there is a firewall between host machines, you must permit traffic to flow through TCP 6783 and UDP 6783 / 6784, which are Weave's control and data ports.
+
 After setting up the network and ensuring the Docker containers can communicate with each other, the next step is to run the GeoMX processes in these containers. To do this, you need to set up the environment variables (described in the chapter of [pseudo-distributed deployment](#pseudo-distributed-deployment)) as per your GeoMX configuration and start the different node processes in different containers.
 
 > NOTE: Kindly remember to correctly assign the IP addresses and port numbers for the global scheduler and all local schedulers. The containers running these schedulers should reflect their actual IP addresses within your network.
@@ -345,7 +358,7 @@ DMLC_NUM_WORKER=1 \
 DMLC_ENABLE_CENTRAL_WORKER=0 \
 DMLC_NUM_ALL_WORKER=4 \
 PS_VERBOSE=1 \
-DMLC_INTERFACE=eth0 \
+DMLC_INTERFACE=weave \                 # Name of Weave's default network interface card
 nohup python -c "import mxnet" > /dev/null &
 ```
 
@@ -356,31 +369,24 @@ Klonet is a network emulation platform for the technology innovation. It is desi
 
 The tutorial for this part is coming soon :)
 
-## Environment Variables explained
+## Summary of Environment Variables
 
-`DMLC_ROLE`: Specifies the local role of current process. It can be `server`,  `worker` , or `scheduler`
+| Environment Variable       | Options                         | Node Used On                                                        | Description                                                                                           |
+|----------------------------|---------------------------------|---------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
+| DMLC_ROLE                  | scheduler, server, worker       | local scheduler, local server, master worker, worker                | The role of the node within the party.                                                                |
+| DMLC_PS_ROOT_URI           | IPv4 address                    | global server, master worker, local scheduler, local server, worker | IPv4 address of the local scheduler node.                                                             |
+| DMLC_PS_ROOT_PORT          | Integer                         | same as above                                                       | Port number of the local scheduler node.                                                              |
+| DMLC_NUM_SERVER            | Integer                         | same as above                                                       | Number of local servers in the participating party, or number of global servers in the central party. |
+| DMLC_NUM_WORKER            | Integer                         | same as above                                                       | Number of workers in the current party, including the master worker.                                  |
+| DMLC_ROLE_GLOBAL           | global_scheduler, global_server | global scheduler, global server                                     | The role of the node across different parties.                                                        |
+| DMLC_PS_GLOBAL_ROOT_URI    | IPv4 address                    | global scheduler, global server, local server                       | IPv4 address of the global scheduler node.                                                            |
+| DMLC_PS_GLOBAL_ROOT_PORT   | Integer                         | same as above                                                       | Port number of the global scheduler node.                                                             |
+| DMLC_NUM_GLOBAL_SERVER     | Number                          | same as above                                                       | Number of global servers in the central party.                                                        |
+| DMLC_NUM_GLOBAL_WORKER     | Number                          | same as above                                                       | Number of local servers worldwide.                                                                    |
+| DMLC_ROLE_MASTER_WORKER    | 0, 1                            | master worker                                                       | Specify if the current node is the master worker.                                                     |
+| DMLC_ENABLE_CENTRAL_WORKER | 0, 1                            | global server                                                       | Specify if the central party joins in model training.                                                 |
+| DMLC_NUM_ALL_WORKER        | Number                          | global server, master worker, worker                                | Total number of workers actually participating in model training.                                     |
+| DMLC_INTERFACE             | String                          | all                                                                 | Name of the network interface used by the node.                                                       |
+| PS_VERBOSE                 | 0, 1, 2                         | all                                                                 | Verbosity level of the system logs.                                                                   |
 
-`DMLC_ROLE_GLOBAL`: Specifies the global role of current process. It can be `global_server`, `worker`, or `global_scheduler`
-
-`DMLC_ROLE_MASTER_WORKER`: Specifies if the role of current process is `master_worker`
-
-`DMLC_PS_ROOT_URI`: Specifies the IP of the local scheduler
-
-`DMLC_PS_ROOT_PORT`: Specifies the port that the local scheduler listens to
-
-`DMLC_PS_GLOBAL_ROOT_URI`: Specifies the IP of the global scheduler
-
-`DMLC_PS_GLOBAL_ROOT_PORT`: Specifies the port that the global scheduler listens to
-
-`DMLC_NUM_SERVER`: Specifies how many server nodes are connected to the local/global scheduler
-
-`DMLC_NUM_WORKER`: Specifies how many worker nodes are connected to the local/global scheduler
-
-`DMLC_NUM_ALL_WORKER`: Specifies how many worker nodes are in the cluster
-
-`DMLC_ENABLE_CENTRAL_WORKER`: Specifies whether to enable `master worker` to join training 
-
-`PS_VERBOSE` Logging communication Value type: 1 or 2 Default value: (empty)
-
-- `PS_VERBOSE=1` logs connection information like the IPs and ports of all nodes
-- `PS_VERBOSE=2` logs all data communication information
+Additional task-related environment variables can be found in the [configuration guide](https://github.com/INET-RC/GeoMX/blob/main/docs/configuration.md).
