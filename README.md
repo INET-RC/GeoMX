@@ -159,7 +159,7 @@ sudo docker run -it --rm --name geomx-gpu lizonghango00o1/geomx:cu101 bash
 cd GeoMX/scripts/gpu && bash run_vanilla_hips.sh
 ```
 
-> The first-time initialization of GeoMX on GPUs may take a few minutes. However, subsequent runs should proceed without delay. This issue is common and can occur with other frameworks like PyTorch and MXNET as well.
+> The first-time initialization of GeoMX on CPUs and GPUs may take a few minutes. However, subsequent runs should proceed without delay. This issue is common and can occur with other frameworks like PyTorch and MXNET as well.
 
 ## Contributors
 * **Li, Zonghang** - *Initial work with equal contribution* - [Homepage](https://github.com/Lizonghang)

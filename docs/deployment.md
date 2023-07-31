@@ -41,7 +41,7 @@ cd GeoMX/scripts/cpu && bash run_vanilla_hips.sh
 cd GeoMX/scripts/gpu && bash run_vanilla_hips.sh
 ```
 
-> The first-time initialization of GeoMX on GPUs may take a few minutes. However, subsequent runs should proceed without delay. This issue is common and can occur with other frameworks like PyTorch and MXNET as well.
+> The first-time initialization of GeoMX on CPUs and GPUs may take a few minutes. However, subsequent runs should proceed without delay. This issue is common and can occur with other frameworks like PyTorch and MXNET as well.
 
 ### Build from Dockerfile
 Alternatively, we can also generate a customized Docker image using a Dockerfile. Some templates can be found in the `docker` folder.
