@@ -228,6 +228,44 @@ The demo code is provided in [`examples/cnn_fp16.py`](https://github.com/INET-RC
 ### Mixed-Precision Quantization
 The technology of Mixed-Precision Quantization (MPQ) leverages both Bi-Sparse and FP16. In this scheme, tiny tensors are quantified into FP16 format for transmission, while large tensors persist in the FP32 format. Moreover, these large sensors will undergo a sparsification process before transmission. This precaution is taken to minimize the loss of crucial information and avoid significant degradation to model performance.
 
+<p align="center">
+  Table 1: Summary of the application scope for Bi-Sparse, FP16, and MPQ.
+</p>
+<table align="center">
+  <tr>
+    <th rowspan="2"></th>
+    <th colspan="2" style="text-align:center; vertical-align:middle">Intra-Data Center</th>
+    <th colspan="2" style="text-align:center; vertical-align:middle">Inter-Data Centers</th>
+  </tr>
+  <tr>
+    <th style="text-align:center; vertical-align:middle">Large Tensors</th>
+    <th style="text-align:center; vertical-align:middle">Tiny Tensors</th>
+    <th style="text-align:center; vertical-align:middle">Large Tensors</th>
+    <th style="text-align:center; vertical-align:middle">Tiny Tensors</th>
+  </tr>
+  <tr>
+    <th style="text-align:center; vertical-align:middle">Bi-Sparse</th>
+    <td style="text-align:center; vertical-align:middle">FP32, Dense</td>
+    <td style="text-align:center; vertical-align:middle">FP32, Dense</td>
+    <td style="text-align:center; vertical-align:middle">FP32, Sparse</td>
+    <td style="text-align:center; vertical-align:middle">FP32, Dense</td>
+  </tr>
+  <tr>
+    <th style="text-align:center; vertical-align:middle">FP16</th>
+    <td style="text-align:center; vertical-align:middle">FP16, Dense</td>
+    <td style="text-align:center; vertical-align:middle">FP16, Dense</td>
+    <td style="text-align:center; vertical-align:middle">FP16, Dense</td>
+    <td style="text-align:center; vertical-align:middle">FP16, Dense</td>
+  </tr>
+  <tr>
+    <th style="text-align:center; vertical-align:middle">MPQ</th>
+    <td style="text-align:center; vertical-align:middle">FP32, Dense</td>
+    <td style="text-align:center; vertical-align:middle">FP16, Dense</td>
+    <td style="text-align:center; vertical-align:middle">FP32, Sparse</td>
+    <td style="text-align:center; vertical-align:middle">FP16, Dense</td>
+  </tr>
+</table>
+
 For details on how to classify large and tiny tensors, please refer to the [instruction of Bi-Sparse](#bidirectional-gradient-sparsification). The demo code for using MPQ is given below:
 
 ```python
