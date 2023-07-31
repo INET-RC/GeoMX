@@ -58,7 +58,7 @@ kvstore_dist = mx.kv.create("dist_async")
 
 Alternatively, you can enable MixedSync by using the `--mixed-sync` option in our provided python script:
 
-```shell
+```commandline
 python examples/cnn.py --mixed-sync
 ```
 
@@ -79,7 +79,7 @@ if kvstore_dist.is_master_worker:
 
 We can use the following command to enable the DCASGD optimizer in MixedSync:
 
-```shell
+```commandline
 python examples/cnn.py --mixed-sync --dcasgd
 ```
 
