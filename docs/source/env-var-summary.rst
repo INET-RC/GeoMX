@@ -1,7 +1,7 @@
-Summary of Environment Variables
---------------------------------
+Summary of Env Variables
+------------------------
 
-.. list-table::
+.. list-table:: Summary of Basic Environment Variables Using by GeoMX.
    :header-rows: 1
 
    * - Environment Variable
@@ -70,9 +70,13 @@ Summary of Environment Variables
      - Verbosity level of the system logs.
 
 
-.. list-table:: Technology Environment Variable Meaning
+.. list-table:: Summary of Environment Variable for Each Optimization Technology.
    :widths: 30 30 40
    :header-rows: 1
+
+   * - Technology
+      - Environment Variable
+      - Description
 
    * - :ref:`HFA <hierarchical-frequency-aggregation>`
      - MXNET_KVSTORE_USE_HFA
