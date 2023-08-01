@@ -6,6 +6,8 @@
 Welcome to GeoMX Docs! 😁
 =================================
 
+---------------------------------
+
 .. toctree::
    :maxdepth: 3
    :caption: GeoMX Tutorials
