@@ -1,5 +1,5 @@
-Pseudo-distributed Deployment
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Deploy GeoMX in Pseudo-distributed Mode
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The pseudo-distributed deployment is designed for quick trial and
 debugging purposes. In this setup, all nodes are launched within a

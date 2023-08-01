@@ -1,5 +1,5 @@
-Multi-host Deployment
----------------------
+Deploy GeoMX on Multiple Hosts
+------------------------------
 
 To deploy GeoMX on real-world geographical data centers, we need to use
 the multi-host mode for cluster deployment.

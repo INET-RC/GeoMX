@@ -1,5 +1,5 @@
-Klonet-based Deployment
-~~~~~~~~~~~~~~~~~~~~~~~
+Deploy GeoMX on Klonet
+~~~~~~~~~~~~~~~~~~~~~~
 
 Klonet is a network emulation platform for the technology innovation. It
 is designed to support the development and testing of new network
