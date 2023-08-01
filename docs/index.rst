@@ -3,14 +3,14 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to GeoMX documentation!😁
+Welcome to GeoMX Docs! 😁
 =================================
 
 ---------------------------------
 
 .. toctree::
    :maxdepth: 3
-   :caption: GeoMX Tutorials
+   :caption:
 
    source/quick-start
    source/installation
