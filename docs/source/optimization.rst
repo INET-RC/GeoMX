@@ -1,5 +1,5 @@
-Configuration Guide
-===================
+How to Use GeoMX Accelerators?
+==============================
 
 This guidance describes the environmental variables and hyperparameters
 needed to launch each optimization technique in our GeoMX system.

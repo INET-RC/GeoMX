@@ -68,6 +68,3 @@ Summary of Environment Variables
      - 0, 1, 2
      - all
      - Verbosity level of the system logs.
-
-Additional task-related environment variables can be found in the
-:doc:`configuration guide <configuration>`.
