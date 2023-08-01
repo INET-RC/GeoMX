@@ -63,5 +63,6 @@ Building upon the two aforementioned fundamental algorithms, GeoMX also offers t
    :caption: GeoMX Tutorials
 
    source/quick-start
+   source/installation
    source/deployment
    source/configuration
