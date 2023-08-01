@@ -64,5 +64,6 @@ Building upon the two aforementioned fundamental algorithms, GeoMX also offers t
 
    source/quick-start
    source/installation
+   source/pseudo-distributed-deployment
    source/deployment
    source/configuration
