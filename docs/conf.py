@@ -35,7 +35,7 @@ exclude_patterns = []
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 # html_theme = 'sphinx_rtd_theme'
 html_theme = 'furo'
-html_favicon = "source/_static/favicon.png"
+# html_favicon = "source/_static/favicon.png"
 
 html_theme_options = {
     "sidebar_hide_name": True,
