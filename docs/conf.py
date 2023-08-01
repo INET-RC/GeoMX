@@ -25,7 +25,7 @@ extensions = [
     'sphinxcontrib.napoleon',
     'sphinx.ext.autosectionlabel',
     'sphinx_design',
-    'sphinxcontrib.bibtex',
+    # 'sphinxcontrib.bibtex',
 ]
 
 templates_path = ['_templates']
