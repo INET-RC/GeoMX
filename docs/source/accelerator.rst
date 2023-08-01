@@ -136,6 +136,8 @@ The demo code is provided in
 we can run it using ``bash scripts/xpu/run_fp16.sh``, where ``xpu``
 should be ``cpu`` or ``gpu``.
 
+.. _mixed-precision-quantization:
+
 Mixed-Precision Quantization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -235,6 +237,8 @@ You can also find them in
 and run this demo by executing ``scripts/xpu/run_mixed_precision.sh``,
 where ``xpu`` should be ``cpu`` or ``gpu``.
 
+.. _differential-gradient-transmission:
+
 Differential Gradient Transmission
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -263,6 +267,8 @@ To enable DGT, set the following environment variables:
    ADAPTIVE_K_FLAG = 1  # set value K adaptively
 
 Use the demo script ``scripts/xpu/run_dgt.sh`` to try it!
+
+.. _tsengine:
 
 TSEngine
 ~~~~~~~~
@@ -296,6 +302,8 @@ Use the demo script ``scripts/xpu/run_tsengine.sh`` to try it!
    enabled inside the data center. In this example, both
    ``ENABLE_INTER_TS`` and ``ENABLE_INTRA_TS`` are enabled, but we can
    also choose to enable only one.
+
+.. _priority-based-parameter-propagation:
 
 Priority-based Parameter Propagation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

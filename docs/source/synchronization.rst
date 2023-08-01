@@ -109,6 +109,8 @@ MixedSync:
 
 Just modify ``scripts/xpu/run_mixed_sync.sh`` and try it!
 
+.. _hierarchical-frequency-aggregation:
+
 Hierarchical Frequency Aggregation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

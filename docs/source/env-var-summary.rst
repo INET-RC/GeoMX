@@ -68,3 +68,56 @@ Summary of Environment Variables
      - 0, 1, 2
      - all
      - Verbosity level of the system logs.
+
+
+.. list-table:: Technology Environment Variable Meaning
+   :widths: 30 30 40
+   :header-rows: 1
+
+   * - :ref:`HFA <hierarchical-frequency-aggregation>`
+     - MXNET_KVSTORE_USE_HFA
+     - Enable or disable HFA synchronization.
+
+   * -
+     - MXNET_KVSTORE_HFA_K1
+     - Number of loops before a local synchronization.
+
+   * -
+     - MXNET_KVSTORE_HFA_K2
+     - Number of loops before a global synchronization.
+
+   * - :ref:`Bi-Sparse <bidirectional-gradient-sparsification>`, :ref:`MPQ <mixed-precision-quantization>`
+     - MXNET_KVSTORE_SIZE_LOWER_BOUND
+     - Size lower bound for classifying large and tiny tensors.
+
+   * - :ref:`DGT <differential-gradient-transmission>`
+     - ENABLE_DGT
+     - Enable or disable DGT protocol, set to 2 for enable.
+
+   * -
+     - DMLC_UDP_CHANNEL_NUM
+     - Number of channels used for transmission.
+
+   * -
+     - DMLC_K
+     - Compression ratio.
+
+   * -
+     - ADAPTIVE_K_FLAG
+     - Enable or disable adaptive K value adjustment.
+
+   * - :ref:`TSEngine <tsengine>`
+     - ENABLE_INTER_TS
+     - Enable or disable TSEngine within the data center.
+
+   * -
+     - ENABLE_INTRA_TS
+     - Enable or disable TSEngine between data centers.
+
+   * -
+     - MAX_GREED_RATE_TS
+     - Probability set for random exploration.
+
+   * - :ref:`P3 <priority-based-parameter-propagation>`
+     - ENABLE_P3
+     - Enable or disable P3 scheduler.
