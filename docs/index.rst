@@ -6,6 +6,18 @@
 Welcome to GeoMX documentation! 😁
 =================================
 
+.. toctree::
+   :maxdepth: 3
+   :caption: GeoMX Tutorials
+
+   source/quick-start
+   source/installation
+   source/pseudo-distributed-deployment
+   source/multi-host-deployment
+   source/klonet-deployment
+   source/env-var-summary
+   source/configuration
+
 **GeoMX** is a fast and unified distributed system for training ML algorithms over geographical data centers. Built upon the `MXNET <https://github.com/apache/mxnet>`_ framework, GeoMX integrates several sophisticated optimization techniques to enhance its training efficiency. These strategic enhancements result in a significant performance boost compared to the original MXNET system, offering 20x acceleration under identical network bandwidth conditions. This superior efficiency propels GeoMX to the forefront of training systems used for geographically dispersed data centers, showcasing satisfying performance and effectiveness.
 
 GeoMX employs the `Hierarchical Parameter Server (HiPS) <https://www.zte.com.cn/content/dam/zte-site/res-www-zte-com-cn/mediares/magazine/publication/com_cn/article/202005/cn202005004.pdf>`_ framework as its fundamental training architecture, designed to segregate the network environment within and beyond the data center. This unique architecture includes an intra-domain parameter server system within each data center while concurrently establishing an inter-parameter server connection between different data centers. In this configuration, model data traffic undergoes two stages of aggregation: an initial local aggregation within each data center, followed by a global aggregation at the central data center. This approach effectively minimizes cross-WAN traffic and, consequently, reduces communication overhead.
@@ -57,13 +69,3 @@ Building upon the two aforementioned fundamental algorithms, GeoMX also offers t
       :alt: Cover for GeoMX Book
       :width: 400px
       :align: center
-
-.. toctree::
-   :maxdepth: 3
-   :caption: GeoMX Tutorials
-
-   source/quick-start
-   source/installation
-   source/pseudo-distributed-deployment
-   source/deployment
-   source/configuration
