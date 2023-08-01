@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to GeoMX documentation! 😁
-=================================
+Welcome to GeoMX documentation!
+===============================
 
 .. toctree::
    :maxdepth: 3
@@ -18,6 +18,8 @@ Welcome to GeoMX documentation! 😁
    source/synchronization
    source/accelerator
    source/env-var-summary
+
+-------------------------------
 
 **GeoMX** is a fast and unified distributed system for training ML algorithms over geographical data centers. Built upon the `MXNET <https://github.com/apache/mxnet>`_ framework, GeoMX integrates several sophisticated optimization techniques to enhance its training efficiency. These strategic enhancements result in a significant performance boost compared to the original MXNET system, offering 20x acceleration under identical network bandwidth conditions. This superior efficiency propels GeoMX to the forefront of training systems used for geographically dispersed data centers, showcasing satisfying performance and effectiveness.
 
