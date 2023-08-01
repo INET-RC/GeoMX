@@ -70,7 +70,7 @@ Summary of Env Variables
      - Verbosity level of the system logs.
 
 
-.. list-table:: Summary of Environment Variable for Each Optimization Technology.
+.. list-table:: Summary of Environment Variables for each Optimization Technology.
    :header-rows: 1
 
    * - Technology
