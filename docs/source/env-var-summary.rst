@@ -71,12 +71,11 @@ Summary of Env Variables
 
 
 .. list-table:: Summary of Environment Variable for Each Optimization Technology.
-   :widths: 30 30 40
    :header-rows: 1
 
    * - Technology
-      - Environment Variable
-      - Description
+     - Environment Variable
+     - Description
 
    * - :ref:`HFA <hierarchical-frequency-aggregation>`
      - MXNET_KVSTORE_USE_HFA
