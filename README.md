@@ -24,7 +24,7 @@ GeoMX employs the [Hierarchical Parameter Server (HiPS)](https://www.zte.com.cn/
 
 ### Communication Optimization Techniques
 
-But it's far from enough, given the often limited and varied network conditions in WANs, distributed training across data centers can potentially create communication bottlenecks. To mitigate these issues, GeoMX employs a variety of optimization techniques. These include gradient sparsification, low-precision quantization (e.g., fp16), mixed-precision quantization, advanced transmission protocols, synchronization algorithms, flow scheduling, and priority scheduling, among others (e.g., overlay scheduling, currently in development). These techniques comprehensively tackle communication issues, further enhancing the efficiency and robustness of distributed machine learning training in GeoMX.
+But it's far from enough, given the often limited and varied network conditions in WANs, distributed training across data centers can potentially create communication bottlenecks. To mitigate these issues, GeoMX employs a variety of optimization techniques. These include gradient sparsification, low-precision quantization (e.g., fp16), mixed-precision quantization, advanced transmission protocols, synchronization algorithms, flow scheduling, priority scheduling, load balancing, among others (e.g., overlay scheduling, currently in development). These techniques comprehensively tackle communication issues, further enhancing the efficiency and robustness of distributed machine learning training in GeoMX.
 
 Next, let's delve into each optimization technique in brief:
 
@@ -159,7 +159,7 @@ sudo docker run -it --rm --name geomx-gpu lizonghango00o1/geomx:cu101 bash
 cd GeoMX/scripts/gpu && bash run_vanilla_hips.sh
 ```
 
-> The first-time initialization of GeoMX on CPUs and GPUs may take a few minutes. However, subsequent runs should proceed without delay. This issue is common and can occur with other frameworks like PyTorch and MXNET as well.
+> If you are using the images with tags `cu80` and `cu101`, the first-time initialization of GeoMX may take a few minutes. However, subsequent runs should proceed without delay. This issue is common and can occur with other frameworks like PyTorch and MXNET as well.
 
 ## Contributors
 * **Li, Zonghang** - *Initial work with equal contribution* - [Homepage](https://github.com/Lizonghang)
@@ -183,15 +183,15 @@ If this repo is helpful to you, please kindly cite us:
 ```
 
 ## References
-1. Li, Zonghang, Hongfang Yu, and Yi Wang. "[Geo-Distributed Machine Learning: Framework and Technology Exceeding LAN Speed.](https://www.zte.com.cn/content/dam/zte-site/res-www-zte-com-cn/mediares/magazine/publication/com_cn/article/202005/cn202005004.pdf)" _ZTE Technology Journal_ 26, no. 5 (2020): 16-22.
+1. Li, Zonghang, Hongfang Yu, and Yi Wang. "[Geo-distributed machine learning: Framework and technology exceeding lan speed.](https://www.zte.com.cn/content/dam/zte-site/res-www-zte-com-cn/mediares/magazine/publication/com_cn/article/202005/cn202005004.pdf)" _ZTE Technology Journal_ 26, no. 5 (2020): 16-22.
 2. Zhou, Huaman, Zonghang Li, Qingqing Cai, Hongfang Yu, Shouxi Luo, Long Luo, and Gang Sun. "[DGT: A contribution-aware differential gradient transmission mechanism for distributed machine learning.](https://drive.google.com/file/d/1IbmpFybX_qXZM2g_8BrcD9IF080qci94/view)" _Future Generation Computer Systems_ 121 (2021): 35-47.
-3. Zhou, Huaman, Weibo Cai, Zonghang Li, Hongfang Yu, Ling Liu, Long Luo, and Gang Sun. "[TSEngine: Enable Efficient Communication Overlay in Distributed Machine Learning in WANs.](https://drive.google.com/file/d/1ELfApVoCA8WCdOe3iBe-VreLJCSD7r8r/view)" _IEEE Transactions on Network and Service Management_ 18, no. 4 (2021): 4846-4859.
-4. Li, Zonghang, Huaman Zhou, Tianyao Zhou, Hongfang Yu, Zenglin Xu, and Gang Sun. "Esync: Accelerating intra-domain federated learning in heterogeneous data centers." _IEEE Transactions on Services Computing_ 15, no. 4 (2020): 2261-2274.
+3. Zhou, Huaman, Weibo Cai, Zonghang Li, Hongfang Yu, Ling Liu, Long Luo, and Gang Sun. "[TSEngine: Enable efficient communication overlay in distributed machine learning in wans.](https://drive.google.com/file/d/1ELfApVoCA8WCdOe3iBe-VreLJCSD7r8r/view)" _IEEE Transactions on Network and Service Management_ 18, no. 4 (2021): 4846-4859.
+4. Li, Zonghang, Huaman Zhou, Tianyao Zhou, Hongfang Yu, Zenglin Xu, and Gang Sun. "[ESync: Accelerating intra-domain federated learning in heterogeneous data centers.](https://drive.google.com/file/d/1bvK0EeO5vjkXveU_ccBp4Uxl-qmbmcfn/view)" _IEEE Transactions on Services Computing_ 15, no. 4 (2020): 2261-2274.
 
 For more details on the GeoMX system, please refer to our book:
 
 <p align="center">
-  <img src="geomx-book.png" alt="Cover for GeoMX Book" width="400">
+  <img src="docs/source/_static/geomx-book.png" alt="Cover for GeoMX Book" width="400">
 </p>
 
 **虞红芳, 李宗航, 孙罡, 罗龙. 《跨数据中心机器学习：赋能多云智能数算融合》. 电子工业出版社, 人工智能前沿理论与技术应用丛书, (2023).**
