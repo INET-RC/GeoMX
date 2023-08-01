@@ -10,15 +10,17 @@ build:
   os: ubuntu-20.04
   tools:
     python: "3.7"
+  image: latest
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
    configuration: docs/conf.py
 
 # Optionally build your docs in additional formats such as PDF and ePub
-# formats:
-#    - pdf
-#    - epub
+formats:
+  - html
+  - pdf
+  - epub
 
 # Optional but recommended, declare the Python requirements required
 # to build your documentation
@@ -28,6 +30,6 @@ sphinx:
 #    - requirements: docs/requirements.txt
 
 python:
+  version: 3.7
   install:
     - requirements: docs/requirements.txt
-

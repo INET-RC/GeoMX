@@ -53,7 +53,7 @@ Building upon the two aforementioned fundamental algorithms, GeoMX also offers t
 
    #. **虞红芳, 李宗航, 孙罡, 罗龙. 《跨数据中心机器学习：赋能多云智能数算融合》. 电子工业出版社, 人工智能前沿理论与技术应用丛书, (2023).**
 
-   .. image:: https://github.com/INET-RC/GeoMX/blob/main/docs/source/_static/geomx-book.png
+   .. image:: source/_static/geomx-book.png
       :alt: Cover for GeoMX Book
       :width: 400px
       :align: center
@@ -62,6 +62,6 @@ Building upon the two aforementioned fundamental algorithms, GeoMX also offers t
    :maxdepth: 3
    :caption: GeoMX Tutorials
 
-   quick-start
-   deployment
-   configuration
+   source/quick-start
+   source/deployment
+   source/configuration
