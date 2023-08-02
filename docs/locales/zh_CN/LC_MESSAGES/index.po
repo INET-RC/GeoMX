@@ -217,7 +217,7 @@ msgstr "**多参数服务器负载均衡 (MultiGPS)**：GeoMX 支持启用多个
 
 #: ../../source/index.rst:49 cbcd1332aa1b49e3bb968f1d87c360c8
 msgid "Synchronization Algorithms:"
-msgstr "同步优化技术一览："
+msgstr "同步优化算法一览："
 
 #: ../../source/index.rst:50 a6f66aed28c743f1b10725c34c9ccd42
 msgid ""
@@ -232,7 +232,9 @@ msgid ""
 "gradients) each round, and both parameter server systems within and "
 "between data centers run in a synchronous parallel mode. This means all "
 "training nodes are synchronized to ensure a consistent model. (Default)"
-msgstr ""
+msgstr "**全同步算法 (FSA)**：在这种同步算法中，训练节点在每一轮都同步它们的模型"
+"数据（模型参数或梯度），数据中心内部和数据中心之间的参数服务器系统都以同步并行模式"
+"运行。这意味着所有训练节点的模型数据都将被同步，以确保模型的一致性。（默认设置）"
 
 #: ../../source/index.rst:55 1833689a600647f381b30ce54444e40c
 msgid ""
@@ -240,7 +242,8 @@ msgid ""
 "consistency, but at the expense of training speed, as it necessitates "
 "waiting for all computations and communications to complete at every "
 "iteration."
-msgstr ""
+msgstr "注意：全同步算法在维护模型精度和一致性方面效果显著，但代价是牺牲训练速度，"
+"因为它需要在每次迭代中都同步模型数据并等待所有计算和通信完成。"
 
 #: ../../source/index.rst:57 e6df7504c73640368101a1a6fd5111c5
 msgid ""
