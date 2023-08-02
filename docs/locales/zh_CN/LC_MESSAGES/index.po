@@ -101,7 +101,10 @@ msgid ""
 "<https://www.zte.com.cn/content/dam/zte-site/res-www-zte-com-"
 "cn/mediares/magazine/publication/com_cn/article/202005/cn202005004.pdf>`_"
 " for more details."
-msgstr "**双向梯度稀疏化 (Bi-Sparse)**："
+msgstr "**双向梯度稀疏化 (Bi-Sparse)**：已有方法如深度梯度压缩 (`DGC <https://arxiv.org/pdf/1712.01887.pdf>`_) "
+"会对上行梯度张量进行稀疏化处理。为了进一步压缩通信流量，GeoMX 还对下行（聚合）梯度张量"
+"进行稀疏化处理，而不是拉取完整模型参数。该技术被设计用于数据中心之间，以减少跨广域传输"
+"的通信流量。请参考`这篇文章`了解更多关于双向梯度稀疏化的介绍。"
 
 #: ../../source/index.rst:36 d827a6445ea5450b86c296e77ccafe9c
 msgid ""
