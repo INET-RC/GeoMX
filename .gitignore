@@ -36,3 +36,6 @@ config.mk
 
 # make
 cmake-build-debug/
+
+# sphinx build files
+*.mo
