@@ -116,7 +116,10 @@ msgid ""
 "pulling data is received, GeoMX reverts it back into FP32 and continues "
 "model computing. This effectively halves the data traffic volume over "
 "both LANs and WANs."
-msgstr ""
+msgstr "**低精度量化 (FP16)**：GeoMX 也支持将模型数据量化为较低精度进行传输，例如"
+"以 FP16 数值精度格式。在这种方案中，GeoMX 使用 FP32 计算模型，但在传输时，它将模"
+"型数据张量转换为 FP16。一旦接收到拉取的数据，GeoMX 就会将其恢复为 FP32 并继续进行"
+"模型计算。这种方法可以有效地将局域网和广域网上传输的数据流量减半。"
 
 #: ../../source/index.rst:38 ae1dc692222d417e8a727bbc34c57c70
 msgid ""
@@ -127,7 +130,7 @@ msgid ""
 "process before transmission. This precaution is taken to minimize the "
 "loss of crucial information and avoid significant degradation to model "
 "performance."
-msgstr ""
+msgstr "**混合精度量化 (MPQ)**："
 
 #: ../../source/index.rst:40 91dc5c1f87fc493683fd0e6e56b2516a
 msgid ""
