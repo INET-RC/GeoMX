@@ -87,7 +87,7 @@ msgstr "但是，仅有这些还远远不够。考虑到广域网中的网络资
 
 #: ../../source/index.rst:33 7200adb078194f048588fd2ebe217a8a
 msgid "Optimization Techniques:"
-msgstr "优化技术一览："
+msgstr "通信优化技术一览："
 
 #: ../../source/index.rst:34 7b928f7b0c9641b792fed12d34744316
 msgid ""
@@ -217,13 +217,13 @@ msgstr "**多参数服务器负载均衡 (MultiGPS)**：GeoMX 支持启用多个
 
 #: ../../source/index.rst:49 cbcd1332aa1b49e3bb968f1d87c360c8
 msgid "Synchronization Algorithms:"
-msgstr ""
+msgstr "同步优化技术一览："
 
 #: ../../source/index.rst:50 a6f66aed28c743f1b10725c34c9ccd42
 msgid ""
 "GeoMX supports two fundamental synchronization algorithms: a fully-"
 "synchronous algorithm and a mixed-synchronous algorithm."
-msgstr ""
+msgstr "GeoMX 支持两种基础的同步算法：全同步算法和混合同步算法。"
 
 #: ../../source/index.rst:52 26f83b04d32b41cb99bb12e8d4de6a63
 msgid ""
