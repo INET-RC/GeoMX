@@ -308,11 +308,16 @@ msgid ""
 "integrated, refer to `this paper <https://drive.google.com/file/d"
 "/1bvK0EeO5vjkXveU_ccBp4Uxl-qmbmcfn/view>`_ for more details and `this "
 "repo <https://github.com/Lizonghang/ESync>`_ for individual use."
-msgstr ""
+msgstr "**ESync**：实践表明，将异步算法应用到强异质资源的集群会导致严重的延迟梯度问题"
+"和收敛性损伤。于是，我们可以采用一种名为 ESync 的优化算法。ESync 是一种同步并行算法，"
+"设计用来在强资源异质的条件下解决分布式系统中的掉队节点问题。它引入了一个状态查询服务器"
+"来协调每个训练节点的本地迭代次数，以平衡他们的模型数据到达参数服务器的时间。如果您想了解"
+"更多详细信息，请参考这篇文章 (`paper <https://drive.google.com/file/d/1bvK0EeO5vjkXveU_ccBp4Uxl-qmbmcfn/view>`_)，"
+"该功能正在集成中，如需提前体验请尝试这个代码库 (`repo <https://github.com/Lizonghang/ESync>`_)。"
 
 #: ../../source/index.rst:69 f7be0b2e43ef4cb784b8ad0ef1b8d1f6
 msgid "For more details on the GeoMX system, please refer to our book:"
-msgstr ""
+msgstr "如需了解更多关于 GeoMX 系统的详细信息，请参阅我们的书籍。"
 
 #: ../../source/index.rst:71 a449ac49156347e69b3655eef7e11674
 msgid ""
