@@ -32,11 +32,12 @@ msgid ""
 "**Prerequisites:** We provide a pre-built Docker image for a quick trial "
 "of GeoMX. For this, Docker needs to be installed following this `guide "
 "<https://docs.docker.com/engine/install/ubuntu/>`__."
-msgstr ""
+msgstr "**前提条件：**我们提供了预先构建的 Docker 镜像以供快速试用 GeoMX。为此，"
+"我们需要按照 Docker 官方指南 (`Guide <https://docs.docker.com/engine/install/ubuntu/>`_) 安装好 Docker。"
 
 #: ../../source/quick-start.rst:12 dd667ff4ba2446eeae325d086cedecda
 msgid "Pull the Docker Image"
-msgstr ""
+msgstr "拉取 Docker 镜像"
 
 #: ../../source/quick-start.rst:14 7b49365eb445479682b3c7b7d8aaa099
 msgid "To run on CPUs, use:"

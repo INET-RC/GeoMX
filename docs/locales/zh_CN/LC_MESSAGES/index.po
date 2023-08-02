@@ -157,9 +157,9 @@ msgstr "**差异梯度传输 (DGT)**：这是一种针对分布式机器学习�
 "级通道，重要梯度在传输中得到优先处理，而其他不太重要的梯度则以较低的优先级和可靠性进"
 "行尽力而为传输。这有助于减少分布式机器学习通信流量的尾流时延，从而减少参数同步的完成"
 "时间。关于 DGT 协议更加详细的说明请参考这篇文章"
-" (`paper <https://drive.google.com/file/d/1IbmpFybX_qXZM2g_8BrcD9IF080qci94/view>`_)，"
+" (`Paper <https://drive.google.com/file/d/1IbmpFybX_qXZM2g_8BrcD9IF080qci94/view>`_)，"
 "如果希望独立使用 DGT 协议，请尝试这个代码库"
-" (`repo <https://github.com/zhouhuaman/dgt>`_)。"
+" (`Repo <https://github.com/zhouhuaman/dgt>`_)。"
 
 #: ../../source/index.rst:42 363b27f16b2a4eeaa84a3813de65f49b
 msgid ""
@@ -178,9 +178,9 @@ msgstr "**TSEngine**: 为了解决分布式系统通信的 TCP Incast 问题，G
 "TSEngine，这是一个为广域网中的高效通信覆盖设计的自适应通信调度器。TSEngine 可以"
 "根据实时网络条件，动态优化分布式节点之间的拓扑覆盖和通信逻辑。在系统通信效率和可扩"
 "展性方面，这种自适应调度器相较于现有的通信模式展现出明显优势。请参阅此文章"
-" (`paper <https://drive.google.com/file/d/1ELfApVoCA8WCdOe3iBe-VreLJCSD7r8r/view>`_) "
+" (`Paper <https://drive.google.com/file/d/1ELfApVoCA8WCdOe3iBe-VreLJCSD7r8r/view>`_) "
 "获取更多详情，也可以使用这个代码库"
-" (`repo <https://github.com/zhouhuaman/TSEngine>`_) "
+" (`Repo <https://github.com/zhouhuaman/TSEngine>`_) "
 "独立应用 TSEngine。"
 
 #: ../../source/index.rst:44 fd7375c58c1e4c568ce2cbd1f39f5638
@@ -200,9 +200,9 @@ msgstr "**基于优先级的参数传播 (P3)**：在传统的实现中，第 :m
 " :math:`r+1` 轮的前向传播不重叠，因为前向传播依赖于梯度同步的完成。为了提高系统效率，"
 "GeoMX 集成了 P3 调度器，该调度器优先传输浅层梯度。这种设置使得前向传播和梯度同步可以"
 "重叠，允许更早地执行下一轮的前向传播，从而加速分布式训练。请参阅此论文"
-" (`paper <https://arxiv.org/pdf/1905.03960.pdf>`_) "
+" (`Paper <https://arxiv.org/pdf/1905.03960.pdf>`_) "
 "以获取更多详情，如果希望独立使用 P3 调度器，请使用这个代码库"
-" (`repo <https://github.com/anandj91/p3>`_)。"
+" (`Repo <https://github.com/anandj91/p3>`_)。"
 
 #: ../../source/index.rst:46 a4a2109b167c4a93b074adfc7c6fa5b1
 msgid ""
@@ -312,8 +312,8 @@ msgstr "**ESync**：实践表明，将异步算法应用到强异质资源的集
 "和收敛性损伤。于是，我们可以采用一种名为 ESync 的优化算法。ESync 是一种同步并行算法，"
 "设计用来在强资源异质的条件下解决分布式系统中的掉队节点问题。它引入了一个状态查询服务器"
 "来协调每个训练节点的本地迭代次数，以平衡他们的模型数据到达参数服务器的时间。如果您想了解"
-"更多详细信息，请参考这篇文章 (`paper <https://drive.google.com/file/d/1bvK0EeO5vjkXveU_ccBp4Uxl-qmbmcfn/view>`_)，"
-"该功能正在集成中，如需提前体验请尝试这个代码库 (`repo <https://github.com/Lizonghang/ESync>`_)。"
+"更多详细信息，请参考这篇文章 (`Paper <https://drive.google.com/file/d/1bvK0EeO5vjkXveU_ccBp4Uxl-qmbmcfn/view>`_)，"
+"该功能正在集成中，如需提前体验请尝试这个代码库 (`Repo <https://github.com/Lizonghang/ESync>`_)。"
 
 #: ../../source/index.rst:69 f7be0b2e43ef4cb784b8ad0ef1b8d1f6
 msgid "For more details on the GeoMX system, please refer to our book:"
