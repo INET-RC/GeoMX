@@ -43,7 +43,7 @@ html_theme_options = {
     # "dark_logo": "logo.svg",
 }
 
-html_static_path = ['source/_static']
+html_static_path = ['_static']
 
 # for 'sphinxcontrib.bibtex' extension
 # bibtex_bibfiles = ['refs.bib']
@@ -62,6 +62,6 @@ todo_include_todos = True
 
 # multi-language docs
 language = 'en'
-locale_dirs = ['locales']
+locale_dirs = ['../locales']
 gettext_compact = False
 gettext_uuid = True
