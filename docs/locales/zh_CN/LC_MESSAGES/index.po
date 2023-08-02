@@ -20,11 +20,11 @@ msgstr ""
 
 #: ../../source/index.rst:11
 msgid "GeoMX Tutorials"
-msgstr "GeoMX教程"
+msgstr "GeoMX 教程"
 
 #: ../../source/index.rst:7 ee1a1e4273a34dcea8ee2b229efe3e28
 msgid "Welcome to GeoMX Docs! 😁"
-msgstr "欢迎来到GeoMX中文文档！😁"
+msgstr "欢迎来到 GeoMX 的中文文档！😁"
 
 #: ../../source/index.rst:26 32bf00cb9bc74913bbf629a4d0ec3647
 msgid ""
@@ -38,7 +38,11 @@ msgid ""
 "GeoMX to the forefront of training systems used for geographically "
 "dispersed data centers, showcasing satisfying performance and "
 "effectiveness."
-msgstr ""
+msgstr "GeoMX 是一个高性能分布式机器学习系统，它用于在地理分散的多个数据中心之间"
+"进行协同的机器学习模型训练。GeoMX 是基于 `MXNET <https://github.com/apache/mxnet>`_ "
+"系统建立的，并且融合了一系列复杂的优化技术以提高训练效率。通过这些改进，相比于原始的 MXNET "
+"系统，在相同网络带宽的条件下，GeoMX 的训练速度提升了 20 倍。这种显著的效率提升使得 GeoMX "
+"适用于地理分散的数据中心场景，在跨广域的分布式机器学习应用中表现出了优越的性能和效率。"
 
 #: ../../source/index.rst:28 284dc6e7dd40416b8252f441ed8a2f57
 msgid ""
