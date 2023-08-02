@@ -21,11 +21,11 @@ msgstr ""
 
 #: ../../source/quick-start.rst:2 06eac0e7af5c4954b71b64973b7622d2
 msgid "Quick Start"
-msgstr "十分钟快速体验"
+msgstr "快速开始"
 
 #: ../../source/quick-start.rst:4 7382f2ae18dc45febe42ff7e11144910
 msgid "This guide will help you get started with GeoMX in just a few minutes."
-msgstr "这份指南将帮助您在十分钟内下载并尝鲜 GeoMX。😁"
+msgstr "这份指南将帮助您在十分钟内快速安装并尝鲜 GeoMX。😁"
 
 #: ../../source/quick-start.rst:7 bf13ef12806941a788fc50391e625e28
 msgid ""
