@@ -1,0 +1,45 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Zonghang Li
+# This file is distributed under the same license as the GeoMX package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: GeoMX 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-08-02 09:50+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.12.1\n"
+
+#: ../../source/klonet-deployment.rst:2 0e44fb502cfa4ee1824379890b5e86a0
+msgid "Deploy GeoMX on Klonet"
+msgstr ""
+
+#: ../../source/klonet-deployment.rst:4 807f9e29347b488ba393392feb996be2
+msgid ""
+"Klonet is a network emulation platform for the technology innovation. It "
+"is designed to support the development and testing of new network "
+"protocols and applications in a realistic environment. Klonet can emulate"
+" various network scenarios, such as wireless, mobile, satellite, and "
+"optical networks, and provide fine-grained control over the network "
+"parameters, such as bandwidth, delay, jitter, and packet loss. Klonet can"
+" also integrate with real devices and applications, such as routers, "
+"switches, sensors, and smartphones, to create hybrid network experiments."
+" Klonet is based on the Linux operating system and uses virtualization "
+"and containerization technologies to create isolated network nodes and "
+"links. Klonet also provides a graphical user interface and a command-line"
+" interface for users to configure and manage their network experiments."
+msgstr ""
+
+#: ../../source/klonet-deployment.rst:19 1c39041f43f34f31b06e24320a3b9948
+msgid "The tutorial for this part is coming soon! 😁"
+msgstr ""
+

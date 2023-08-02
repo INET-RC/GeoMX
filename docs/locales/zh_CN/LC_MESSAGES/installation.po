@@ -1,0 +1,110 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Zonghang Li
+# This file is distributed under the same license as the GeoMX package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: GeoMX 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-08-02 09:50+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.12.1\n"
+
+#: ../../source/installation.rst:2 38d090dad3584a0991ce9e762d347961
+msgid "Installation"
+msgstr ""
+
+#: ../../source/installation.rst:4 61ddf0713ead455b88522104ca8fe16a
+msgid ""
+"This guide will walk you through the process of installing and deploying "
+"GeoMX. It also explains the meaning of the environment variables used in "
+"the accompanying shell scripts."
+msgstr ""
+
+#: ../../source/installation.rst:9 47e49ce06d524c468e70f9afd5f93532
+msgid "Use Pre-built Docker Image"
+msgstr ""
+
+#: ../../source/installation.rst:11 ba87d7a8ebb54cbe99b035c67a11a16e
+msgid ""
+"To simplify installation, we strongly recommend using our pre-built "
+"Docker images, which are available on `DockerHub "
+"<https://hub.docker.com/repository/docker/lizonghango00o1/geomx/general>`__:"
+msgstr ""
+
+#: ../../source/installation.rst:26 b7c8b469510a403b9b932ed96044ff52
+msgid ""
+"These commands will automatically pull the required Docker image from "
+"DockerHub and initiate a Docker container. You can directly interact with"
+" GeoMX within this container."
+msgstr ""
+
+#: ../../source/installation.rst:31 4953799ff37b4d82b74d6c0147eca5f8
+msgid ""
+"For more in-depth information on using Docker / Nvidia-Docker, please "
+"refer to the `Docker Docs <https://docs.docker.com/get-started/>`__ and "
+"the `NVIDIA Container Toolkit <https://docs.nvidia.com/datacenter/cloud-"
+"native/container-toolkit/latest/index.html>`__."
+msgstr ""
+
+#: ../../source/installation.rst:36 26292b2f2bf64e1cbda116b9d26e3d25
+msgid ""
+"Then we can use the script files provided in the ``scripts`` folder to "
+"execute demo tasks. For example:"
+msgstr ""
+
+#: ../../source/installation.rst:50 7f2c0e6b7a174baaa4960961e6bd99a4
+msgid ""
+"If you are using the image versions with tags ``cu80`` and ``cu101``, the"
+" first-time initialization of GeoMX may take a few minutes. However, "
+"subsequent runs should proceed without delay. This issue is common and "
+"can occur with other frameworks like PyTorch and MXNET as well."
+msgstr ""
+
+#: ../../source/installation.rst:56 ab52b7d09a7345e99d4049fe833661ca
+msgid "Build from Dockerfile"
+msgstr ""
+
+#: ../../source/installation.rst:58 d119c8b4a59b4705b33349354926d783
+msgid ""
+"Alternatively, we can also generate a customized Docker image using a "
+"Dockerfile. Some templates can be found in the ``docker`` folder."
+msgstr ""
+
+#: ../../source/installation.rst:61 c63e87682ab142e7ae10af2ad2b9a1d7
+msgid "To create a CPU-based Docker image, run:"
+msgstr ""
+
+#: ../../source/installation.rst:67 f5261b8a85444274af05bc0b38c595e7
+msgid "And for a GPU-based Docker image, run:"
+msgstr ""
+
+#: ../../source/installation.rst:76 d964f1dd634f48999617a7e4cff805f0
+msgid ""
+"This step may fail due to network issues. If this happens, retry or opt "
+"to compile GeoMX inside the Docker container."
+msgstr ""
+
+#: ../../source/installation.rst:80 6adf3ee8b09f4d5cac54705ee4be1128
+msgid "Build from Source Code"
+msgstr ""
+
+#: ../../source/installation.rst:82 0f63b818ad9d4b74a034788c477f36bf
+msgid ""
+"Though it is feasible to perform a direct installation on the host "
+"machine, we generally advise against this approach. This is due to "
+"potential issues that might arise from environmental incompatibilities. "
+"For a detailed walkthrough of the installation process on a host machine,"
+" please consult this `README <https://github.com/INET-"
+"RC/GeoMX/blob/main/README.md>`__ file."
+msgstr ""
+

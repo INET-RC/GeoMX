@@ -60,3 +60,8 @@ pygments_style = 'sphinx'
 # Config for 'sphinx.ext.todo'
 todo_include_todos = True
 
+# multi-language docs
+language = 'en'
+locale_dirs = ['locales']
+gettext_compact = False
+gettext_uuid = True

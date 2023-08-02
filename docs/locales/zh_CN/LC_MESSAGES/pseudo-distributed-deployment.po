@@ -1,0 +1,296 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Zonghang Li
+# This file is distributed under the same license as the GeoMX package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: GeoMX 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-08-02 09:50+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.12.1\n"
+
+#: ../../source/pseudo-distributed-deployment.rst:2
+#: ebdca9c175e941a889a5983982cca0f9
+msgid "Deploy GeoMX in Pseudo-distributed Mode"
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:4
+#: a09fa5b4707f40b19e93b5ee93d45205
+msgid ""
+"The pseudo-distributed deployment is designed for quick trial and "
+"debugging purposes. In this setup, all nodes are launched within a single"
+" Docker container and their IP addresses are all set to ``127.0.0.1``. "
+"This removes the need for additional network configuration. While this "
+"method is handy for getting a quick understanding of how the system "
+"operates, it is not meant for deployment in a production environment."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:12
+#: e82a3c6a82fd41c9895e45fee49087a1
+msgid ""
+"A basic shell script for pseudo-distributed deployment can be found `here"
+" <https://github.com/INET-"
+"RC/GeoMX/blob/main/scripts/cpu/run_vanilla_hips.sh>`__. In this script, "
+"we launched a total of 12 nodes, each command corresponds to running a "
+"different node, with roles specified by ``DMLC_ROLE`` and "
+"``DMLC_ROLE_GLOBAL``."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:19
+#: df197598cb3c494a809cef37e520eed2
+msgid "Launch Nodes in the Central Party"
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:21
+#: 20bd835be58845309c50774677e8da83
+msgid ""
+"The central party consists of 4 nodes: a global scheduler, a local "
+"scheduler, a global server, and a master worker."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:24
+#: f937858800224d2bb37eb15f34451658
+msgid ""
+"The global scheduler is used to manage the global server and local "
+"servers (in other parties). Use the following commands to launch it:"
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:38
+#: 77f74b682729466e8ca53d712f573cb2
+msgid "These environment variables are defined as follows:"
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:40
+#: a4fc0731dd6b4b57b969d5ef6cfaefa7
+msgid ""
+"``DMLC_ROLE_GLOBAL``: The role of the current process. In this case, it "
+"is a ``global_scheduler`` node. It could also be set to "
+"``global_server``."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:42
+#: 917b5ce719bf447586a522c541aaff28
+msgid ""
+"``DMLC_PS_GLOBAL_ROOT_URI``: The IP address of the global scheduler. In "
+"this case, it is set to ``127.0.0.1``, meaning the process is running on "
+"the local machine."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:44
+#: 68c21e67b23b44c29daaebd656bdec89
+msgid ""
+"``DMLC_PS_GLOBAL_ROOT_PORT``: The port that the global scheduler binds "
+"to. In this case, the port is set to 9092."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:46
+#: ef4f1912fe8549fca85a8b50da72d84f
+msgid ""
+"``DMLC_NUM_GLOBAL_SERVER``: The number of global servers. In this case, "
+"it is set to 1, meaning there is only one global server."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:48
+#: 2743b3ec637d4155bea0e355dee0de44
+msgid ""
+"``DMLC_NUM_GLOBAL_WORKER``: The number of local servers, i.e., the number"
+" of participating data centers. Here, it is set to 2, representing 2 "
+"participating data centers (Party A and Party B)."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:50
+#: 1448ae68f0f247d9957f1c8af3a68b28
+msgid ""
+"``PS_VERBOSE``: The level of detail in the logs. Setting it to 0 disables"
+" log outputs, 1 outputs necessary log information, and 2 outputs log "
+"details."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:52
+#: 5aac7af6c7a745b7b2099f2d37422f66
+msgid ""
+"``DMLC_INTERFACE``: This specifies the network interface used for inter-"
+"process communication. In this case, it is set to ``eth0``. This should "
+"be replaced with the actual network interface name used by your system or"
+" container."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:54
+#: 0dfbd528695c44d78675e9b3fdafa6e0
+msgid ""
+"Then, we launch a local scheduler, used to manage the global server and "
+"the master worker."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:67
+#: 3d5bb1b02b274473af7ea75ed3e7aec1
+msgid ""
+"Some new environment variables introduced here control intra-party "
+"behaviors:"
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:70
+#: b2c6e292865c4d0292dd5e4d848b2b54
+msgid ""
+"``DMLC_ROLE``: The role of the current process. In this case, it is a "
+"``scheduler`` node. It could also be set to ``server`` and ``worker``."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:72
+#: ad2bb0a23c4a4b17a21f3eaa12295b5b
+msgid ""
+"``DMLC_PS_ROOT_URI``: The IP address of the local scheduler. Here, it is "
+"set to ``127.0.0.1``, meaning the local scheduler runs on the local "
+"machine."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:74
+#: 3169332c36af425b85d22b6b88f1cd0f
+msgid ""
+"``DMLC_PS_ROOT_PORT``: The port that the local scheduler binds to. It "
+"should differ from other schedulers (and the global scheduler) if they’re"
+" launched on the same machine. Here, the port number is set to 9093."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:76
+#: f15d96ea3edc4982981a96e4faacacd2
+msgid ""
+"``DMLC_NUM_SERVER``: In the central party, this indicates the number of "
+"global server nodes. Here, it is set to 1."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:78
+#: a8d9b47820de4848b62c4fc1bba3fbab
+msgid ""
+"``DMLC_NUM_WORKER``: In the central party, this indicates the number of "
+"worker nodes (and the master worker). Here, we have only one master "
+"worker, so this value is set to 1."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:80
+#: cbfcc945ebe24affa03c2f8da8d2e62a
+msgid "To launch the global server, run the following commands:"
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:100
+#: 438119a476674b678fde0cad924bd039
+msgid ""
+"In this case, ``DMLC_PS_GLOBAL_ROOT_URI`` and "
+"``DMLC_PS_GLOBAL_ROOT_PORT`` refer to the setup of the global scheduler, "
+"while ``DMLC_PS_ROOT_URI`` and ``DMLC_PS_ROOT_PORT`` refer to the setup "
+"of the local scheduler."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:105
+#: 14f0d289a1ac42dd8d532df5bc90daf9
+msgid "Other environment variables are as follows:"
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:107
+#: 5e5a85f7b6d043c6bfd5cdd1e70aa2cd
+msgid ""
+"``DMLC_ENABLE_CENTRAL_WORKER``: This option enables or disables the "
+"central party to participate in model training. If set to 0, the central "
+"party only provides a master worker to initialize the global server. If "
+"set to 1, the central party can provide a worker cluster to participate "
+"in model training, with the master worker attached to a worker node."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:109
+#: 2e01b8d0d4ce4f97bfc4a022cb7a50e0
+msgid ""
+"``DMLC_NUM_ALL_WORKER``: The total number of worker nodes worldwide "
+"participating in model training. Here, with 2 workers in Party A and 2 "
+"workers in Party B, it’s set to 4. Note that although the master worker "
+"is also a worker node, in this case it does not participate in model "
+"training, so it is not counted."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:111
+#: 98a24cf490b44a8483379f77ea5698f6
+msgid "Lastly, we launch the master worker."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:126
+#: 90140aa38d194a218d43ae6df4d6d16b
+msgid ""
+"The master worker sets ``DMLC_ROLE_MASTER_WORKER=1`` to announce itself "
+"as a master worker node. It establishes a socket connection with the "
+"local scheduler, thus ``DMLC_PS_ROOT_URI=127.0.0.1`` and "
+"``DMLC_PS_ROOT_PORT=9093`` are set to ensure that the master worker can "
+"find the local scheduler."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:133
+#: 9ad349d877514b568a63c7b2bfe40128
+msgid "Launch Nodes in Other Parties"
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:135
+#: 3e491f48f1e24e2ebe01694f4146ecd2
+msgid ""
+"Next, we will be launching a scheduler, a parameter server, and two "
+"workers in the other parties. Let’s take one of them as an example."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:138
+#: c2e46dfdba784a278ce473c42a3368ad
+msgid "First, we’ll start with launching the local scheduler:"
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:151
+#: 7845319d29c9471980b858c60ef7b695
+msgid ""
+"This setup is similar to that of the local scheduler in the central "
+"party, but in this context, ``DMLC_NUM_SERVER`` specifies the number of "
+"local parameter servers within the current party, which typically sets to"
+" 1. Furthermore, ``DMLC_NUM_WORKER`` specifies the number of worker nodes"
+" within the current party. As we’re planning to launch two worker nodes "
+"in this party, here we set this value to 2."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:158
+#: 3eac49fe79fc4b75907e0511a4fc8dee
+msgid "Next, we launch the local parameter server:"
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:175
+#: c66210a2fd264e56b6a1e2898a6db624
+msgid ""
+"As we mentioned above, a parameter server is required to establish socket"
+" connections with both the local and global schedulers. Thus, it needs to"
+" know the IP and port address of both the local scheduler and the global "
+"scheduler."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:180
+#: aedec1693a65445894b65b2acde263ae
+msgid "Finally, we’ll launch two worker nodes:"
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:204
+#: 292c0cb9d8a64d198b76e94cdb6b1592
+msgid ""
+"The worker nodes are launched in a similar manner as before, but they "
+"connect to their own local scheduler within their party."
+msgstr ""
+
+#: ../../source/pseudo-distributed-deployment.rst:207
+#: 395e9cbb6b5c4133b2763ee72a224566
+msgid ""
+"The training data is divided among worker nodes. Each worker gets a slice"
+" of data to process, which is specified by the ``--data-slice-idx`` "
+"option. For example, the first worker gets the 0th slice of the data, and"
+" the second worker gets the 1st slice of the data."
+msgstr ""
+

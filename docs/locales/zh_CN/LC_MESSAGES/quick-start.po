@@ -1,0 +1,135 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Zonghang Li
+# This file is distributed under the same license as the GeoMX package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: GeoMX 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-08-02 09:50+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.12.1\n"
+
+#: ../../source/quick-start.rst:2 06eac0e7af5c4954b71b64973b7622d2
+msgid "Quick Start"
+msgstr ""
+
+#: ../../source/quick-start.rst:4 7382f2ae18dc45febe42ff7e11144910
+msgid "This guide will help you get started with GeoMX in just a few minutes."
+msgstr ""
+
+#: ../../source/quick-start.rst:7 bf13ef12806941a788fc50391e625e28
+msgid ""
+"**Prerequisites:** We provide a pre-built Docker image for a quick trial "
+"of GeoMX. For this, Docker needs to be installed following this `guide "
+"<https://docs.docker.com/engine/install/ubuntu/>`__."
+msgstr ""
+
+#: ../../source/quick-start.rst:12 dd667ff4ba2446eeae325d086cedecda
+msgid "Pull the Docker Image"
+msgstr ""
+
+#: ../../source/quick-start.rst:14 7b49365eb445479682b3c7b7d8aaa099
+msgid "To run on CPUs, use:"
+msgstr ""
+
+#: ../../source/quick-start.rst:20 9e641defa65146e99f02820953600a21
+msgid "To run on GPUs with CUDA 8.0, use:"
+msgstr ""
+
+#: ../../source/quick-start.rst:26 dbf62c4f3573442fb4b050787f25c509
+msgid "To run on GPUs with CUDA 10.1, use:"
+msgstr ""
+
+#: ../../source/quick-start.rst:33 99bc76ad58ba49769fc29db02a1c9920
+msgid "Run the Docker Container"
+msgstr ""
+
+#: ../../source/quick-start.rst:35 b80751efb27e40a7b464ffc086026f00
+msgid ""
+"If you’re using the image with tag ``cpu-only``, use the following "
+"command to start the container:"
+msgstr ""
+
+#: ../../source/quick-start.rst:42 799380c682ae41e7a5394fb2c7d05cdd
+msgid ""
+"That’s similar for the GPU versions ``cu80`` and ``cu101``, but we need "
+"to add the ``--gpus all`` option:"
+msgstr ""
+
+#: ../../source/quick-start.rst:50 d97b475e45094342a2abc1dbb1cee1b5
+msgid "Run the Demo Scripts"
+msgstr ""
+
+#: ../../source/quick-start.rst:52 0be64771a9914829a60e66e7661fcc9a
+msgid ""
+"We provide some `example scripts <https://github.com/INET-"
+"RC/GeoMX/tree/main/scripts>`__ of how to train a deep learning model "
+"using GeoMX in the ``scripts`` and ``examples`` folders."
+msgstr ""
+
+#: ../../source/quick-start.rst:57 06c8b35a260e4ab08d7f3b9955105970
+msgid "To quickly start with the vanilla version of GeoMX, run:"
+msgstr ""
+
+#: ../../source/quick-start.rst:67 855dbaa16c814c988610003ed381f14b
+msgid ""
+"We also provide scripts for several other optimization techniques, they "
+"are:"
+msgstr ""
+
+#: ../../source/quick-start.rst:70 da3922b5d549423f8986c786b1db6759
+msgid ""
+"Bidirectional Gradient Sparsification (Bi-Sparse): ``bash "
+"run_bisparse_compression.sh``."
+msgstr ""
+
+#: ../../source/quick-start.rst:72 c29f823838fc4795a54677ae34b2bfdb
+msgid "Low-Precision Quantization (FP16): ``bash run_fp16.sh``."
+msgstr ""
+
+#: ../../source/quick-start.rst:74 327699121ed44efc942c1cc677bd6825
+msgid "Mixed-Precision Quantization (MPQ): ``bash run_mixed_precision.sh``."
+msgstr ""
+
+#: ../../source/quick-start.rst:76 e5ca75186acf4e3dad0d35ede9ba47b6
+msgid "Differential Gradient Transmission (DGT): ``bash run_dgt.sh``."
+msgstr ""
+
+#: ../../source/quick-start.rst:78 91a5265c54494ef697df3aa6f48b6420
+msgid "TSEngine: ``bash run_tsengine.sh``."
+msgstr ""
+
+#: ../../source/quick-start.rst:80 85236909550146b495ac7a5f2ae3624a
+msgid "Priority-based Parameter Propagation (P3): ``bash run_p3.sh``."
+msgstr ""
+
+#: ../../source/quick-start.rst:82 4f604aeb79f143f59355539285e5ed8d
+msgid "Multi-Server Load Balancing (MultiGPS): ``bash run_multi_gps.sh``."
+msgstr ""
+
+#: ../../source/quick-start.rst:84 62c5cf64f72149f3981fd1a022558dca
+msgid "Mixed-Synchronous Algorithm (MixedSync): ``bash run_mixed_sync.sh``."
+msgstr ""
+
+#: ../../source/quick-start.rst:86 fdfe859c13bf44bf933335b1fb7d190d
+msgid "Hierarchical Frequency Aggregation (HFA): ``bash run_hfa_sync.sh``."
+msgstr ""
+
+#: ../../source/quick-start.rst:89 4afcc04ed487449f81968552eb009802
+msgid ""
+"NOTE: If you are using the images with tags ``cu80`` and ``cu101``, the "
+"first-time initialization of GeoMX may take a few minutes. However, "
+"subsequent runs should proceed without delay. This issue is common and "
+"can occur with other frameworks like PyTorch and MXNET as well."
+msgstr ""
+

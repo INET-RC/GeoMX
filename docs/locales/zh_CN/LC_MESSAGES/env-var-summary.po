@@ -1,0 +1,376 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Zonghang Li
+# This file is distributed under the same license as the GeoMX package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: GeoMX 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-08-02 09:50+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.12.1\n"
+
+#: ../../source/env-var-summary.rst:2 b67f9cd824e4462ba870bbf7652b6b59
+msgid "Summary of Env Variables"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:4 dd287d4e50564f3297b1808e25b75cdb
+msgid "Summary of Basic Environment Variables Using by GeoMX."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:7 ../../source/env-var-summary.rst:77
+#: 3683752b4d7b4497bbe01976f7569a4e 8ee1336646444678a236935ec0c445dd
+msgid "Environment Variable"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:8 b60ee306bd644b7da9e1f09f2b0306c6
+msgid "Options"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:9 ca333996b324427c973c7f2f2ddddcb1
+msgid "Node Used On"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:10 ../../source/env-var-summary.rst:78
+#: 72ff6607562a4e6c8166a1910bfb0443 9810ade234944fbd97781d71294f1ce8
+msgid "Description"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:11 235cb45ab2654935961305411591e31c
+msgid "DMLC_ROLE"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:12 623f211a9f8c403198847c7db691c631
+msgid "scheduler, server, worker"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:13 6127c76af41b46a8a33cc023493596f8
+msgid "local scheduler, local server, master worker, worker"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:14 d9d6b3f9c53e4f8b82cc4b93b7107b32
+msgid "The role of the node within the party."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:15 c878a6f12169410a9fea809477051b2e
+msgid "DMLC_PS_ROOT_URI"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:16 ../../source/env-var-summary.rst:36
+#: 299bf733df724a90ba40789be1d568d5 da411523a5bc429b913f17576592ddcd
+msgid "IPv4 address"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:17 78955c158a74410f82d826ecffaaa1c5
+msgid "global server, master worker, local scheduler, local server, worker"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:18 4ec98f73eb3347cbb3c5ae3184e70383
+msgid "IPv4 address of the local scheduler node."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:19 2c5e043413454234a3cc74d56bd8af48
+msgid "DMLC_PS_ROOT_PORT"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:20 ../../source/env-var-summary.rst:24
+#: ../../source/env-var-summary.rst:28 ../../source/env-var-summary.rst:40
+#: 12326783bdc44002a77914d9681168c3 402734fbf7094d6c8c847c52aa28984a
+#: 989bf91bf2274efaa76bc26c12e53294 dc625dc6b1bc4fad83c55b8a24a6c339
+msgid "Integer"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:21 ../../source/env-var-summary.rst:25
+#: ../../source/env-var-summary.rst:29 ../../source/env-var-summary.rst:41
+#: ../../source/env-var-summary.rst:45 ../../source/env-var-summary.rst:49
+#: 12552d1e0acc467b9237a6de830f3a16 4e115918e11a4abaa7f644cb1bd99ed1
+#: 6ca867205abe4da097ce4d709882ef33 a53753804b844f0989c6bc2a39494f5f
+#: c9ce416a1b054d8592eb4c8775febb90 ece595dc5f3648b2a87bc194266b9a58
+msgid "same as above"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:22 1e09f7871fbd4c81bdf1f39824de94b5
+msgid "Port number of the local scheduler node."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:23 4b5547ca746a4f9fbedbfda247cd07ac
+msgid "DMLC_NUM_SERVER"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:26 a4c4614e1aea4e8db337a286f5c0c533
+msgid ""
+"Number of local servers in the participating party, or number of global "
+"servers in the central party."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:27 19b8cee22e1c4d41a245c86bbec2e9ae
+msgid "DMLC_NUM_WORKER"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:30 3ffcd64d17744a1d9e43e1d9bb8662b2
+msgid "Number of workers in the current party, including the master worker."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:31 281301019ace48cab224cfd07b14e032
+msgid "DMLC_ROLE_GLOBAL"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:32 0db2afe782f94182ab11fc2b1bcf67d2
+msgid "global_scheduler, global_server"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:33 f8b8352d9d064466b229ae07d0c36473
+msgid "global scheduler, global server"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:34 881ef79412724097ae3ab837f823020f
+msgid "The role of the node across different parties."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:35 dcd5760e95784fada1f3cfa35449d280
+msgid "DMLC_PS_GLOBAL_ROOT_URI"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:37 01959202292d4ff5a28d7c7c150a2802
+msgid "global scheduler, global server, local server"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:38 46e9f593fd7846e2a27adbe45d9a5701
+msgid "IPv4 address of the global scheduler node."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:39 f88b8c7fcdf74485b57061101acb9b8c
+msgid "DMLC_PS_GLOBAL_ROOT_PORT"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:42 a9bcd986a47f471f93b5aa7615f16850
+msgid "Port number of the global scheduler node."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:43 bb6aa553694040319a3beac1367edd78
+msgid "DMLC_NUM_GLOBAL_SERVER"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:44 ../../source/env-var-summary.rst:48
+#: ../../source/env-var-summary.rst:60 01abdbfed3e9443b829973231fa3b013
+#: befd67361cb941f39abe40316a81921b e734dd5356b04c2ea51a42b15e02a2aa
+msgid "Number"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:46 f5f47fd1d88f43e287635e3fd347df3e
+msgid "Number of global servers in the central party."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:47 55a20a6ca4df48659514a20439d9dcda
+msgid "DMLC_NUM_GLOBAL_WORKER"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:50 7c4961a314a24ee1ae1c32378382d043
+msgid "Number of local servers worldwide."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:51 0053ce6f2495438899b6ce0598c87c9f
+msgid "DMLC_ROLE_MASTER_WORKER"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:52 ../../source/env-var-summary.rst:56
+#: b15b5e54e9364015ac7eb7e8ce960b9c d363d0c8f69f436faa27c4f9b6b1a985
+msgid "0, 1"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:53 a7b55f2818cc41959fde439a2a913e33
+msgid "master worker"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:54 54d1af3e086547918450235402d7af0e
+msgid "Specify if the current node is the master worker."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:55 58dfe6e90b0048e6ac11e8c079ea4bc9
+msgid "DMLC_ENABLE_CENTRAL_WORKER"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:57 4e114863763c4cefa06581082bd453a4
+msgid "global server"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:58 2d544c3f5a894875ada0d14642eaf618
+msgid "Specify if the central party joins in model training."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:59 f26966e0d5d745ab835a8bb7372fedff
+msgid "DMLC_NUM_ALL_WORKER"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:61 1cfe75149ad94789a25c417173adabd1
+msgid "global server, master worker, worker"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:62 9ed0ef148b29414690d68d26558edc3c
+msgid "Total number of workers actually participating in model training."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:63 3f168f0329e14c67a122efe0329dee7f
+msgid "DMLC_INTERFACE"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:64 391db299ba4c43658928dfe5fd396c3a
+msgid "String"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:65 ../../source/env-var-summary.rst:69
+#: 3398cb8a239240e5b9ad542735ee82fb a0aea476a7af4b7787159cf1c466ecca
+msgid "all"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:66 9270a1d32abf455eb179f2cc22084dad
+msgid "Name of the network interface used by the node."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:67 6ef2dd49499b4055b3096ff96ead071b
+msgid "PS_VERBOSE"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:68 d78dc22ab69f41bd9eef6f0142b3cfaa
+msgid "0, 1, 2"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:70 e7a1bda6fac64db5b393858fc7995ff1
+msgid "Verbosity level of the system logs."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:73 58e5151f452843258fcd2da4dab8c2c3
+msgid "Summary of Environment Variables for each Optimization Technology."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:76 b2b7909baed9478b9b43ed54e15fe037
+msgid "Technology"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:80 76072c29fddb421d995ff4627732cd49
+msgid ":ref:`HFA <hierarchical-frequency-aggregation>`"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:81 0dd7fcf4e1d643d8be6a7ebd059cdf95
+msgid "MXNET_KVSTORE_USE_HFA"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:82 b2c737bd453344e3b70909c8b7d19221
+msgid "Enable or disable HFA synchronization."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:85 046ed80209cd47978ac09db4cf004245
+msgid "MXNET_KVSTORE_HFA_K1"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:86 b4b7329ba9204c3198c106e715eb221d
+msgid "Number of loops before a local synchronization."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:89 5deec80b693b4afb9f1c69a2919061f6
+msgid "MXNET_KVSTORE_HFA_K2"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:90 da56fa6c14824927a81c64422a6c3cff
+msgid "Number of loops before a global synchronization."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:92 1b80fc2793b64ba4bde7ab64c3bd5206
+msgid ""
+":ref:`Bi-Sparse <bidirectional-gradient-sparsification>`, :ref:`MPQ "
+"<mixed-precision-quantization>`"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:93 231d7bbe39fb4e40a1a085cec801e340
+msgid "MXNET_KVSTORE_SIZE_LOWER_BOUND"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:94 207c16076a0f4b228417f53d1f0492e2
+msgid "Size lower bound for classifying large and tiny tensors."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:96 ffae5501e7594cd8add9040b7c81c631
+msgid ":ref:`DGT <differential-gradient-transmission>`"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:97 cc388bbee6db4769b1484c1fd337c1be
+msgid "ENABLE_DGT"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:98 11865ddbebfb450abd2100779d5166b3
+msgid "Enable or disable DGT protocol, set to 2 for enable."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:101 ca05fcfb67694611b5e1b861a81285ca
+msgid "DMLC_UDP_CHANNEL_NUM"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:102 9c4e4ed213f043b6a3ae7d37e594f93b
+msgid "Number of channels used for transmission."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:105 52883e406566488384a1890ab2df1b84
+msgid "DMLC_K"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:106 c454f7011e854714b22e84e2daac66b1
+msgid "Compression ratio."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:109 890690cd7a734bafb7220ed72d7ca22b
+msgid "ADAPTIVE_K_FLAG"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:110 02c3cff86d53441289c945232b16b43c
+msgid "Enable or disable adaptive K value adjustment."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:112 63a7b5f025b34ab29a943a9ba323bdea
+msgid ":ref:`TSEngine <tsengine>`"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:113 ad4168b98bf0412d834843f311dacdc3
+msgid "ENABLE_INTER_TS"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:114 de80c560c63d4edcb486fbf802ebb01f
+msgid "Enable or disable TSEngine within the data center."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:117 e1b44742bc9e4cc0888bd04459c408d9
+msgid "ENABLE_INTRA_TS"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:118 612a41b487d24c1090eca5c20eabb216
+msgid "Enable or disable TSEngine between data centers."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:121 450845697bde46cdb3a3a505f48340d0
+msgid "MAX_GREED_RATE_TS"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:122 66b31f4204f643f9a950d34bbc3c1af9
+msgid "Probability set for random exploration."
+msgstr ""
+
+#: ../../source/env-var-summary.rst:124 a37bcb2021c949f29f08a2c76918c464
+msgid ":ref:`P3 <priority-based-parameter-propagation>`"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:125 ad16edac5c7b4147afd6a7c65a1ef1f6
+msgid "ENABLE_P3"
+msgstr ""
+
+#: ../../source/env-var-summary.rst:126 d8032496dca84526bfe61fefdfb05423
+msgid "Enable or disable P3 scheduler."
+msgstr ""
+

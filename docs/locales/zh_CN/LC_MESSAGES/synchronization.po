@@ -1,0 +1,162 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2023, Zonghang Li
+# This file is distributed under the same license as the GeoMX package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: GeoMX 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-08-02 09:50+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.12.1\n"
+
+#: ../../source/synchronization.rst:2 5b22a42341f649aabd3bc811cdad7c17
+msgid "How to Use GeoMX Synchronization?"
+msgstr ""
+
+#: ../../source/synchronization.rst:4 e56a01ffc3ff41f788da66b6d757e06e
+msgid ""
+"GeoMX currently supports two fundamental synchronization algorithms, "
+"i.e., the fully-synchronous algorithm, the mixed-synchronous algorithm, "
+"and an advanced algorithm, i.e., hierarchical frequency aggregation."
+msgstr ""
+
+#: ../../source/synchronization.rst:9 33eab94768a44c0fb078f3d0cca86aac
+msgid "Fully-Synchronous Algorithm"
+msgstr ""
+
+#: ../../source/synchronization.rst:11 be3c28e0d4fe416d990254262cb25c33
+msgid ""
+"Fully-Synchronous Algorithm (FSA) is the default strategy for model "
+"synchronization. In this synchronous algorithm, training nodes "
+"synchronize their model data (can be parameters or gradients) each round,"
+" and both parameter server systems within and between data centers run in"
+" a synchronous parallel mode. All training nodes are synchronized to "
+"ensure a consistent model. However, this comes at the expense of training"
+" speed, as it requires waiting for all computations and communications to"
+" complete at every iteration."
+msgstr ""
+
+#: ../../source/synchronization.rst:20 1e31c265e2e641638c4fbb8edd77949f
+msgid ""
+"To use FSA, all that’s required is to set ``dist_sync`` as a "
+"hyperparameter during the initialization of ``kvstore``. For example:"
+msgstr ""
+
+#: ../../source/synchronization.rst:44 53ece56e63c64903a954c603bc152400
+msgid ""
+"The demo code can be found in `examples/cnn.py <https://github.com/INET-"
+"RC/GeoMX/blob/main/examples/cnn.py>`_. You can run this demo by simply "
+"``bash scripts/xpu/run_vanilla_hips.sh``, where ``xpu`` should be ``cpu``"
+" or ``gpu``."
+msgstr ""
+
+#: ../../source/synchronization.rst:51 5aea90b014b54a25bc15afb7c4e5233d
+msgid "Mixed-Synchronous Algorithm"
+msgstr ""
+
+#: ../../source/synchronization.rst:53 46b909f754f047f899ed76e168296513
+msgid ""
+"Mixed-Synchronous Algorithm (MixedSync) is an asynchronous version of "
+"FSA, where the difference is that the parameter server system between "
+"data centers runs in an asynchronous parallel mode. This setup is "
+"particularly suitable for scenarios where intra-data center training "
+"nodes display high homogeneity, yet there is significant resource "
+"heterogeneity between different data centers. This asynchronous method "
+"resolves the problem of straggling data centers, thereby accelerating "
+"distributed training across WANs."
+msgstr ""
+
+#: ../../source/synchronization.rst:62 5c20b59293ba402ebfa1b8aaa508c346
+msgid ""
+"To use MixedSync, all that’s required is to set ``dist_async`` instead of"
+" ``dist_sync`` when initializing ``kvstore``. The rest of the setup "
+"remains the same:"
+msgstr ""
+
+#: ../../source/synchronization.rst:72 03a38c0f1bc241758e485f48cb6743e8
+msgid ""
+"Alternatively, you can enable MixedSync by using the ``--mixed-sync`` "
+"option in our provided python script:"
+msgstr ""
+
+#: ../../source/synchronization.rst:79 f54256423f3b4bb5accf16ceed41c619
+msgid ""
+"You can also run this demo by executing ``bash "
+"scripts/xpu/run_mixed_sync.sh``, where ``xpu`` should be ``cpu`` or "
+"``gpu``."
+msgstr ""
+
+#: ../../source/synchronization.rst:84 6b08e51224264c4bacbc48561fad69b8
+msgid "Use DCASGD Optimizer in MixedSync"
+msgstr ""
+
+#: ../../source/synchronization.rst:86 d339d6e6db1544c880f17a1871feb948
+msgid ""
+"To alleviate the issue of stale gradients in asynchronous parallel "
+"operations, the global parameter server can be configured to use the "
+"`DCASGD <http://proceedings.mlr.press/v70/zheng17b/zheng17b.pdf>`__ "
+"optimizer. This adjustment aids in improving training convergence while "
+"preserving model accuracy."
+msgstr ""
+
+#: ../../source/synchronization.rst:92 be5898da98ee4c15a3495e6197d76b44
+msgid ""
+"The way to enable DCASGD in MixedSync is the same as in MXNET: simply "
+"replace the ``Adam`` optimizer with the ``DCASGD`` optimizer:"
+msgstr ""
+
+#: ../../source/synchronization.rst:103 0833df25ca464f46aa3bc0e34c86f5ff
+msgid ""
+"We can use the following command to enable the DCASGD optimizer in "
+"MixedSync:"
+msgstr ""
+
+#: ../../source/synchronization.rst:110 74a7d226d99d458e9df7f7d6cd57cd9d
+msgid "Just modify ``scripts/xpu/run_mixed_sync.sh`` and try it!"
+msgstr ""
+
+#: ../../source/synchronization.rst:115 cea7e0b14b1f410dacd6191f8c1bc083
+msgid "Hierarchical Frequency Aggregation"
+msgstr ""
+
+#: ../../source/synchronization.rst:117 3c4dd89b518849478ea79526c875e032
+msgid ""
+"Inspired by `this paper "
+"<https://ieeexplore.ieee.org/abstract/document/9148862>`__, our "
+"Hierarchical Frequency Aggregation (HFA) algorithm first performs "
+":math:`K_1` steps of local updates at the training nodes, followed by "
+":math:`K_2` steps of synchronizations at the local parameter server. "
+"Finally, a global synchronization is performed at the global parameter "
+"server. This approach effectively reduces the frequency of model "
+"synchronization across data centers, thereby boosting distributed "
+"training."
+msgstr ""
+
+#: ../../source/synchronization.rst:127 b6850b240a454eb2b953dcc31ed25316
+msgid ""
+"To enable HFA, we initialize ``kvstore`` in ``dist_sync`` mode and make a"
+" simple modification to the training loop:"
+msgstr ""
+
+#: ../../source/synchronization.rst:162 034f864499dd4a79b9dddee9bf5454e5
+msgid "Then, let’s set three environmental variables:"
+msgstr ""
+
+#: ../../source/synchronization.rst:170 103fdbe91e464303afc4e2040a71bcb3
+msgid ""
+"The demo code can be found in `examples/cnn_hfa.py <https://github.com"
+"/INET-RC/GeoMX/blob/main/examples/cnn_hfa.py>`_. You can run this demo by"
+" simply ``bash scripts/xpu/run_hfa_sync.sh``, where ``xpu`` should be "
+"``cpu`` or ``gpu``."
+msgstr ""
+
