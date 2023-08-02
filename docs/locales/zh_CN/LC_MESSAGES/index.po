@@ -130,7 +130,10 @@ msgid ""
 "process before transmission. This precaution is taken to minimize the "
 "loss of crucial information and avoid significant degradation to model "
 "performance."
-msgstr "**混合精度量化 (MPQ)**："
+msgstr "**混合精度量化 (MPQ)**：混合精度量化结合了双向梯度稀疏化和低精度量化两种技术。"
+"在这种方案中，小张量被量化为 FP16 格式进行传输，而大张量则保持为 FP32 格式。但是，"
+"这些大张量在传输前将经过稀疏化处理。这样设计是为了减少关键信息的丢失，避免对模型性能"
+"造成明显损伤。"
 
 #: ../../source/index.rst:40 91dc5c1f87fc493683fd0e6e56b2516a
 msgid ""
