@@ -65,66 +65,67 @@ msgstr "如果您使用的是带有 ``cpu-only`` 标签的镜像，请使用以�
 msgid ""
 "That’s similar for the GPU versions ``cu80`` and ``cu101``, but we need "
 "to add the ``--gpus all`` option:"
-msgstr ""
+msgstr "对于 GPU 版本的 ``cu80`` 和 ``cu101`` 镜像，使用方法类似，但我们需要添加 ``--gpus all`` 选项："
 
 #: ../../source/quick-start.rst:50 d97b475e45094342a2abc1dbb1cee1b5
 msgid "Run the Demo Scripts"
-msgstr ""
+msgstr "运行示例脚本"
 
 #: ../../source/quick-start.rst:52 0be64771a9914829a60e66e7661fcc9a
 msgid ""
 "We provide some `example scripts <https://github.com/INET-"
 "RC/GeoMX/tree/main/scripts>`__ of how to train a deep learning model "
 "using GeoMX in the ``scripts`` and ``examples`` folders."
-msgstr ""
+msgstr "我们在 ``scripts`` 和 ``examples`` 文件夹中提供了一些使用 GeoMX 训练"
+"深度学习模型的示例脚本。"
 
 #: ../../source/quick-start.rst:57 06c8b35a260e4ab08d7f3b9955105970
 msgid "To quickly start with the vanilla version of GeoMX, run:"
-msgstr ""
+msgstr "要体验 GeoMX 的初始版本（仅使用分层参数服务器），请运行："
 
 #: ../../source/quick-start.rst:67 855dbaa16c814c988610003ed381f14b
 msgid ""
 "We also provide scripts for several other optimization techniques, they "
 "are:"
-msgstr ""
+msgstr "我们也提供了几种其他优化技术的快捷运行脚本，它们是："
 
 #: ../../source/quick-start.rst:70 da3922b5d549423f8986c786b1db6759
 msgid ""
 "Bidirectional Gradient Sparsification (Bi-Sparse): ``bash "
 "run_bisparse_compression.sh``."
-msgstr ""
+msgstr "双向梯度稀疏化 (Bi-Sparse)： ``bash run_bisparse_compression.sh``."
 
 #: ../../source/quick-start.rst:72 c29f823838fc4795a54677ae34b2bfdb
 msgid "Low-Precision Quantization (FP16): ``bash run_fp16.sh``."
-msgstr ""
+msgstr "低精度量化 (FP16)：``bash run_fp16.sh``."
 
 #: ../../source/quick-start.rst:74 327699121ed44efc942c1cc677bd6825
 msgid "Mixed-Precision Quantization (MPQ): ``bash run_mixed_precision.sh``."
-msgstr ""
+msgstr "混合精度量化 (MPQ)：``bash run_mixed_precision.sh``."
 
 #: ../../source/quick-start.rst:76 e5ca75186acf4e3dad0d35ede9ba47b6
 msgid "Differential Gradient Transmission (DGT): ``bash run_dgt.sh``."
-msgstr ""
+msgstr "差异梯度传输 (DGT)：``bash run_dgt.sh``."
 
 #: ../../source/quick-start.rst:78 91a5265c54494ef697df3aa6f48b6420
 msgid "TSEngine: ``bash run_tsengine.sh``."
-msgstr ""
+msgstr "TSEngine: ``bash run_tsengine.sh``."
 
 #: ../../source/quick-start.rst:80 85236909550146b495ac7a5f2ae3624a
 msgid "Priority-based Parameter Propagation (P3): ``bash run_p3.sh``."
-msgstr ""
+msgstr "优先级参数传播 (P3)：``bash run_p3.sh``."
 
 #: ../../source/quick-start.rst:82 4f604aeb79f143f59355539285e5ed8d
 msgid "Multi-Server Load Balancing (MultiGPS): ``bash run_multi_gps.sh``."
-msgstr ""
+msgstr "多全局参数服务器负载均衡 (MultiGPS)：``bash run_multi_gps.sh``."
 
 #: ../../source/quick-start.rst:84 62c5cf64f72149f3981fd1a022558dca
 msgid "Mixed-Synchronous Algorithm (MixedSync): ``bash run_mixed_sync.sh``."
-msgstr ""
+msgstr "混合同步算法 (MixedSync)：``bash run_mixed_sync.sh``."
 
 #: ../../source/quick-start.rst:86 fdfe859c13bf44bf933335b1fb7d190d
 msgid "Hierarchical Frequency Aggregation (HFA): ``bash run_hfa_sync.sh``."
-msgstr ""
+msgstr "混合频率聚合 (HFA)：``bash run_hfa_sync.sh``."
 
 #: ../../source/quick-start.rst:89 4afcc04ed487449f81968552eb009802
 msgid ""
@@ -132,5 +133,6 @@ msgid ""
 "first-time initialization of GeoMX may take a few minutes. However, "
 "subsequent runs should proceed without delay. This issue is common and "
 "can occur with other frameworks like PyTorch and MXNET as well."
-msgstr ""
-
+msgstr "注意：如果您使用的是带有 ``cu80`` 和 ``cu101`` 标签的镜像，GeoMX 的首次"
+"初始化可能需要几分钟的时间。但是，后续的运行将会恢复正常，除非您重新编译了 GeoMX。"
+"这个初始化延迟是正常的，它也发生在 PyTorch 和 MXNET 等其他框架上。"
