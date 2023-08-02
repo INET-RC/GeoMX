@@ -10,9 +10,9 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-08-02 09:50+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Last-Translator: Li, Zonghang <lizhuestc@gmail.com>\n"
 "Language: zh_CN\n"
-"Language-Team: zh_CN <LL@li.org>\n"
+"Language-Team: zh_CN <lizhuestc@gmail.com>\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -21,14 +21,14 @@ msgstr ""
 
 #: ../../source/installation.rst:2 38d090dad3584a0991ce9e762d347961
 msgid "Installation"
-msgstr ""
+msgstr "GeoMX 安装指南"
 
 #: ../../source/installation.rst:4 61ddf0713ead455b88522104ca8fe16a
 msgid ""
 "This guide will walk you through the process of installing and deploying "
 "GeoMX. It also explains the meaning of the environment variables used in "
 "the accompanying shell scripts."
-msgstr ""
+msgstr "本指南将引导您完成 GeoMX 的安装过程，并解释附带的 shell 脚本中使用的环境变量的含义。"
 
 #: ../../source/installation.rst:9 47e49ce06d524c468e70f9afd5f93532
 msgid "Use Pre-built Docker Image"
