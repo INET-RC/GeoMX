@@ -10,9 +10,9 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-08-02 09:50+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Last-Translator: Li, Zonghang <lizhuestc@gmail.com>\n"
 "Language: zh_CN\n"
-"Language-Team: zh_CN <LL@li.org>\n"
+"Language-Team: zh_CN <lizhuestc@gmail.com>\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -21,11 +21,11 @@ msgstr ""
 
 #: ../../source/quick-start.rst:2 06eac0e7af5c4954b71b64973b7622d2
 msgid "Quick Start"
-msgstr ""
+msgstr "十分钟快速体验"
 
 #: ../../source/quick-start.rst:4 7382f2ae18dc45febe42ff7e11144910
 msgid "This guide will help you get started with GeoMX in just a few minutes."
-msgstr ""
+msgstr "这份指南将帮助您在十分钟内下载并尝鲜 GeoMX。😁"
 
 #: ../../source/quick-start.rst:7 bf13ef12806941a788fc50391e625e28
 msgid ""
