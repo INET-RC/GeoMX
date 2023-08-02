@@ -255,7 +255,10 @@ msgid ""
 "resource heterogeneity between different data centers. This asynchronous "
 "method resolves the problem of straggling data centers, thereby "
 "accelerating distributed training across WANs."
-msgstr ""
+msgstr "**混合同步算法 (MixedSync)**：该算法是全同步算法的异步版本，区别在于数据中心"
+"之间的参数服务器系统以异步并行模式运行。这种算法适用于数据中心内部训练节点显示出同质性，"
+"但不同数据中心之间的资源异质较强的情况。异步算法解决了低性能数据中心掉队的问题，能够加速"
+"广域分布式机器学习训练过程。"
 
 #: ../../source/index.rst:60 2999eee93840435cb9c660181392f4e8
 msgid ""
@@ -264,7 +267,9 @@ msgid ""
 "`DCASGD <http://proceedings.mlr.press/v70/zheng17b/zheng17b.pdf>`_ "
 "optimizer. This adjustment aids in improving training convergence while "
 "preserving model accuracy."
-msgstr ""
+msgstr "注意：为了缓解异步并行中的延迟梯度问题，我们可以配置全局参数服务器使用"
+" `DCASGD <http://proceedings.mlr.press/v70/zheng17b/zheng17b.pdf>`_ "
+"优化器。这个优化器可以自动补偿延迟梯度，有助于提高分布式训练的收敛性。"
 
 #: ../../source/index.rst:62 8f9eba7ff543484ebebf82ba129fe588
 msgid ""
