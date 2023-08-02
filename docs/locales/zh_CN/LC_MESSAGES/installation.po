@@ -32,14 +32,16 @@ msgstr "本指南将引导您完成 GeoMX 的安装过程，并解释附带的 s
 
 #: ../../source/installation.rst:9 47e49ce06d524c468e70f9afd5f93532
 msgid "Use Pre-built Docker Image"
-msgstr ""
+msgstr "使用预构建的 Docker 镜像安装 GeoMX"
 
 #: ../../source/installation.rst:11 ba87d7a8ebb54cbe99b035c67a11a16e
 msgid ""
 "To simplify installation, we strongly recommend using our pre-built "
 "Docker images, which are available on `DockerHub "
 "<https://hub.docker.com/repository/docker/lizonghango00o1/geomx/general>`__:"
-msgstr ""
+msgstr "为了简化安装过程，我们强烈推荐使用我们预构建的 Docker 镜像，它们可以在"
+" ``DockerHub <https://hub.docker.com/repository/docker/lizonghango00o1/geomx/general>``_ "
+"上获取："
 
 #: ../../source/installation.rst:26 b7c8b469510a403b9b932ed96044ff52
 msgid ""
