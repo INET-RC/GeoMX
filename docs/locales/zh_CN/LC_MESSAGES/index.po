@@ -211,7 +211,9 @@ msgid ""
 "across multiple global parameter servers. By preventing any single server"
 " from becoming a bottleneck, MultiGPS significantly enhances efficiency, "
 "scalability, and overall performance of our GeoMX system."
-msgstr ""
+msgstr "**多参数服务器负载均衡 (MultiGPS)**：GeoMX 支持启用多个全局参数服务器以均衡"
+"工作负载，包括通信流量、参数存储和聚合计算等。MultiGPS 可以避免单一全局参数服务器成为"
+"性能瓶颈，从而提高 GeoMX 系统的效率、可扩展性和整体性能。"
 
 #: ../../source/index.rst:49 cbcd1332aa1b49e3bb968f1d87c360c8
 msgid "Synchronization Algorithms:"
