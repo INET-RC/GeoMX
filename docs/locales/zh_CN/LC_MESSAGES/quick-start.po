@@ -41,25 +41,25 @@ msgstr "拉取 Docker 镜像"
 
 #: ../../source/quick-start.rst:14 7b49365eb445479682b3c7b7d8aaa099
 msgid "To run on CPUs, use:"
-msgstr ""
+msgstr "如果想在 CPU 上体验，请使用："
 
 #: ../../source/quick-start.rst:20 9e641defa65146e99f02820953600a21
 msgid "To run on GPUs with CUDA 8.0, use:"
-msgstr ""
+msgstr "如果想在 GPU 上运行，且宿主机的 CUDA 版本高于 8.0，请使用："
 
 #: ../../source/quick-start.rst:26 dbf62c4f3573442fb4b050787f25c509
 msgid "To run on GPUs with CUDA 10.1, use:"
-msgstr ""
+msgstr "如果想在 GPU 上运行，且宿主机的 CUDA 版本高于 10.1，请使用："
 
 #: ../../source/quick-start.rst:33 99bc76ad58ba49769fc29db02a1c9920
 msgid "Run the Docker Container"
-msgstr ""
+msgstr "运行 Docker 容器"
 
 #: ../../source/quick-start.rst:35 b80751efb27e40a7b464ffc086026f00
 msgid ""
 "If you’re using the image with tag ``cpu-only``, use the following "
 "command to start the container:"
-msgstr ""
+msgstr "如果您使用的是带有 ``cpu-only`` 标签的镜像，请使用以下命令来启动容器："
 
 #: ../../source/quick-start.rst:42 799380c682ae41e7a5394fb2c7d05cdd
 msgid ""
