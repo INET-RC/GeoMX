@@ -277,7 +277,8 @@ msgid ""
 "offers two advanced synchronization algorithms. These two advanced "
 "algorithms are specifically designed to address the challenges of "
 "bandwidth scarcity and resource heterogeneity in WANs."
-msgstr ""
+msgstr "基于上述两种基础同步算法，GeoMX 还提供了两种优化后的同步算法，专门设计用来"
+"解决广域网中带宽稀缺和资源异质所带来的挑战。"
 
 #: ../../source/index.rst:64 8b9c1bfd8b5e444f86c7f6d36008ccb2
 msgid ""
@@ -289,7 +290,11 @@ msgid ""
 " the global parameter server. This approach effectively reduces the "
 "frequency of model synchronization across data centers, thereby boosting "
 "distributed training."
-msgstr ""
+msgstr "**分层频率聚合 (HFA)**：受到这篇文章"
+" (`paper <https://ieeexplore.ieee.org/abstract/document/9148862>`_)"
+"的启发，我们的 HFA 算法首先在训练节点上执行 :math:`K_1` 步本地更新，然后在域"
+"内参数服务器进行 :math:`K_2` 次局域同步，然后才在全局参数服务器进行一次全局同步。"
+"这种方法有效减少了跨数据中心的模型同步频率，从而能够大幅提升分布式训练的效率。"
 
 #: ../../source/index.rst:66 60010757393c4b43bf5e91766a4faae3
 msgid ""
