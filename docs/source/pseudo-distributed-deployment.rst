@@ -208,3 +208,13 @@ The training data is divided among worker nodes. Each worker gets a
 slice of data to process, which is specified by the ``--data-slice-idx``
 option. For example, the first worker gets the 0th slice of the data,
 and the second worker gets the 1st slice of the data.
+
+.. warning::
+
+   This demo task might encounter errors due to a missing dataset.
+   If this occurs, there's no need for concern as the script is implemented
+   to automatically download the required dataset. You just need to restart
+   this demo task.
+
+   If you're using our pre-built images, the demo dataset is already placed
+   within the image, thus eliminating this issue.
