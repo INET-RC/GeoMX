@@ -32,7 +32,7 @@ msgstr "本指南将引导您完成 GeoMX 的安装过程，并解释附带的 s
 
 #: ../../source/installation.rst:9 47e49ce06d524c468e70f9afd5f93532
 msgid "Use Pre-built Docker Image"
-msgstr "使用预构建的 Docker 镜像安装 GeoMX"
+msgstr "用预构建 Docker 镜像安装 GeoMX"
 
 #: ../../source/installation.rst:11 ba87d7a8ebb54cbe99b035c67a11a16e
 msgid ""
@@ -40,7 +40,7 @@ msgid ""
 "Docker images, which are available on `DockerHub "
 "<https://hub.docker.com/repository/docker/lizonghango00o1/geomx/general>`__:"
 msgstr "为了简化安装过程，我们强烈推荐使用我们预构建的 Docker 镜像，它们可以在"
-" ``DockerHub <https://hub.docker.com/repository/docker/lizonghango00o1/geomx/general>``_ "
+" `DockerHub <https://hub.docker.com/repository/docker/lizonghango00o1/geomx/general>`_ "
 "上获取："
 
 #: ../../source/installation.rst:26 b7c8b469510a403b9b932ed96044ff52
@@ -48,7 +48,8 @@ msgid ""
 "These commands will automatically pull the required Docker image from "
 "DockerHub and initiate a Docker container. You can directly interact with"
 " GeoMX within this container."
-msgstr ""
+msgstr "这些命令会自动从 DockerHub 拉取所需的 Docker 镜像并启动 Docker 容器。"
+"我们可以在此容器中直接与 GeoMX 进行交互。"
 
 #: ../../source/installation.rst:31 4953799ff37b4d82b74d6c0147eca5f8
 msgid ""
@@ -56,13 +57,16 @@ msgid ""
 "refer to the `Docker Docs <https://docs.docker.com/get-started/>`__ and "
 "the `NVIDIA Container Toolkit <https://docs.nvidia.com/datacenter/cloud-"
 "native/container-toolkit/latest/index.html>`__."
-msgstr ""
+msgstr "如需获取更深入的关于使用 Docker / Nvidia-Docker 的指南，请参考"
+" `Docker <https://docs.docker.com/get-started/>`_ 文档和"
+" `NVIDIA <https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html>`_ "
+"容器工具集。"
 
 #: ../../source/installation.rst:36 26292b2f2bf64e1cbda116b9d26e3d25
 msgid ""
 "Then we can use the script files provided in the ``scripts`` folder to "
 "execute demo tasks. For example:"
-msgstr ""
+msgstr "然后，我们可以使用 ``scripts`` 文件夹中提供的脚本文件来运行示例任务。例如："
 
 #: ../../source/installation.rst:50 7f2c0e6b7a174baaa4960961e6bd99a4
 msgid ""
@@ -70,43 +74,183 @@ msgid ""
 " first-time initialization of GeoMX may take a few minutes. However, "
 "subsequent runs should proceed without delay. This issue is common and "
 "can occur with other frameworks like PyTorch and MXNET as well."
-msgstr ""
+msgstr "注意：如果您使用的是带有 ``cu80`` 和 ``cu101`` 标签的镜像，GeoMX 的首次"
+"初始化可能需要几分钟的时间。但是，后续的运行将会恢复正常，除非您重新编译了 GeoMX。"
+"这个初始化延迟是正常的，它也发生在 PyTorch 和 MXNET 等其他框架上。"
 
 #: ../../source/installation.rst:56 ab52b7d09a7345e99d4049fe833661ca
 msgid "Build from Dockerfile"
-msgstr ""
+msgstr "从 Dockerfile 中自动构建 GeoMX"
 
 #: ../../source/installation.rst:58 d119c8b4a59b4705b33349354926d783
 msgid ""
 "Alternatively, we can also generate a customized Docker image using a "
 "Dockerfile. Some templates can be found in the ``docker`` folder."
-msgstr ""
+msgstr "另外，我们也可以使用 Dockerfile 生成自定义的 Docker 镜像。在 ``docker`` "
+"文件夹中可以找到一些 Dockerfile 模板。"
 
 #: ../../source/installation.rst:61 c63e87682ab142e7ae10af2ad2b9a1d7
 msgid "To create a CPU-based Docker image, run:"
-msgstr ""
+msgstr "要创建一个基于 CPU 的 Docker 镜像，使用："
 
 #: ../../source/installation.rst:67 f5261b8a85444274af05bc0b38c595e7
 msgid "And for a GPU-based Docker image, run:"
-msgstr ""
+msgstr "要创建一个基于 GPU 的 Docker 镜像，以 CUDA 10.1  版本为例，使用："
 
 #: ../../source/installation.rst:76 d964f1dd634f48999617a7e4cff805f0
 msgid ""
 "This step may fail due to network issues. If this happens, retry or opt "
 "to compile GeoMX inside the Docker container."
-msgstr ""
+msgstr "如果由于网络问题导致 Docker 镜像或 GeoMX 编译失败，您可以重试，或在"
+" Docker 容器内编译 GeoMX。"
 
 #: ../../source/installation.rst:80 6adf3ee8b09f4d5cac54705ee4be1128
 msgid "Build from Source Code"
-msgstr ""
+msgstr "从源代码编译 GeoMX"
 
 #: ../../source/installation.rst:82 0f63b818ad9d4b74a034788c477f36bf
 msgid ""
 "Though it is feasible to perform a direct installation on the host "
 "machine, we generally advise against this approach. This is due to "
 "potential issues that might arise from environmental incompatibilities. "
-"For a detailed walkthrough of the installation process on a host machine,"
-" please consult this `README <https://github.com/INET-"
-"RC/GeoMX/blob/main/README.md>`__ file."
-msgstr ""
+"For a detailed walkthrough of the installation process on a host machine, "
+"please follow the instructions below."
+msgstr "虽然在主机上直接安装 GeoMX 是可行的，但由于可能存在的环境不兼容等问题，"
+"我们不建议使用这种方式安装。但如果您需要在宿主机上编译安装 GeoMX，请参考以下步骤。"
 
+#: ../../source/installation.rst:88 6c391eb97c4b48359df5cf5902ade211
+msgid "Step 1: Download the source code by cloning our GeoMX repository:"
+msgstr "步骤 1：从 GitHub 克隆 GeoMX 代码仓库下载源代码："
+
+#: ../../source/installation.rst:96 3ca0c5b8f8e84439b1af7e98c369a466
+msgid "If it fails due to network issues, please try this instead:"
+msgstr ""
+"如果因网络问题导致 git clone 失败，请尝试使用代理，如在仓库地址前添加 "
+"``https://ghproxy.com/``："
+
+#: ../../source/installation.rst:102 9a630038a90e44ddbf657a072a02acc7
+msgid ""
+"Step 2: Install third-party dependencies. Use the following command to do"
+" so:"
+msgstr "步骤 2：安装第三方依赖："
+
+#: ../../source/installation.rst:109 a8b768186deb4080adfe2a2b88f97a68
+msgid ""
+"Step 3: Create a conda environment named ``geomx`` with Python 3.7 and "
+"install necessary packages:"
+msgstr "步骤 3：创建一个名为 ``geomx`` 的 conda 环境，使用 Python 3.7，"
+"并安装必要的包："
+
+#: ../../source/installation.rst:121 bccec26890ed4b6c9613fcc3ac1da535
+msgid ""
+"If you haven't installed Anaconda3, or if your version of Anaconda3 is "
+"too high, it might cause the creation of the Python3.7 conda environment "
+"to fail. To solve this, you can use the following commands to install a "
+"compatible version of Anaconda3:"
+msgstr "如果您没有安装 Anaconda3，或者 Anaconda3 版本过高，可能会导致创建 Python 3.7 "
+"的 conda 环境失败。为解决这个问题，您可以使用以下命令安装一个兼容的 Anaconda3 版本："
+
+#: ../../source/installation.rst:136 395598ff50f14a049d7af7f797522652
+msgid ""
+"If the installation was successful, you will see the following output "
+"when you re-open your shell:"
+msgstr "如果安装成功，当重新打开您的 shell 时，会看到以下输出："
+
+#: ../../source/installation.rst:143 5e59cfdba67c4b43bfe5c138ddd3213f
+msgid ""
+"Step 4: Copy the configuration file. Based on your preference for running"
+" GeoMX on CPUs or GPUs, copy the corresponding configuration file to "
+"``GeoMX/config.mk``. For CPU, use:"
+msgstr "步骤 4：复制配置文件。根据您的偏好，将对应的配置文件复制到 ``GeoMX/config.mk``。"
+"如果是在 CPU 上编译安装，请使用："
+
+#: ../../source/installation.rst:151 800b07a2c20b4dc4878b7ab21f70b43a
+msgid ""
+"And for GPU, copy ``make/gpu_config.mk`` instead. Refer to `cpu_config.mk"
+" <https://github.com/INET-RC/GeoMX/blob/main/make/cpu_config.mk>`_ and "
+"`gpu_config.mk <https://github.com/INET-"
+"RC/GeoMX/blob/main/make/gpu_config.mk>`_ for detailed configuration "
+"instructions."
+msgstr "如果需要在 GPU 上编译安装，请复制配置文件 ``make/gpu_config.mk``。"
+"具体的配置指令请参考 `cpu_config.mk <https://github.com/INET-RC/GeoMX/blob/main/make/cpu_config.mk>`_ "
+"和 `gpu_config.mk <https://github.com/INET-RC/GeoMX/blob/main/make/gpu_config.mk>`_。"
+
+#: ../../source/installation.rst:156 b03da3441f2244b195b776e95db5290f
+msgid ""
+"Step 5: Build the source code. Here, we use all CPU cores to build GeoMX "
+"faster. You may need to decrease the value to avoid CPU overload."
+msgstr "步骤 5：编译源代码。这里我们使用所有的 CPU 逻辑核（通过 ``$(nproc)`` 自动获取）"
+"来更快地构建 GeoMX。但是，为了避免 CPU 过载，您可能需要根据机器当前的 CPU 负载率调小这个值。"
+
+#: ../../source/installation.rst:165 cfe8a56c7ef94266acb545615d3314d6
+msgid ""
+"This step may fail due to network issues. If that happens, rerun the "
+"command again at a later time. Once the build is successful, you will see"
+" a new folder ``lib`` containing the library file ``libmxnet.so``."
+msgstr "这一步可能会因为网络问题而失败。如果发生这种问题，稍后再重新运行该命令。"
+"一旦构建成功，您将看到一个新的文件夹 ``lib``，其中包含库文件 ``libmxnet.so``。"
+
+#: ../../source/installation.rst:171 20fb3654570b43c9b1fd05dbea838668
+msgid ""
+"We might encounter a fatal error stating \"opencv2/opencv.hpp: No such "
+"file or directory\" during ``make``. If this happens, follow the "
+"instructions given in the `OpenCV official doc "
+"<https://docs.opencv.org/2.4/doc/tutorials/introduction/linux_install/linux_install.html"
+"#linux-installation>`_ to install OpenCV2."
+msgstr "在执行 ``make`` 时，我们可能会遇到一个错误称 “opencv2/opencv.hpp: 没有那个文件或目录”。"
+"如果发生这种问题，请按照 OpenCV 官方文档中的指示安装"
+" `OpenCV2 <https://docs.opencv.org/2.4/doc/tutorials/introduction/linux_install/linux_install.html>`_。"
+
+#: ../../source/installation.rst:176 1ae81ab9e6944b208e0bd8d84f27a40c
+msgid ""
+"If you're just testing GeoMX or do not require OpenCV, you can simply "
+"disable it in the ``./config.mk`` file by setting ``USE_OPENCV = 0``."
+msgstr "如果您只是想快速试用 GeoMX 或不需要 OpenCV，您可以在 ``./config.mk`` 文件"
+"中简单地将 ``USE_OPENCV = 0`` 来禁用它。"
+
+#: ../../source/installation.rst:179 53c3148c7f684b8faf83a6d4ab23a3ce
+msgid ""
+"If you're using the Dockerfile or pre-built Docker image we provide, "
+"OpenCV2 has already been installed and you won't need to worry about this"
+" error."
+msgstr "如果您正在使用我们提供的 Dockerfile 或预构建 Docker 镜像，那么 OpenCV2 "
+"已经被安装好了，您不需要担心这个错误。"
+
+#: ../../source/installation.rst:182 2deda3b19113447483ee924e7d134dc1
+msgid "Step 6: Bind GeoMX to Python."
+msgstr "步骤 6：安装 GeoMX 到 Python"
+
+#: ../../source/installation.rst:188 47b342ce1b5a469fb7714a48cc5059f5
+msgid ""
+"The ``-e`` flag is optional. It is equivalent to ``--editable`` and means"
+" that if you edit the source files, these changes will be reflected in "
+"the package installed."
+msgstr "其中，``-e`` 参数是可选的。它等同于 ``--editable``，意味着如果您编辑了源文件，"
+"这些更改将会反映在已安装的包中。"
+
+#: ../../source/installation.rst:191 98e60e25599f4356903105e8911d89f2
+msgid "Step 7: Test if GeoMX is installed successfully."
+msgstr "步骤 7：测试 GeoMX 是否安装成功"
+
+msgid "If no errors are reported, GeoMX was installed successfully."
+msgstr "如果没有报错，就说明 GeoMX 安装成功了。"
+
+msgid "If you compiled GeoMX with ``USE_CUDA = 1``, but the command "
+    "``nd.zeros(1, ctx=mx.gpu(0))`` freezed for a long delay, please "
+    "be relax. This pause is often due to the initial set up operations "
+    "when the GPU is accessed for the first time. What we need to do is "
+    "just waiting patiently for a few minutes."
+msgstr "如果您编译 GeoMX 时设置了 ``USE_CUDA = 1``，但是执行 ``nd.zeros(1, ctx=mx.gpu(0))`` "
+"时长时间无响应，请不用担心。这种延迟通常是因为第一次访问 GPU 时的初始设置操作。"
+"我们需要做的只是耐心等待几分钟。"
+
+msgid "If there is no response for an extended period, it would be prudent "
+    "to verify your GPU driver installation and CUDA version, or consider "
+    "restarting your system."
+msgstr "如果过长的时间一直没有响应，最好检查您的 GPU 驱动和 CUDA 版本，或者考虑重启您的系统。"
+
+msgid "If you encounter errors while compiling with ``USE_CUDA = 1``, try "
+    "downgrading the CUDA version to ``8.0`` or ``10.1``. Higher CUDA "
+    "versions might be not supported."
+msgstr "如果您设置 ``USE_CUDA = 1`` 后编译出现错误，尝试将 CUDA 版本降级到 8.0 "
+"或 10.1。目前 GeoMX 没有兼容更高的 CUDA 版本。"
