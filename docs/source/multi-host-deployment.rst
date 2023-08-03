@@ -179,8 +179,9 @@ After setting up the network and ensuring the Docker containers can
 communicate with each other, the next step is to run the GeoMX processes
 in these containers. To do this, you need to set up the environment
 variables (described in the chapter of
-:doc:`Pseudo-distributed Deployment <pseudo-distributed-deployment>` as per your GeoMX configuration
-and start the different node processes in different containers.
+:doc:`Deploy GeoMX in Pseudo-distributed Mode <pseudo-distributed-deployment>`
+as per your GeoMX configuration and start the different node processes
+in different containers.
 
 .. warning::
    Kindly remember to correctly assign the IP addresses and port
@@ -196,7 +197,7 @@ and start the different node processes in different containers.
 
    To export a container’s port to the host, use the ``-p`` option when
    running Docker image. For example, if we have the global scheduler
-   listening on port 9092, we map it to port 9093 on its host machine
+   listening on port 9092, we map it to port 9092 on its host machine
    via:
 
    .. code:: bash
