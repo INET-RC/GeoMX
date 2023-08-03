@@ -204,6 +204,16 @@ If no errors are reported, GeoMX was installed successfully.
 
 .. warning::
 
+    If you compiled GeoMX with ``USE_CUDA = 1``, but the command
+    ``nd.zeros(1, ctx=mx.gpu(0))`` freezed for a long delay, please
+    be relax. This pause is often due to the initial set up operations
+    when the GPU is accessed for the first time. What we need to do is
+    just waiting patiently for a few minutes.
+
+    If there is no response for an extended period, it would be prudent
+    to verify your GPU driver installation and CUDA version, or consider
+    restarting your system.
+
     If you encounter errors while compiling with ``USE_CUDA = 1``, try
     downgrading the CUDA version to ``8.0`` or ``10.1``. Higher CUDA
     versions might be not supported.
