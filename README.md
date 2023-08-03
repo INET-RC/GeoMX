@@ -46,7 +46,7 @@ Building upon the two aforementioned fundamental algorithms, GeoMX also offers t
 ## Quick Start
 This guide will help you get started with GeoMX in just two steps.
 
-> **Prerequisites:** We provide a pre-built Docker image for a quick trial of GeoMX. For this, Docker needs to be installed following this [guide](https://docs.docker.com/engine/install/ubuntu/).
+> **Prerequisites:** We provide a pre-built Docker image for a quick trial of GeoMX. For this, Docker and Nvidia-Docker need to be installed following: [Docker Guide](https://docs.docker.com/engine/install/ubuntu/) and [Nvidia-Docker Guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#install-guide).
 
 * Step 1: Pull the Docker image and run a container.
 
