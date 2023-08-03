@@ -10,9 +10,9 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-08-02 09:50+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Last-Translator: Li, Zonghang <lizhuestc@gmail.com>\n"
 "Language: zh_CN\n"
-"Language-Team: zh_CN <LL@li.org>\n"
+"Language-Team: zh_CN <lizhuestc@gmail.com>\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -22,7 +22,7 @@ msgstr ""
 #: ../../source/pseudo-distributed-deployment.rst:2
 #: ebdca9c175e941a889a5983982cca0f9
 msgid "Deploy GeoMX in Pseudo-distributed Mode"
-msgstr ""
+msgstr "以伪分布式模式部署 GeoMX"
 
 #: ../../source/pseudo-distributed-deployment.rst:4
 #: a09fa5b4707f40b19e93b5ee93d45205
@@ -33,7 +33,9 @@ msgid ""
 "This removes the need for additional network configuration. While this "
 "method is handy for getting a quick understanding of how the system "
 "operates, it is not meant for deployment in a production environment."
-msgstr ""
+msgstr "伪分布式部署旨在快速试用和调试 GeoMX。在此模式中，所有节点都在单个 Docker "
+"容器内启动，并且它们的 IP 地址都设置为 127.0.0.1，所以不需要额外的网络配置。"
+"虽然这种方法便于快速了解 GeoMX 系统的部署和运行，但不适用于实际的生产环境部署。"
 
 #: ../../source/pseudo-distributed-deployment.rst:12
 #: e82a3c6a82fd41c9895e45fee49087a1
@@ -44,31 +46,33 @@ msgid ""
 "we launched a total of 12 nodes, each command corresponds to running a "
 "different node, with roles specified by ``DMLC_ROLE`` and "
 "``DMLC_ROLE_GLOBAL``."
-msgstr ""
+msgstr "在这里 (`here <https://github.com/INET-RC/GeoMX/blob/main/scripts/cpu/run_vanilla_hips.sh>`_)，"
+"您可以找到一个伪分布式部署的 shell 脚本。在这个脚本中，我们启动了总共 12 个节点，"
+"每个命令对应运行一个不同的进程来代表一个节点，节点角色由 ``DMLC_ROLE`` 和 ``DMLC_ROLE_GLOBAL`` 指定。"
 
 #: ../../source/pseudo-distributed-deployment.rst:19
 #: df197598cb3c494a809cef37e520eed2
 msgid "Launch Nodes in the Central Party"
-msgstr ""
+msgstr "启动中央机构的节点"
 
 #: ../../source/pseudo-distributed-deployment.rst:21
 #: 20bd835be58845309c50774677e8da83
 msgid ""
 "The central party consists of 4 nodes: a global scheduler, a local "
 "scheduler, a global server, and a master worker."
-msgstr ""
+msgstr "中央机构包括 4 个节点：全局调度器，本地调度器，全局参数服务器和主控工作节点。"
 
 #: ../../source/pseudo-distributed-deployment.rst:24
 #: f937858800224d2bb37eb15f34451658
 msgid ""
 "The global scheduler is used to manage the global server and local "
 "servers (in other parties). Use the following commands to launch it:"
-msgstr ""
+msgstr "全局调度器用于管理全局参数服务器和其他机构的本地参数服务器，使用以下命令启动它："
 
 #: ../../source/pseudo-distributed-deployment.rst:38
 #: 77f74b682729466e8ca53d712f573cb2
 msgid "These environment variables are defined as follows:"
-msgstr ""
+msgstr "这些环境变量的定义如下："
 
 #: ../../source/pseudo-distributed-deployment.rst:40
 #: a4fc0731dd6b4b57b969d5ef6cfaefa7
@@ -76,7 +80,8 @@ msgid ""
 "``DMLC_ROLE_GLOBAL``: The role of the current process. In this case, it "
 "is a ``global_scheduler`` node. It could also be set to "
 "``global_server``."
-msgstr ""
+msgstr "``DMLC_ROLE_GLOBAL``：当前进程的角色。在这里，它是一个 ``global_scheduler`` 节点。"
+"它也可以设置为 ``global_server``。"
 
 #: ../../source/pseudo-distributed-deployment.rst:42
 #: 917b5ce719bf447586a522c541aaff28
@@ -84,21 +89,23 @@ msgid ""
 "``DMLC_PS_GLOBAL_ROOT_URI``: The IP address of the global scheduler. In "
 "this case, it is set to ``127.0.0.1``, meaning the process is running on "
 "the local machine."
-msgstr ""
+msgstr "``DMLC_PS_GLOBAL_ROOT_URI``：全局调度器的 IP 地址。在这里，它被设置为 127.0.0.1，"
+"意味着进程在本地机器上运行。"
 
 #: ../../source/pseudo-distributed-deployment.rst:44
 #: 68c21e67b23b44c29daaebd656bdec89
 msgid ""
 "``DMLC_PS_GLOBAL_ROOT_PORT``: The port that the global scheduler binds "
 "to. In this case, the port is set to 9092."
-msgstr ""
+msgstr "``DMLC_PS_GLOBAL_ROOT_PORT``：全局调度器绑定的端口号。在这里，端口号设置为 9092。"
 
 #: ../../source/pseudo-distributed-deployment.rst:46
 #: ef4f1912fe8549fca85a8b50da72d84f
 msgid ""
 "``DMLC_NUM_GLOBAL_SERVER``: The number of global servers. In this case, "
 "it is set to 1, meaning there is only one global server."
-msgstr ""
+msgstr "``DMLC_NUM_GLOBAL_SERVER``：全局参数服务器的数量。在这里，它设置为 1，"
+"意味着只有一个全局参数服务器。"
 
 #: ../../source/pseudo-distributed-deployment.rst:48
 #: 2743b3ec637d4155bea0e355dee0de44
@@ -106,7 +113,8 @@ msgid ""
 "``DMLC_NUM_GLOBAL_WORKER``: The number of local servers, i.e., the number"
 " of participating data centers. Here, it is set to 2, representing 2 "
 "participating data centers (Party A and Party B)."
-msgstr ""
+msgstr "``DMLC_NUM_GLOBAL_WORKER``：域内参数服务器的数量，也是参与数据中心的数量。"
+"在这里，它设置为 2，代表有 2 个参与数据中心（数据中心 A 和数据中心 B）。"
 
 #: ../../source/pseudo-distributed-deployment.rst:50
 #: 1448ae68f0f247d9957f1c8af3a68b28
@@ -114,7 +122,8 @@ msgid ""
 "``PS_VERBOSE``: The level of detail in the logs. Setting it to 0 disables"
 " log outputs, 1 outputs necessary log information, and 2 outputs log "
 "details."
-msgstr ""
+msgstr "``PS_VERBOSE``：日志详细等级。设置为 0 禁用日志输出，1 输出必要的日志信息，"
+"2 输出日志详情。"
 
 #: ../../source/pseudo-distributed-deployment.rst:52
 #: 5aac7af6c7a745b7b2099f2d37422f66
@@ -123,28 +132,30 @@ msgid ""
 "process communication. In this case, it is set to ``eth0``. This should "
 "be replaced with the actual network interface name used by your system or"
 " container."
-msgstr ""
+msgstr "``DMLC_INTERFACE``：用于进程间通信的网络接口名字。在这里，它被设置为 eth0。"
+"在实际部署中，该环境变量应该被替换为您的系统或容器使用的网络接口的名称。"
 
 #: ../../source/pseudo-distributed-deployment.rst:54
 #: 0dfbd528695c44d78675e9b3fdafa6e0
 msgid ""
 "Then, we launch a local scheduler, used to manage the global server and "
 "the master worker."
-msgstr ""
+msgstr "然后，我们启动一个本地调度器，用于管理全局参数服务器和主控工作节点。"
 
 #: ../../source/pseudo-distributed-deployment.rst:67
 #: 3d5bb1b02b274473af7ea75ed3e7aec1
 msgid ""
 "Some new environment variables introduced here control intra-party "
 "behaviors:"
-msgstr ""
+msgstr "这里引入一些新的环境变量用来控制数据中心内部参数服务器系统的行为："
 
 #: ../../source/pseudo-distributed-deployment.rst:70
 #: b2c6e292865c4d0292dd5e4d848b2b54
 msgid ""
 "``DMLC_ROLE``: The role of the current process. In this case, it is a "
 "``scheduler`` node. It could also be set to ``server`` and ``worker``."
-msgstr ""
+msgstr "``DMLC_ROLE``：当前进程的角色。在这里，它是一个 ``scheduler`` 节点。"
+"它也可以设置为 ``server`` 或 ``worker``。"
 
 #: ../../source/pseudo-distributed-deployment.rst:72
 #: ad2bb0a23c4a4b17a21f3eaa12295b5b
@@ -152,7 +163,8 @@ msgid ""
 "``DMLC_PS_ROOT_URI``: The IP address of the local scheduler. Here, it is "
 "set to ``127.0.0.1``, meaning the local scheduler runs on the local "
 "machine."
-msgstr ""
+msgstr "``DMLC_PS_ROOT_URI``：本地调度器的 IP 地址。这里，它被设置为 127.0.0.1，"
+"意味着本地调度器在本地机器上运行。"
 
 #: ../../source/pseudo-distributed-deployment.rst:74
 #: 3169332c36af425b85d22b6b88f1cd0f
@@ -160,14 +172,16 @@ msgid ""
 "``DMLC_PS_ROOT_PORT``: The port that the local scheduler binds to. It "
 "should differ from other schedulers (and the global scheduler) if they’re"
 " launched on the same machine. Here, the port number is set to 9093."
-msgstr ""
+msgstr "``DMLC_PS_ROOT_PORT``：本地调度器绑定的端口号。如果在同一台机器上启动，"
+"该端口号应该与其他调度器（包括全局调度器）不同。这里，我们将端口号设置为 9093。"
 
 #: ../../source/pseudo-distributed-deployment.rst:76
 #: f15d96ea3edc4982981a96e4faacacd2
 msgid ""
 "``DMLC_NUM_SERVER``: In the central party, this indicates the number of "
 "global server nodes. Here, it is set to 1."
-msgstr ""
+msgstr "``DMLC_NUM_SERVER``：如果在中心机构，这表示全局参数服务器节点的数量。"
+"在这里，它设置为 1，因为我们只启动了一个全局参数服务器。"
 
 #: ../../source/pseudo-distributed-deployment.rst:78
 #: a8d9b47820de4848b62c4fc1bba3fbab
@@ -175,12 +189,13 @@ msgid ""
 "``DMLC_NUM_WORKER``: In the central party, this indicates the number of "
 "worker nodes (and the master worker). Here, we have only one master "
 "worker, so this value is set to 1."
-msgstr ""
+msgstr "``DMLC_NUM_WORKER``：如果在中心机构，这表示工作节点的数量（包括主控工作节点）。"
+"在这里，我们只启用了一个主控工作节点，所以这个值设置为 1。"
 
 #: ../../source/pseudo-distributed-deployment.rst:80
 #: cbfcc945ebe24affa03c2f8da8d2e62a
 msgid "To launch the global server, run the following commands:"
-msgstr ""
+msgstr "要启动全局参数服务器，请运行以下命令："
 
 #: ../../source/pseudo-distributed-deployment.rst:100
 #: 438119a476674b678fde0cad924bd039
@@ -189,12 +204,14 @@ msgid ""
 "``DMLC_PS_GLOBAL_ROOT_PORT`` refer to the setup of the global scheduler, "
 "while ``DMLC_PS_ROOT_URI`` and ``DMLC_PS_ROOT_PORT`` refer to the setup "
 "of the local scheduler."
-msgstr ""
+msgstr "请注意，``DMLC_PS_GLOBAL_ROOT_URI`` 和 ``DMLC_PS_GLOBAL_ROOT_PORT`` "
+"指向的是全局调度器的 IP 和端口号，而 ``DMLC_PS_ROOT_URI`` 和 ``DMLC_PS_ROOT_PORT`` "
+"指向的是本地调度器的 IP 和端口号。"
 
 #: ../../source/pseudo-distributed-deployment.rst:105
 #: 14f0d289a1ac42dd8d532df5bc90daf9
 msgid "Other environment variables are as follows:"
-msgstr ""
+msgstr "其他环境变量的说明如下："
 
 #: ../../source/pseudo-distributed-deployment.rst:107
 #: 5e5a85f7b6d043c6bfd5cdd1e70aa2cd
@@ -204,7 +221,9 @@ msgid ""
 "party only provides a master worker to initialize the global server. If "
 "set to 1, the central party can provide a worker cluster to participate "
 "in model training, with the master worker attached to a worker node."
-msgstr ""
+msgstr "``DMLC_ENABLE_CENTRAL_WORKER``：这个选项用来启用或禁止中心机构参与模型训练。"
+"如果设置为 0，中心机构只提供一个主控工作节点来初始化全局参数服务器。如果设置为 1，中心机构"
+"可以提供工作节点集群并参与模型训练，此时主控工作节点附加到某一个工作节点上。"
 
 #: ../../source/pseudo-distributed-deployment.rst:109
 #: 2e01b8d0d4ce4f97bfc4a022cb7a50e0
@@ -214,12 +233,14 @@ msgid ""
 "workers in Party B, it’s set to 4. Note that although the master worker "
 "is also a worker node, in this case it does not participate in model "
 "training, so it is not counted."
-msgstr ""
+msgstr "``DMLC_NUM_ALL_WORKER``：全局参与模型训练的工作节点总数。在这个示例中，"
+"参与数据中心 A 有 2 个工作节点，参与数据中心 B 也有 2 个工作节点，所以总数为 4。"
+"请注意，虽然主控工作节点也是一个工作节点，但在本例中它不参与模型训练，所以没有计入。"
 
 #: ../../source/pseudo-distributed-deployment.rst:111
 #: 98a24cf490b44a8483379f77ea5698f6
 msgid "Lastly, we launch the master worker."
-msgstr ""
+msgstr "最后，我们启动主控工作节点。"
 
 #: ../../source/pseudo-distributed-deployment.rst:126
 #: 90140aa38d194a218d43ae6df4d6d16b
@@ -229,24 +250,27 @@ msgid ""
 "local scheduler, thus ``DMLC_PS_ROOT_URI=127.0.0.1`` and "
 "``DMLC_PS_ROOT_PORT=9093`` are set to ensure that the master worker can "
 "find the local scheduler."
-msgstr ""
+msgstr "主控工作节点设置 ``DMLC_ROLE_MASTER_WORKER=1`` 来声明自己为主控工作节点。"
+"它需要与本地调度器建立 socket 连接，所以需要设置 ``DMLC_PS_ROOT_URI=127.0.0.1`` "
+"和 ``DMLC_PS_ROOT_PORT=9093`` 以确保主控工作节点可以顺利找到本地调度器。"
 
 #: ../../source/pseudo-distributed-deployment.rst:133
 #: 9ad349d877514b568a63c7b2bfe40128
 msgid "Launch Nodes in Other Parties"
-msgstr ""
+msgstr "启动其它机构的节点"
 
 #: ../../source/pseudo-distributed-deployment.rst:135
 #: 3e491f48f1e24e2ebe01694f4146ecd2
 msgid ""
 "Next, we will be launching a scheduler, a parameter server, and two "
 "workers in the other parties. Let’s take one of them as an example."
-msgstr ""
+msgstr "接下来，我们将在其他参与机构启动一个本地调度器、一个域内参数服务器和两个"
+"工作节点。我们以其中一个参与机构为例进行说明。"
 
 #: ../../source/pseudo-distributed-deployment.rst:138
 #: c2e46dfdba784a278ce473c42a3368ad
 msgid "First, we’ll start with launching the local scheduler:"
-msgstr ""
+msgstr "首先，我们启动本地调度器："
 
 #: ../../source/pseudo-distributed-deployment.rst:151
 #: 7845319d29c9471980b858c60ef7b695
@@ -257,12 +281,14 @@ msgid ""
 " 1. Furthermore, ``DMLC_NUM_WORKER`` specifies the number of worker nodes"
 " within the current party. As we’re planning to launch two worker nodes "
 "in this party, here we set this value to 2."
-msgstr ""
+msgstr "这里的设置与中央机构内本地调度器的设置相同，但在参与机构内，``DMLC_NUM_SERVER`` "
+"指定当前参与机构中的域内参数服务器数量，通常设置为 1。此外，``DMLC_NUM_WORKER`` 指定当前"
+"参与机构中的工作节点数量。由于我们计划在这个参与机构内启动两个工作节点，所以我们将这个值设置为 2。"
 
 #: ../../source/pseudo-distributed-deployment.rst:158
 #: 3eac49fe79fc4b75907e0511a4fc8dee
 msgid "Next, we launch the local parameter server:"
-msgstr ""
+msgstr "接下来，我们启动域内参数服务器："
 
 #: ../../source/pseudo-distributed-deployment.rst:175
 #: c66210a2fd264e56b6a1e2898a6db624
@@ -271,19 +297,20 @@ msgid ""
 " connections with both the local and global schedulers. Thus, it needs to"
 " know the IP and port address of both the local scheduler and the global "
 "scheduler."
-msgstr ""
+msgstr "如我们之前提到的，域内参数服务器需要与本地调度器和全局调度器建立 socket 连接。"
+"因此，它需要知道本地调度器和全局调度器的 IP 和端口号。"
 
 #: ../../source/pseudo-distributed-deployment.rst:180
 #: aedec1693a65445894b65b2acde263ae
 msgid "Finally, we’ll launch two worker nodes:"
-msgstr ""
+msgstr "最后，我们启动两个工作节点："
 
 #: ../../source/pseudo-distributed-deployment.rst:204
 #: 292c0cb9d8a64d198b76e94cdb6b1592
 msgid ""
 "The worker nodes are launched in a similar manner as before, but they "
 "connect to their own local scheduler within their party."
-msgstr ""
+msgstr "工作节点的启动方式与前面类似，但它们连接到其各自机构的本地调度器。"
 
 #: ../../source/pseudo-distributed-deployment.rst:207
 #: 395e9cbb6b5c4133b2763ee72a224566
@@ -292,5 +319,20 @@ msgid ""
 " of data to process, which is specified by the ``--data-slice-idx`` "
 "option. For example, the first worker gets the 0th slice of the data, and"
 " the second worker gets the 1st slice of the data."
-msgstr ""
+msgstr "训练数据将被切片给各个工作节点，每个工作节点处理一部分数据，这是通过"
+" ``--data-slice-idx`` 选项指定的。例如，第一个工作节点拥有数据的第 0 个切片，"
+"第二个工作节点拥有数据的第 1 个切片。"
 
+msgid ""
+"This demo task might encounter errors due to a missing dataset. "
+"If this occurs, there's no need for concern as the script is implemented "
+"to automatically download the required dataset. You just need to restart "
+"this demo task."
+msgstr "这个示例可能会因为数据集缺失而出错。如果发生这种情况，无需担心，该脚本会自动"
+"下载所需的数据集。您只需要重新启动这些进程即可。"
+
+msgid ""
+"If you're using our pre-built images, the demo dataset is already placed "
+"within the image, thus eliminating this issue."
+msgstr "如果您使用的是我们预先构建的 Docker 镜像，所需数据集已经内置在镜像中，"
+"所以不必担心这些问题。"
