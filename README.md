@@ -54,113 +54,38 @@ Building upon the two aforementioned fundamental algorithms, GeoMX also offers t
 
 4. **ESync<sup>4</sup>:** Applying asynchronous algorithms to strongly heterogeneous clusters can lead to severe stale gradient issues. To address this, we can adopt an optimized algorithm known as ESync. ESync is a synchronous parallel algorithm designed to save stragglers under conditions of strong resource heterogeneity. It introduces a state server to orchestrate the local iteration steps of each training node, in order to balance their reach-server time (including computational and transmission time). (To be integrated, refer to [this paper](https://drive.google.com/file/d/1bvK0EeO5vjkXveU_ccBp4Uxl-qmbmcfn/view) for more details and [this repo](https://github.com/Lizonghang/ESync) for individual use.)
 
-## Installation Guidance
+## Quick Start
+This guide will help you get started with GeoMX in just two steps.
 
-GeoMX provides three methods for installation:
-1. Build it from the source code.
-2. Build a Docker image using the provided Dockerfile.
-3. Download the pre-built Docker image directly from DockerHub.
+> **Prerequisites:** We provide a pre-built Docker image for a quick trial of GeoMX. For this, Docker needs to be installed following this [guide](https://docs.docker.com/engine/install/ubuntu/).
 
-### 1. Build from Source Code 
-
-To install GeoMX from the source code, follow the steps below:
-* Step 1: Download the source code. Git clone the GeoMX repository using the following command:
+* Step 1: Pull the Docker image and run a container.
 
 ```commandline
-git clone https://github.com/INET-RC/GeoMX.git
+# To run on CPUs, use:
+sudo docker run -it --rm --name geomx lizonghango00o1/geomx:cpu-only bash
+
+# To run on GPUs with CUDA 8.0, use:
+sudo docker run -it --rm --name geomx --gpus all lizonghango00o1/geomx:cu80 bash
+
+# To run on GPUs with CUDA 10.1, use:
+sudo docker run -it --rm --name geomx --gpus all lizonghango00o1/geomx:cu101 bash
 ```
 
-* Step 2: Install third-party dependencies. Ensure you have the necessary dependencies installed. Use the following command to do so:
+
+* Step 2: Use the scripts in the `scripts` folder to launch demo tasks. For example:
 
 ```commandline
-sudo apt update
-sudo apt install -y build-essential cmake libopencv-dev libopenblas-dev libsnappy-dev autogen autoconf automake libtool
-pip install --upgrade pip
-pip install numpy==1.17.3 pandas opencv-python
-```
-
-* Step 3: Copy the configuration file. Based on your preference for running GeoMX on CPUs or GPUs, copy the corresponding configuration file to `GeoMX/config.mk`. For CPU, use:
-
-```commandline
-cp make/cpu_config.mk ./config.mk
-```
-
-And for GPU, copy `make/gpu_config.mk` instead. Refer to [cpu_config.mk](https://github.com/INET-RC/GeoMX/blob/main/make/cpu_config.mk) and [gpu_config.mk](https://github.com/INET-RC/GeoMX/blob/main/make/gpu_config.mk) for detailed configuration instructions.
-
-* Step 4: Build the source code. Use the following command to build the source code:
-
-```commandline
-# Here all CPU cores are used to build GeoMX faster. You can decrease its value to avoid CPU overload.
-make -j$(nproc)
-```
-
-> This step may fail due to network issues. If that happens, retry or wait to run the command again at a later time. Once the build is successful, you will see a new folder `lib` containing the library file `libmxnet.so`.
-
-* Step 5: Bind GeoMX to Python, using the following command:
-
-```commandline
-$ cd python && pip install -e .
-```
-
-> The `-e` flag is optional. It is equivalent to `--editable` and means that if you edit the source files, these changes will be reflected in the package installed.
-
-### 2. Build from Dockerfile
-
-For an effortless deployment and streamlined setup, we highly recommend running GeoMX within a Docker container. Please ensure [Docker](https://docs.docker.com/get-docker/) and [Nvidia-Docker](https://github.com/NVIDIA/nvidia-docker) are correctly installed on your machine before proceeding. Then use the Dockerfiles provided in the `docker` folder to build your Docker image.
-
-For a CPU-based Docker image, run:
-
-```commandline
-cd docker && sudo docker build -f build_on_cpu.dockerfile -t geomx:cpu-only .
-```
-
-And for a GPU-based Docker image, run:
-
-```commandline
-cd docker && sudo docker build -f build_on_gpu.dockerfile -t geomx:cu101 .
-```
-
-> This step may also fail due to network issues. If this happens, retry or opt to compile GeoMX inside the Docker container.
-
-### 3. Download Pre-built Docker Image from DockerHub
-If you prefer not to build the Docker image yourself, you can download a [pre-built Docker image](https://hub.docker.com/repository/docker/lizonghango00o1/geomx/general) for GeoMX from DockerHub using the following command:
-
-```commandline
-# If run on CPUs
-sudo docker pull lizonghango00o1/geomx:cpu-only
-
-# If run on GPUs with CUDA 8.0
-sudo docker pull lizonghango00o1/geomx:cu80
-
-# If run on GPUs with CUDA 10.1
-sudo docker pull lizonghango00o1/geomx:cu101
-```
-
-> These Docker images include a demo dataset, so we can run demo scripts without much trouble. However, if we install GeoMX using other methods, please download the demo dataset manually.
-
-## How to Use GeoMX?
-If we are using a pre-built Docker image, run it as a container using the following command:
-
-```commandline
-sudo docker run -it --rm --name geomx-cpu lizonghango00o1/geomx:cpu-only bash
-```
-
-Then we can use the script files provided in the `scripts` folder to execute demo tasks. For example:
-
-```commandline
+# To run on CPUs, use:
 cd GeoMX/scripts/cpu && bash run_vanilla_hips.sh
-```
 
-> We may encounter errors if the dataset file is missing. However, don't worry as some worker nodes will automatically download the dataset files and store them in the default location `/root/data`. If you face this issue, terminate the existing process using `killall python` and rerun the training script.
-
-To run GeoMX on GPUs, use a pre-built Docker image, for example, `geomx:cu101`, as follows:
-
-```commandline
-sudo docker run -it --rm --name geomx-gpu lizonghango00o1/geomx:cu101 bash
+# To run on GPUs, use:
 cd GeoMX/scripts/gpu && bash run_vanilla_hips.sh
 ```
 
 > If you are using the images with tags `cu80` and `cu101`, the first-time initialization of GeoMX may take a few minutes. However, subsequent runs should proceed without delay. This issue is common and can occur with other frameworks like PyTorch and MXNET as well.
+
+For more detailed instructions, please refer to our [GeoMX Docs](https://geomx.readthedocs.io/en/latest/) (中文文档请看[这里](https://geomx.readthedocs.io/zh_CN/latest/)).
 
 ## Contributors
 * **Li, Zonghang** - *Initial work with equal contribution* - [Homepage](https://github.com/Lizonghang)
