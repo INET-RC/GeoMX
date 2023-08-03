@@ -1,9 +1,8 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) 2023, Zonghang Li
 # This file is distributed under the same license as the GeoMX package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
-#
-#, fuzzy
+# Zonghang Li <lizhuestc@gmail.com>, 2023.
+
 msgid ""
 msgstr ""
 "Project-Id-Version: GeoMX 1.0\n"
