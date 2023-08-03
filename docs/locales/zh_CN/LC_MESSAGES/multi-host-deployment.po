@@ -20,50 +20,51 @@ msgstr ""
 
 #: ../../source/multi-host-deployment.rst:2 9cfc528eb60c4ac1b60aeddf728c0256
 msgid "Deploy GeoMX on Multiple Hosts"
-msgstr ""
+msgstr "在多台机器上部署 GeoMX"
 
 #: ../../source/multi-host-deployment.rst:4 001cdb99dc534c9db625c55913c70d6d
 msgid ""
 "To deploy GeoMX on real-world geographical data centers, we need to use "
 "the multi-host mode for cluster deployment."
-msgstr ""
+msgstr "要在实际的地理分散的数据中心上部署 GeoMX，我们需要使用多机模式进行集群部署。"
 
 #: ../../source/multi-host-deployment.rst:7 7efae6eb419a46819c7e5511081ad303
 msgid ""
 "In this tutorial, we use three host machines as an example, namely A, B, "
 "and C with their respective IP addresses as follows:"
-msgstr ""
+msgstr "在这个教程中，我们以三台机器为例，分别是 A，B 和 C，它们的 IP 地址分别是："
 
 #: ../../source/multi-host-deployment.rst:10 509312013a2b441d88ce6bb216ce475d
 msgid "Host A IP: 10.1.1.34"
-msgstr ""
+msgstr "主机 A IP: 10.1.1.34"
 
 #: ../../source/multi-host-deployment.rst:11 433738a794ad4ab49028c3f13e191a7a
 msgid "Host B IP: 10.1.1.29"
-msgstr ""
+msgstr "主机 B IP: 10.1.1.29"
 
 #: ../../source/multi-host-deployment.rst:12 9296f076314b42bd84ebc9977d26f102
 msgid "Host C IP: 10.1.1.33"
-msgstr ""
+msgstr "主机 C IP: 10.1.1.33"
 
 #: ../../source/multi-host-deployment.rst:14 4e4ab463940e4c1aa30054e240e3c9ea
 msgid ""
 "To simulate the interconnection among three data centers using these "
 "three host machines, we manually segregate the Docker containers on these"
 " machines into three distinct network segments."
-msgstr ""
+msgstr "为了使用这三台机器模拟三个数据中心之间的互联网络，我们手动"
+"将这些机器上的 Docker 容器划分为三个不同的网段："
 
 #: ../../source/multi-host-deployment.rst:18 9f53e5cbf5704bf18671ff87056366fa
 msgid "Host A: bridge docker0, 172.17.34.0/24"
-msgstr ""
+msgstr "主机 A 网段：172.17.34.0/24"
 
 #: ../../source/multi-host-deployment.rst:19 ea828b50f91848629f9f3695f896656d
 msgid "Host B: bridge docker0, 172.17.29.0/24"
-msgstr ""
+msgstr "主机 B 网段：172.17.29.0/24"
 
 #: ../../source/multi-host-deployment.rst:20 5518b69195ef47bdab72103083cb3b22
 msgid "Host C: bridge docker0, 172.17.33.0/24"
-msgstr ""
+msgstr "主机 C 网段：172.17.33.0/24"
 
 #: ../../source/multi-host-deployment.rst:25 8ff9cb1564cf49ef8a705494549e2898
 msgid ""
