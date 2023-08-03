@@ -70,7 +70,7 @@ msgstr "主机 C 网段：172.17.33.0/24"
 msgid ""
 "We can use the following configuration example to guide you on how to "
 "configure the Docker bridge network on your own machines."
-msgstr ""
+msgstr "我们可以使用以下配置示例来配置 Docker 子网络。"
 
 #: ../../source/multi-host-deployment.rst:28 2b131592fdc6487db834e6adccb04bac
 msgid ""
@@ -79,7 +79,9 @@ msgid ""
 "subnet. For instance, on host A with IP 10.1.1.34, set the ``bip`` to "
 "172.17.34.1/24. Similar modifications should be made for host B and C, as"
 " shown in the following:"
-msgstr ""
+msgstr "在每台宿主机上，修改 Docker 配置文件 ``/etc/docker/daemon.json``，"
+"将 ``bip`` (Bridge IP) 设置为特定的子网。例如，对于 IP 为 10.1.1.34 的主机 A，"
+"将 ``bip`` 设置为 172.17.34.1/24。对主机 B 和 C 也应用类似的修改，如下所示："
 
 #: ../../source/multi-host-deployment.rst:44 531c288ea8b64eda96b947c6490cdbb9
 msgid ""
@@ -87,7 +89,8 @@ msgid ""
 "host. By separating the networks in this way, each Docker container on "
 "the hosts can have its unique IP, which assists in simulating "
 "intercommunication across different networks."
-msgstr ""
+msgstr "这个步骤定义了每台宿主机上 Docker 子网的 IP 范围。通过这种方式分隔网络，"
+"宿主机上的每个 Docker 容器都可以有其唯一的 IP，这有助于模拟跨广域的网络互联。"
 
 #: ../../source/multi-host-deployment.rst:49 703d45ccbd24436f98af2a9becf92ea9
 msgid ""
@@ -95,14 +98,16 @@ msgid ""
 "the Docker service to apply the changes. You can check the status of the "
 "Docker service using the ``service docker status`` command to ensure that"
 " it has restarted successfully."
-msgstr ""
+msgstr "请注意，一旦您更改了此配置，您需要重新启动 Docker 服务以应用更改。您可以使用"
+" ``service docker status`` 命令检查 Docker 服务的状态，以确保它已经成功重启。"
 
 #: ../../source/multi-host-deployment.rst:54 5a518e4f9cc8406bb7becdbd26149660
 msgid ""
 "To enable intercommunication between containers located within different "
 "network segments, we can configure the route table on the host machines "
 "to assist in forwarding IP packets sent from the containers."
-msgstr ""
+msgstr "为了让不同网段的容器之间能够相互通信，我们可以配置宿主机的路由表来协助转发"
+"容器的 IP 数据包。"
 
 #: ../../source/multi-host-deployment.rst:58 ea4bd04fbec64af79bbd0d2c90e4b75e
 msgid ""
@@ -110,7 +115,8 @@ msgid ""
 " kernel. It’s a way to define how packets should be forwarded depending "
 "on their destination address. Here is an example on how to set it up on "
 "each host:"
-msgstr ""
+msgstr "``route`` 命令用于修改 Linux 内核的 IP 路由表，它定义了如何根据数据包的"
+"目地地址转发数据包。以下是在宿主机上设置 IP 路由表的示例："
 
 #: ../../source/multi-host-deployment.rst:77 8490be74089f4182ab05f1c43322fe31
 msgid ""
@@ -119,7 +125,9 @@ msgid ""
 "are forwarded to the corresponding IP (represented by 10.1.1.29, "
 "10.1.1.33, and 10.1.1.34 respectively). As a result, the containers on "
 "each host can communicate with the containers on the other hosts."
-msgstr ""
+msgstr "这些命令向路由表添加路由，以便将发送到宿主机上 Docker 网络（例如，172.17.29.0，"
+"172.17.33.0 和 172.17.34.0）的数据包转发到相应的宿主机 IP（分别是 10.1.1.29，"
+"10.1.1.33 和 10.1.1.34）。于是，每个宿主机上的容器都可以与其它宿主机上的容器进行通信。"
 
 #: ../../source/multi-host-deployment.rst:84 fb882099d2cc414aac6ca11c3575a810
 msgid ""
@@ -131,11 +139,14 @@ msgid ""
 "packet to the IP address of the host machine. The host then routes the "
 "packet to its destination, and when the packet returns, it translates the"
 " destination IP back to the original Docker container."
-msgstr ""
+msgstr "接下来，我们在主机 A，B 和 C 上配置 ``iptables`` 以支持源网络地址转换（SNAT）。"
+"在该示例中，SNAT 是必需的，因为它允许不同网段的机器（此处为不同宿主机上的 Docker 容器）"
+"相互通信。这是通过将正在发送的数据包的源 IP 地址转换为宿主机 IP 地址来实现的。然后宿主机将"
+"数据包路由到其目的地，当数据包返回时，它将目的地 IP 转换回原始的 Docker 容器的 IP。"
 
 #: ../../source/multi-host-deployment.rst:93 a31fe6701b464a1aba675b84a6a5b087
 msgid "Here’s how to set up SNAT with iptables on each host:"
-msgstr ""
+msgstr "以下是如何在每台宿主机上使用 ``iptables`` 设置 SNAT 的方法："
 
 #: ../../source/multi-host-deployment.rst:110 d23549341c464213b5a558876de90a1b
 msgid ""
@@ -144,14 +155,18 @@ msgid ""
 "172.17.29.0/24``, ``-s 172.17.33.0/24``) that are not destined to their "
 "local network (``! -d 172.17.0.0/16``). The ``-j MASQUERADE`` option "
 "hides the Docker network behind the IP address of the host machine."
-msgstr ""
+msgstr "在上述指令中，``iptables -t nat -A POSTROUTING -s`` 指令应用于"
+"来自每个 Docker 网络（``-s 172.17.34.0/24``，``-s 172.17.29.0/24``，``-s 172.17.33.0/24``）"
+"且未指向其本地网络（``! -d 172.17.0.0/16``）的所有数据包。``-j MASQUERADE`` "
+"选项则将 Docker 网络隐藏在宿主机 IP 地址之后。"
 
 #: ../../source/multi-host-deployment.rst:117 9b984722c6f04c6dabfc823c353ca37e
 msgid ""
 "By setting up SNAT with iptables this way, we enable seamless "
 "communication between Docker containers across different network "
 "segments, which is crucial for a distributed system like GeoMX."
-msgstr ""
+msgstr "通过使用 ``iptables`` 设置 SNAT，我们实现了跨不同网段的 Docker 容"
+"器之间的无缝通信，这对于像 GeoMX 这样的广域分布式系统至关重要。"
 
 #: ../../source/multi-host-deployment.rst:122 6936f742882743db9f7f054642006e35
 msgid ""
@@ -161,7 +176,10 @@ msgid ""
 "`Weave <https://github.com/weaveworks/weave>`__ and `Klonet "
 "<https://caod.oriprobe.com/articles/62233507/Klonet__a_network_emulation_platform_for_the_techn.htm>`__"
 " are good choices."
-msgstr ""
+msgstr "除了上述手动配置网络路由表的方法以外，还有许多其它方法也可以建立不同网段中"
+" Docker 容器之间的网络互联。例如，`Weave <https://github.com/weaveworks/weave>`__ "
+"和 `Klonet <https://caod.oriprobe.com/articles/62233507/Klonet__a_network_emulation_platform_for_the_techn.htm>`__ "
+"就是两个不错的选择。"
 
 #: ../../source/multi-host-deployment.rst:130 f675e26fd6164033b52969ce5e28e52f
 msgid ""
@@ -169,27 +187,28 @@ msgid ""
 "across multiple hosts. Essentially, it establishes a network bridge "
 "between hosts which allows containers to communicate as if they are on "
 "the same host."
-msgstr ""
+msgstr "Weave 创建了一个虚拟网络，它可以连接部署在多个宿主机上的 Docker 容器。"
+"Weave 在宿主机之间建立了一个网桥，使得容器能够像在同一个网段中一样进行通信。"
 
 #: ../../source/multi-host-deployment.rst:135 5cc71e5b7405444a83608292851926c7
 msgid ""
 "Here’s a basic example of how you could use Weave to connect Docker "
 "containers."
-msgstr ""
+msgstr "以下是一个基本的示例，展示了如何使用 Weave 来连接不同宿主机上的 Docker 容器。"
 
 #: ../../source/multi-host-deployment.rst:138 a7c73c1348524691b68e1165badfb96e
 msgid "Install Weave on each of the host machines:"
-msgstr ""
+msgstr "在每台宿主机上安装 Weave："
 
 #: ../../source/multi-host-deployment.rst:145 97d764f1b79744909648af552f45ded1
 msgid "Launch Weave on each host:"
-msgstr ""
+msgstr "在每台宿主机上启动 Weave："
 
 #: ../../source/multi-host-deployment.rst:151 1fb3420ae8f2401384fd4fba902a53f7
 msgid ""
 "If you have Docker containers running, you can attach them to the Weave "
 "network:"
-msgstr ""
+msgstr "如果您有正在运行的 Docker 容器，您可以将它们连接到 Weave 网络："
 
 #: ../../source/multi-host-deployment.rst:158 9dfecc3d38c04152920e68999ef0941d
 msgid ""
@@ -199,7 +218,10 @@ msgid ""
 "refer to the latest `weave docs "
 "<https://www.weave.works/docs/net/latest/install/installing-weave/>`__ "
 "for the latest deployment guide."
-msgstr ""
+msgstr "这将把指定的容器连接到 Weave 网络。现在，所有通过 Weave 连接的容器之间都可"
+"以无缝通信，无论它们位于哪个宿主机上。如果在使用 Weave 时遇到任何问题，请参考最新的"
+" `Weave <https://www.weave.works/docs/net/latest/install/installing-weave/>`_ "
+"文档以获取最新的指南。"
 
 #: ../../source/multi-host-deployment.rst:165 699398acb5224b9aa23bb0829129da04
 msgid ""
@@ -207,25 +229,30 @@ msgid ""
 "small to medium-sized networks. For larger networks or for networks with "
 "specific performance requirements, the Klonet platform might be more "
 "appropriate."
-msgstr ""
+msgstr "虽然 Weave 是一个优秀的工具，但它最适用于小中型网络。对于更大的网络或者有特"
+"定性能需求的网络，Klonet 平台可能更为合适。"
 
 #: ../../source/multi-host-deployment.rst:174 1b0bbf4854b14836951c0106cb2d86a8
 msgid ""
 "If there is a firewall between host machines, you must permit traffic to "
 "flow through TCP 6783 and UDP 6783 / 6784, which are Weave’s control and "
 "data ports."
-msgstr ""
+msgstr "如果宿主机之间存在防火墙，您必须允许流量通过 TCP 6783 和 UDP 6783 / 6784，"
+"它们是 Weave 的控制和数据端口。"
 
 #: ../../source/multi-host-deployment.rst:178 a327b06fdeba43a9bba6e1c707f209cd
 msgid ""
 "After setting up the network and ensuring the Docker containers can "
 "communicate with each other, the next step is to run the GeoMX processes "
 "in these containers. To do this, you need to set up the environment "
-"variables (described in the chapter of :doc:`Pseudo-distributed "
-"Deployment <pseudo-distributed-deployment>` as per your GeoMX "
+"variables (described in the chapter of :doc:`Deploy GeoMX in Pseudo-distributed "
+"Mode <pseudo-distributed-deployment>` as per your GeoMX "
 "configuration and start the different node processes in different "
 "containers."
-msgstr ""
+msgstr "在设置好网络并确保 Docker 容器可以彼此通信之后，下一步是在这些容器中"
+"运行 GeoMX 的进程。为了做到这一点，您需要配置 GeoMX 的环境变量（请参考 "
+":doc:`以伪分布式模式部署 GeoMX <pseudo-distributed-deployment>`），"
+"并在不同的容器中启动对应的节点进程。"
 
 #: ../../source/multi-host-deployment.rst:186 b23dc42c00394915a293a58c5b3574d3
 msgid ""
@@ -233,7 +260,8 @@ msgid ""
 " the global scheduler and all local schedulers. The containers running "
 "these schedulers should reflect their actual IP addresses within your "
 "network."
-msgstr ""
+msgstr "请注意正确分配全局调度器和所有本地调度器的 IP 地址和端口号，应当用它们所在"
+"容器的实际 IP 地址作为这些调度器的 IP 和端口号"
 
 #: ../../source/multi-host-deployment.rst:192 48be28b6c8164c88815d97fd14fbdf11
 msgid ""
@@ -241,14 +269,17 @@ msgid ""
 "machine. This step is known as “port mapping” and is crucial for allowing"
 " external applications or systems to communicate with the GeoMX service "
 "running inside the Docker container."
-msgstr ""
+msgstr "请确保所有容器都将其端口暴露给宿主机。这个步骤叫作“端口映射”，对于允许"
+"外部应用与容器内 GeoMX 服务之间的通信至关重要。"
 
 #: ../../source/multi-host-deployment.rst:197 42eebe6db7ec469d9caa570fde67f94f
 msgid ""
 "To export a container’s port to the host, use the ``-p`` option when "
 "running Docker image. For example, if we have the global scheduler "
-"listening on port 9092, we map it to port 9093 on its host machine via:"
-msgstr ""
+"listening on port 9092, we map it to port 9092 on its host machine via:"
+msgstr "要将容器的端口暴露到宿主机，请在运行 Docker 镜像时使用 ``-p`` 选项。"
+"例如，假如全局调度器在端口 9092 上监听，我们可以通过以下命令将其映射到其宿主机的"
+" 9092 端口上："
 
 #: ../../source/multi-host-deployment.rst:206 eeba0cb1295649d58d2e230a85381415
 msgid ""
@@ -260,7 +291,10 @@ msgid ""
 " on the same host machine try to map to the same host port, a port "
 "conflict will occur, leading to errors and potentially failed "
 "deployments."
-msgstr ""
+msgstr "请记得调整端口号以避免容器之间端口冲突。当您将容器的端口映射到宿主机的端口时，"
+"宿主机上的这个端口就被容器预留。这意味着，在预留期间，宿主机上的其他进程或容器都不能使用"
+"这个预留端口。如果同一宿主机上的多个容器试图映射到同一个宿主机端口，就会发生端口冲突，"
+"并导致部署失败。"
 
 #: ../../source/multi-host-deployment.rst:215 d21e6ec772d34882925a1f4e9fc25ad8
 msgid ""
@@ -269,7 +303,9 @@ msgid ""
 " done by setting the ``DMLC_PS_GLOBAL_ROOT_URI`` and "
 "``DMLC_PS_GLOBAL_ROOT_PORT`` environment variables to the IP and port "
 "number of the global scheduler."
-msgstr ""
+msgstr "在设置全局参数服务器和域内参数服务器时，您需要指定全局调度器的 IP 和端口号。"
+"这通过设置环境变量 ``DMLC_PS_GLOBAL_ROOT_URI`` 和 ``DMLC_PS_GLOBAL_ROOT_PORT`` "
+"来完成。"
 
 #: ../../source/multi-host-deployment.rst:221 a874393f6c034d209d3faa5a57bc6ff8
 msgid ""
@@ -278,18 +314,19 @@ msgid ""
 "scheduler in their party. This can be done by setting the "
 "``DMLC_PS_ROOT_URI`` and ``DMLC_PS_ROOT_PORT`` environment variables to "
 "the IP and port number of their own local scheduler."
-msgstr ""
+msgstr "对于所有的域内参数服务器和工作节点（包括全局参数服务器和主控工作节点），"
+"都需要指定他们所在机构的本地调度器的 IP 和端口号。这通过设置环境变量 ``DMLC_PS_ROOT_URI`` "
+"和 ``DMLC_PS_ROOT_PORT`` 来完成。"
 
 #: ../../source/multi-host-deployment.rst:227 e13483dbf2c04edc900e592d76d9b6b4
 msgid ""
 "Here’s an example of how you might set these variables in a global server"
 " node:"
-msgstr ""
+msgstr "以下是一个在全局参数服务器节点中设置这些变量的例子："
 
 #: ../../source/multi-host-deployment.rst:248 5a1a15ee078b4d8184422b7a1833835c
 msgid ""
 "Remember to replace the IP addresses and port numbers according to your "
 "actual network configuration. The configuration for other environment "
 "variables remains the same as previously discussed."
-msgstr ""
-
+msgstr "请根据您实际的网络配置替换上述 IP 地址和端口号。其他环境变量的配置与之前讨论的一致。"
