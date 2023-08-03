@@ -20,7 +20,7 @@ msgstr ""
 
 #: ../../source/klonet-deployment.rst:2 0e44fb502cfa4ee1824379890b5e86a0
 msgid "Deploy GeoMX on Klonet"
-msgstr ""
+msgstr "在 Klonet 平台上部署 GeoMX"
 
 #: ../../source/klonet-deployment.rst:4 807f9e29347b488ba393392feb996be2
 msgid ""
@@ -36,9 +36,14 @@ msgid ""
 "and containerization technologies to create isolated network nodes and "
 "links. Klonet also provides a graphical user interface and a command-line"
 " interface for users to configure and manage their network experiments."
-msgstr ""
+msgstr "Klonet 是一个用于网络技术创新的实验平台，它旨在构建一个逼真的网络环境用于"
+"开发和测试新的网络协议和应用。Klonet 可以构建各种网络场景，如广域、无线、移动、卫"
+"星和光网络等，并提供对网络参数（如带宽、延迟、抖动和数据包丢失）的精细控制。Klonet "
+"还可以与真实的设备和应用（如路由器、交换机、传感器和智能手机）集成，创建混合网络实验。"
+"Klonet 基于 Linux 操作系统，使用虚拟化和容器化技术创建隔离的网络节点和链接。Klonet "
+"还提供图形用户界面和命令行界面，供用户配置和管理他们的网络实验。"
 
 #: ../../source/klonet-deployment.rst:19 1c39041f43f34f31b06e24320a3b9948
 msgid "The tutorial for this part is coming soon! 😁"
-msgstr ""
+msgstr "该部分教程正在赶赴前线，敬请期待！😁"
 
