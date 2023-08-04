@@ -300,11 +300,14 @@ msgid ""
 "enabled inside the data center. In this example, both ``ENABLE_INTER_TS``"
 " and ``ENABLE_INTRA_TS`` are enabled, but we can also choose to enable "
 "only one."
-msgstr ""
+msgstr "如果使用了 ``ENABLE_INTER_TS``，TSEngine 就会在跨数据中心之间启用。"
+"反之，如果使用了 ``ENABLE_INTRA_TS``，TSEngine 就会在数据中心内部启用。"
+"我们可以同时启用 ``ENABLE_INTER_TS`` 和 ``ENABLE_INTRA_TS``，像这个例子"
+"给出的一样，但我们也可以选择只启用其中一个。"
 
 #: ../../source/accelerator.rst:309 48dc1297ee814bf0905d2bac8f013aa3
 msgid "Priority-based Parameter Propagation"
-msgstr ""
+msgstr "优先级参数传播"
 
 #: ../../source/accelerator.rst:311 792beeb9c82143b184c97c712a1778e7
 msgid ""
@@ -319,19 +322,25 @@ msgid ""
 "the next round, thereby accelerating distributed training. (See `this "
 "paper <https://arxiv.org/pdf/1905.03960.pdf>`__ for more details and "
 "`this repo <https://github.com/anandj91/p3>`__ for individual use.)"
-msgstr ""
+msgstr "在传统的实现中，第 :math:`r` 轮的梯度同步与第"
+" :math:`r+1` 轮的前向传播不重叠，因为前向传播依赖于梯度同步的完成。为了提高系统效率，"
+"GeoMX 集成了 P3 调度器，该调度器优先传输浅层梯度。这种设置使得前向传播和梯度同步可以"
+"重叠，允许更早地执行下一轮的前向传播，从而加速分布式训练。请参阅此论文"
+" (`Paper <https://arxiv.org/pdf/1905.03960.pdf>`_) "
+"以获取更多详情，如果希望独立使用 P3 调度器，请使用这个代码库"
+" (`Repo <https://github.com/anandj91/p3>`_)。"
 
 #: ../../source/accelerator.rst:323 882bcaf82c0e4f2dbd21889a4016aaa0
 msgid "To enable P3, only one environment variable is required:"
-msgstr ""
+msgstr "要启用优先级参数传播，我们只需要设置一个环境变量："
 
 #: ../../source/accelerator.rst:329 9ce2dc6c441a487bae69e5adec966a6e
 msgid "Use the demo script ``scripts/xpu/run_p3.sh`` to try it!"
-msgstr ""
+msgstr "请使用示例脚本 ``scripts/xpu/run_p3.sh`` 来体验它！"
 
 #: ../../source/accelerator.rst:332 334605aaeb8644febe89d037969d1053
 msgid "Multi-Server Load Balancing"
-msgstr ""
+msgstr "多全局参数服务器负载均衡"
 
 #: ../../source/accelerator.rst:334 d43ec28e447f4dd1a1df9bb35b7effb1
 msgid ""
@@ -340,15 +349,18 @@ msgid ""
 "preventing any single server from becoming a bottleneck, Multi-Server "
 "Load Balancing (MultiGPS) significantly enhances efficiency, scalability,"
 " and overall performance of our GeoMX system."
-msgstr ""
+msgstr "GeoMX 支持启用多个全局参数服务器以均衡工作负载，包括通信流量、参数存储和聚合计算等。"
+"多全局参数服务器负载均衡技术 MultiGPS 可以避免单一全局参数服务器成为"
+"性能瓶颈，从而提高 GeoMX 系统的效率、可扩展性和整体性能。"
 
 #: ../../source/accelerator.rst:340 a3bc260bdeae412e996b681fac675dee
 msgid ""
 "To enable MultiGPS, set ``DMLC_NUM_GLOBAL_SERVER`` and some "
 "``DMLC_NUM_SERVER`` to an integer greater than 1."
-msgstr ""
+msgstr "要启用多全局参数服务器负载均衡，需要将所有机构的 ``DMLC_NUM_GLOBAL_SERVER`` "
+"和中央机构内的 ``DMLC_NUM_SERVER`` 设置为大于 1 的整数。"
 
 #: ../../source/accelerator.rst:363 a02c69afbafc4573b234a357cb666ff9
 msgid "Use the demo script ``scripts/xpu/run_multi_gps.sh`` to try it!"
-msgstr ""
-
+msgstr "我们也已经提供好了相应的示例脚本，使用 ``scripts/xpu/run_multi_gps.sh`` "
+"来体验它！"
