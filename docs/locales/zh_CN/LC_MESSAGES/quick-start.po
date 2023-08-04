@@ -120,7 +120,7 @@ msgstr "多全局参数服务器负载均衡 (MultiGPS)：``bash run_multi_gps.s
 
 #: ../../source/quick-start.rst:84 62c5cf64f72149f3981fd1a022558dca
 msgid "Mixed-Synchronous Algorithm (MixedSync): ``bash run_mixed_sync.sh``."
-msgstr "混合同步算法 (MixedSync)：``bash run_mixed_sync.sh``."
+msgstr "复合同步算法 (MixedSync)：``bash run_mixed_sync.sh``."
 
 #: ../../source/quick-start.rst:86 fdfe859c13bf44bf933335b1fb7d190d
 msgid "Hierarchical Frequency Aggregation (HFA): ``bash run_hfa_sync.sh``."

@@ -20,18 +20,19 @@ msgstr ""
 
 #: ../../source/synchronization.rst:2 5b22a42341f649aabd3bc811cdad7c17
 msgid "How to Use GeoMX Synchronization?"
-msgstr ""
+msgstr "如何使用 GeoMX 同步并行？"
 
 #: ../../source/synchronization.rst:4 e56a01ffc3ff41f788da66b6d757e06e
 msgid ""
 "GeoMX currently supports two fundamental synchronization algorithms, "
 "i.e., the fully-synchronous algorithm, the mixed-synchronous algorithm, "
 "and an advanced algorithm, i.e., hierarchical frequency aggregation."
-msgstr ""
+msgstr "GeoMX 目前支持两种基础同步算法，即全同步算法和复合同步算法，"
+"以及一种同步优化算法，即分层频率聚合算法。在本节中，我们将依次介绍它们。"
 
 #: ../../source/synchronization.rst:9 33eab94768a44c0fb078f3d0cca86aac
 msgid "Fully-Synchronous Algorithm"
-msgstr ""
+msgstr "全同步算法"
 
 #: ../../source/synchronization.rst:11 be3c28e0d4fe416d990254262cb25c33
 msgid ""
@@ -43,13 +44,16 @@ msgid ""
 "ensure a consistent model. However, this comes at the expense of training"
 " speed, as it requires waiting for all computations and communications to"
 " complete at every iteration."
-msgstr ""
+msgstr "全同步算法 FSA 是默认的模型同步策略。在这种同步算法中，训练节点在每个轮次"
+"都会同步其模型数据（模型参数或梯度），并且数据中心内外的参数服务器系统都运行在同步"
+"并行模式下。所有训练节点都保持相同步调以确保模型一致性，但代价是训练速度，因为它需"
+"要在每个迭代执行模型同步，并等待所有计算和通信完成。"
 
 #: ../../source/synchronization.rst:20 1e31c265e2e641638c4fbb8edd77949f
 msgid ""
 "To use FSA, all that’s required is to set ``dist_sync`` as a "
 "hyperparameter during the initialization of ``kvstore``. For example:"
-msgstr ""
+msgstr "要使用全同步算法，只需要在初始化 ``kvstore`` 时指定为 ``dist_sync`` 运行模式："
 
 #: ../../source/synchronization.rst:44 53ece56e63c64903a954c603bc152400
 msgid ""
@@ -57,11 +61,13 @@ msgid ""
 "RC/GeoMX/blob/main/examples/cnn.py>`_. You can run this demo by simply "
 "``bash scripts/xpu/run_vanilla_hips.sh``, where ``xpu`` should be ``cpu``"
 " or ``gpu``."
-msgstr ""
+msgstr "示例代码可以在 `examples/cnn.py <https://github.com/INET-RC/GeoMX/blob/main/examples/cnn.py>`_ "
+"中找到。您可以简单地执行 ``bash scripts/xpu/run_vanilla_hips.sh`` 来运行这个示例，"
+"其中， ``xpu`` 需要设置为 ``cpu`` 或 ``gpu``。"
 
 #: ../../source/synchronization.rst:51 5aea90b014b54a25bc15afb7c4e5233d
 msgid "Mixed-Synchronous Algorithm"
-msgstr ""
+msgstr "复合同步算法"
 
 #: ../../source/synchronization.rst:53 46b909f754f047f899ed76e168296513
 msgid ""
@@ -73,31 +79,37 @@ msgid ""
 "heterogeneity between different data centers. This asynchronous method "
 "resolves the problem of straggling data centers, thereby accelerating "
 "distributed training across WANs."
-msgstr ""
+msgstr "复合同步算法 MixedSync 是全同步算法的异步版本，区别在于数据中心之间的参"
+"数服务器系统以异步并行模式运行。这种设置适用于数据中心内部训练节点具有同质性，而不"
+"同数据中心之间的资源异质性显著的情况。异步方法解决了低性能数据中心掉队导致的同步阻"
+"塞问题，从而能够加速分布式训练。"
 
 #: ../../source/synchronization.rst:62 5c20b59293ba402ebfa1b8aaa508c346
 msgid ""
 "To use MixedSync, all that’s required is to set ``dist_async`` instead of"
 " ``dist_sync`` when initializing ``kvstore``. The rest of the setup "
 "remains the same:"
-msgstr ""
+msgstr "要使用复合同步算法，只需要在初始化 ``kvstore`` 时设置 ``dist_async``"
+" （而不是 ``dist_sync``）。其它设置保持不变："
 
 #: ../../source/synchronization.rst:72 03a38c0f1bc241758e485f48cb6743e8
 msgid ""
 "Alternatively, you can enable MixedSync by using the ``--mixed-sync`` "
 "option in our provided python script:"
-msgstr ""
+msgstr "您也可以在我们提供的 Python 脚本中使用 ``--mixed-sync`` 选项来启用复合"
+"同步算法："
 
 #: ../../source/synchronization.rst:79 f54256423f3b4bb5accf16ceed41c619
 msgid ""
 "You can also run this demo by executing ``bash "
 "scripts/xpu/run_mixed_sync.sh``, where ``xpu`` should be ``cpu`` or "
 "``gpu``."
-msgstr ""
+msgstr "您可以执行 ``bash scripts/xpu/run_mixed_sync.sh`` 来运行这个示例，"
+"其中 ``xpu`` 应为 ``cpu`` 或 ``gpu``。"
 
 #: ../../source/synchronization.rst:84 6b08e51224264c4bacbc48561fad69b8
 msgid "Use DCASGD Optimizer in MixedSync"
-msgstr ""
+msgstr "在复合同步中使用 DCASGD 优化器"
 
 #: ../../source/synchronization.rst:86 d339d6e6db1544c880f17a1871feb948
 msgid ""
@@ -106,27 +118,29 @@ msgid ""
 "`DCASGD <http://proceedings.mlr.press/v70/zheng17b/zheng17b.pdf>`__ "
 "optimizer. This adjustment aids in improving training convergence while "
 "preserving model accuracy."
-msgstr ""
+msgstr "为了缓解异步并行中的梯度过时问题，全局参数服务器可以配置为使用"
+" `DCASGD <http://proceedings.mlr.press/v70/zheng17b/zheng17b.pdf>`_ 优化器。"
+"这个优化有助于改善训练收敛性。"
 
 #: ../../source/synchronization.rst:92 be5898da98ee4c15a3495e6197d76b44
 msgid ""
 "The way to enable DCASGD in MixedSync is the same as in MXNET: simply "
 "replace the ``Adam`` optimizer with the ``DCASGD`` optimizer:"
-msgstr ""
+msgstr "在复合同步中启用 DCASGD 的方式与在 MXNET 中一样：只需将 Adam 优化器替换为 DCASGD："
 
 #: ../../source/synchronization.rst:103 0833df25ca464f46aa3bc0e34c86f5ff
 msgid ""
 "We can use the following command to enable the DCASGD optimizer in "
 "MixedSync:"
-msgstr ""
+msgstr "我们可以使用以下命令来同时启用复合同步和 DCASGD 优化器："
 
 #: ../../source/synchronization.rst:110 74a7d226d99d458e9df7f7d6cd57cd9d
 msgid "Just modify ``scripts/xpu/run_mixed_sync.sh`` and try it!"
-msgstr ""
+msgstr "请试试按上述提示修改 ``scripts/xpu/run_mixed_sync.sh`` 并运行它。"
 
 #: ../../source/synchronization.rst:115 cea7e0b14b1f410dacd6191f8c1bc083
 msgid "Hierarchical Frequency Aggregation"
-msgstr ""
+msgstr "分层频率聚合"
 
 #: ../../source/synchronization.rst:117 3c4dd89b518849478ea79526c875e032
 msgid ""
@@ -139,17 +153,22 @@ msgid ""
 "server. This approach effectively reduces the frequency of model "
 "synchronization across data centers, thereby boosting distributed "
 "training."
-msgstr ""
+msgstr "受到这篇文章"
+" (`paper <https://ieeexplore.ieee.org/abstract/document/9148862>`_)"
+"的启发，我们的分层频率聚合算法首先在训练节点上执行 :math:`K_1` 步本地更新，然后在域"
+"内参数服务器进行 :math:`K_2` 次局域同步，然后才在全局参数服务器进行一次全局同步。"
+"这种方法有效减少了跨数据中心的模型同步频率，从而能够大幅提升分布式训练的效率。"
 
 #: ../../source/synchronization.rst:127 b6850b240a454eb2b953dcc31ed25316
 msgid ""
 "To enable HFA, we initialize ``kvstore`` in ``dist_sync`` mode and make a"
 " simple modification to the training loop:"
-msgstr ""
+msgstr "要启用分层频率聚合，我们将 ``kvstore`` 初始化为 ``dist_sync`` 模式，并对"
+"训练循环做一些简单的修改："
 
 #: ../../source/synchronization.rst:162 034f864499dd4a79b9dddee9bf5454e5
 msgid "Then, let’s set three environmental variables:"
-msgstr ""
+msgstr "接下来，设置三个环境变量："
 
 #: ../../source/synchronization.rst:170 103fdbe91e464303afc4e2040a71bcb3
 msgid ""
@@ -157,5 +176,6 @@ msgid ""
 "/INET-RC/GeoMX/blob/main/examples/cnn_hfa.py>`_. You can run this demo by"
 " simply ``bash scripts/xpu/run_hfa_sync.sh``, where ``xpu`` should be "
 "``cpu`` or ``gpu``."
-msgstr ""
+msgstr "演示代码可以在 ``examples/cnn_hfa.py`` 找到。您只需要简单地执行"
+" ``bash scripts/xpu/run_hfa_sync.sh`` 即可。"
 
