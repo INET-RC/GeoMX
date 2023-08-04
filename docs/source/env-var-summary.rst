@@ -41,11 +41,11 @@ Summary of Env Variables
      - same as above
      - Port number of the global scheduler node.
    * - DMLC_NUM_GLOBAL_SERVER
-     - Number
+     - Integer
      - same as above
      - Number of global servers in the central party.
    * - DMLC_NUM_GLOBAL_WORKER
-     - Number
+     - Integer
      - same as above
      - Number of local servers worldwide.
    * - DMLC_ROLE_MASTER_WORKER
@@ -57,7 +57,7 @@ Summary of Env Variables
      - global server
      - Specify if the central party joins in model training.
    * - DMLC_NUM_ALL_WORKER
-     - Number
+     - Integer
      - global server, master worker, worker
      - Total number of workers actually participating in model training.
    * - DMLC_INTERFACE
@@ -70,7 +70,7 @@ Summary of Env Variables
      - Verbosity level of the system logs.
 
 
-.. list-table:: Summary of Environment Variables for each Optimization Technology.
+.. list-table:: Summary of Environment Variables for Each Optimization Technology.
    :header-rows: 1
 
    * - Technology
