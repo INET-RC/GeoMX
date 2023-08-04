@@ -49,6 +49,11 @@ msgstr "在这里 (`here <https://github.com/INET-RC/GeoMX/blob/main/scripts/cpu
 "您可以找到一个伪分布式部署的 shell 脚本。在这个脚本中，我们启动了总共 12 个节点，"
 "每个命令对应运行一个不同的进程来代表一个节点，节点角色由 ``DMLC_ROLE`` 和 ``DMLC_ROLE_GLOBAL`` 指定。"
 
+msgid ""
+"Please ensure the global scheduler and local schedulers are initiated "
+"prior to the other nodes within each party."
+msgstr "在任意一个机构内，请确保全局调度器或本地调度器优先于其它节点启动。"
+
 #: ../../source/pseudo-distributed-deployment.rst:19
 #: df197598cb3c494a809cef37e520eed2
 msgid "Launch Nodes in the Central Party"

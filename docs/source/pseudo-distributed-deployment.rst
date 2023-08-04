@@ -15,6 +15,11 @@ In this script, we launched a total of 12 nodes, each command
 corresponds to running a different node, with roles specified by
 ``DMLC_ROLE`` and ``DMLC_ROLE_GLOBAL``.
 
+.. warning::
+
+   Please ensure the global scheduler and local schedulers are initiated
+   prior to the other nodes within each party.
+
 Launch Nodes in the Central Party
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

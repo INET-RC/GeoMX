@@ -78,12 +78,18 @@ cd GeoMX/scripts/gpu && bash run_vanilla_hips.sh
 For more detailed instructions, please refer to our [GeoMX Docs](https://geomx.readthedocs.io/en/latest/) (中文文档请看[这里](https://geomx.readthedocs.io/zh_CN/latest/)).
 
 ## Contributors
-* **Li, Zonghang** - *Initial work with equal contribution* - [Homepage](https://github.com/Lizonghang)
-* **Zhang, Zhaofeng** - *Initial work with equal contribution* - [Homepage](https://github.com/vcfgv)
-* **Zhou, Huaman** - *Initial work with equal contribution* - [Homepage](https://github.com/zhouhuaman)
-* **Cai, Weibo** - *Initial work with equal contribution* - [Homepage](https://github.com/CaiWeibo)
-* **Yu, Hongfang** - *Project instructor* - [Homepage](https://scholar.google.com/citations?user=GmEdMqwAAAAJ&hl=en&oi=ao)
-* Other contributors: Cai, Qingqing; Wang, Jigang; Zhang, Zhihao; Xu, Zenglin; Shao, Junming; AND YOU.
+* **Li, Zonghang**<sup>1</sup> - *Initial work with equal contribution* - [Homepage](https://github.com/Lizonghang)
+* **Zhang, Zhaofeng**<sup>1</sup> - *Initial work with equal contribution* - [Homepage](https://github.com/vcfgv)
+* **Zhou, Huaman**<sup>1</sup> - *Initial work with equal contribution* - [Homepage](https://github.com/zhouhuaman)
+* **Cai, Weibo**<sup>1</sup> - *Initial work with equal contribution* - [Homepage](https://github.com/CaiWeibo)
+* **Yu, Hongfang**<sup>1</sup> - *Project instructor* - [Homepage](https://scholar.google.com/citations?user=GmEdMqwAAAAJ&hl=en&oi=ao)
+* Other contributors: Cai, Qingqing<sup>1</sup>; Wang, Jigang<sup>1</sup>; Zhang, Zhihao<sup>1</sup>; Shao, Junming<sup>2</sup>; Xu, Zenglin<sup>3</sup>; AND YOU.
+
+The contributors are from the following institutions:
+
+1. **University of Electronic Science and Technology of China** - Intelligent Network and Application Research Centre (INET-RC)
+2. **University of Electronic Science and Technology of China** - Data Mining Lab
+3. **Harbin Institute of Technology, Shenzhen** - Statistical Machine Intelligence and Learning Lab (SMILE Lab)
 
 ## Cite Us
 If this repo is helpful to you, please kindly cite us:
