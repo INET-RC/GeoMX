@@ -176,6 +176,6 @@ msgid ""
 "/INET-RC/GeoMX/blob/main/examples/cnn_hfa.py>`_. You can run this demo by"
 " simply ``bash scripts/xpu/run_hfa_sync.sh``, where ``xpu`` should be "
 "``cpu`` or ``gpu``."
-msgstr "演示代码可以在 ``examples/cnn_hfa.py`` 找到。您只需要简单地执行"
+msgstr "演示代码可以在 `examples/cnn_hfa.py <https://github.com/INET-RC/GeoMX/blob/main/examples/cnn_hfa.py>`_ 找到。您只需要简单地执行"
 " ``bash scripts/xpu/run_hfa_sync.sh`` 即可。"
 

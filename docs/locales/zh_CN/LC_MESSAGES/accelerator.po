@@ -20,7 +20,7 @@ msgstr ""
 
 #: ../../source/accelerator.rst:2 1ce840bf6efa44ca9677d10ecc9b4e2a
 msgid "How to Use GeoMX Accelerators?"
-msgstr ""
+msgstr "如何使用 GeoMX 通信加速器？"
 
 #: ../../source/accelerator.rst:4 c97753cff827411e9508a8de7397f53d
 msgid ""
@@ -29,22 +29,27 @@ msgid ""
 "communication bottlenecks. To mitigate these issues, GeoMX employs a "
 "variety of optimization techniques. These include gradient "
 "sparsification, mixed-precision quantization, advanced transmission "
-"protocols, synchronization algorithms, flow scheduling, and priority "
-"scheduling, among others (e.g., overlay scheduling, currently in "
+"protocols, synchronization algorithms, flow scheduling, priority "
+"scheduling, and load balancing, among others (e.g., overlay scheduling, currently in "
 "development). These techniques comprehensively tackle communication "
 "issues, further enhancing the efficiency and robustness of distributed "
 "machine learning training in GeoMX."
-msgstr ""
+msgstr "考虑到广域网中的网络资源常常是受限的，并且随时间"
+"动态时变，跨数据中心的分布式训练仍然面临诸多通信瓶颈。为了缓解这些瓶颈，GeoMX 采用"
+"了多种优化技术。这些技术包括梯度稀疏化、低精度量化（例如 FP16）、混合精度量化、更先"
+"进的传输协议、同步算法、流量调度、优先级调度、负载均衡，以及其他一些正在开发或集成的技术，例如"
+"通信覆盖调度等）。这些技术全面地解决了跨广域分布式系统的通信问题，进一步提高了 GeoMX "
+"系统训练的效率和稳健性。"
 
 #: ../../source/accelerator.rst:15 dfa4728e6b234ca39ee0cc362b3c3e2f
 msgid ""
 "This guidance describes the environmental variables and hyperparameters "
 "needed to launch each optimization technique in our GeoMX system."
-msgstr ""
+msgstr "本教程将详述在 GeoMX 系统中启用每种通信优化器所需的环境变量和超参数设置。"
 
 #: ../../source/accelerator.rst:21 1f8d219bf1ce436fa22cd964b1971974
 msgid "Bidirectional Gradient Sparsification"
-msgstr ""
+msgstr "双向梯度稀疏化"
 
 #: ../../source/accelerator.rst:23 85a2b96af1854875a4bb79e271a47741
 msgid ""
@@ -57,13 +62,18 @@ msgid ""
 " <https://www.zte.com.cn/content/dam/zte-site/res-www-zte-com-"
 "cn/mediares/magazine/publication/com_cn/article/202005/cn202005004.pdf>`__"
 " for more details.)"
-msgstr ""
+msgstr "已有方法如深度梯度压缩 (`DGC <https://arxiv.org/pdf/1712.01887.pdf>`_) "
+"会对上行梯度张量进行稀疏化处理。为了进一步压缩通信流量，GeoMX 还对下行（聚合）梯度张量"
+"进行稀疏化处理，而不是拉取完整模型参数。该技术被设计用于数据中心之间，以减少跨广域传输"
+"的通信流量。请参考这篇文章 (`paper <https://www.zte.com.cn/content/dam/zte-site/res-www-zte-com-cn/mediares/magazine/publication/com_cn/article/202005/cn202005004.pdf>`_) "
+"了解更多关于双向梯度稀疏化的介绍。"
 
 #: ../../source/accelerator.rst:33 8f0966f16ff54460a7f29e9d371cbedd
 msgid ""
 "To enable bidirectional gradient sparsification, define it in "
 "``kvstore_dist.set_gradient_compression`` and set the compression ratio:"
-msgstr ""
+msgstr "要启用双向梯度稀疏化，需要在 ``kvstore_dist.set_gradient_compression`` "
+"中定义它，并设置压缩率："
 
 #: ../../source/accelerator.rst:69 b46ea807915549d4a25e7ab7811f930d
 msgid ""
@@ -72,7 +82,9 @@ msgid ""
 "transmission. The threshold for classifying large and tiny tensors can be"
 " set through the environmental variable "
 "``MXNET_KVSTORE_SIZE_LOWER_BOUND``. For example:"
-msgstr ""
+msgstr "梯度张量根据大小分为大张量和小张量，只有大张量才会被稀疏化传输。"
+"我们可以通过环境变量 ``MXNET_KVSTORE_SIZE_LOWER_BOUND`` 设置分类大"
+"小张量的阈值："
 
 #: ../../source/accelerator.rst:79 329bc67ebe074da0ad7ea0d63b8aad81
 msgid ""
@@ -80,11 +92,13 @@ msgid ""
 "/INET-RC/GeoMX/blob/main/examples/cnn_bsc.py>`_. You can run this demo by"
 " simply ``bash scripts/xpu/run_bisparse_compression.sh``, where ``xpu`` "
 "should be ``cpu`` or ``gpu``."
-msgstr ""
+msgstr "演示代码可以在 `examples/cnn_bsc.py <https://github.com/INET-RC/GeoMX/blob/main/examples/cnn_bsc.py>`_ 中找到。您可以简单地执行"
+" ``bash scripts/xpu/run_bisparse_compression.sh`` 来运行此示例，"
+"其中 ``xpu`` 应为 ``cpu`` 或 ``gpu``。"
 
 #: ../../source/accelerator.rst:86 29da9417ae3c496b840a6f3acacc3e06
 msgid "Low-Precision Quantization"
-msgstr ""
+msgstr "低精度量化"
 
 #: ../../source/accelerator.rst:88 0ca9d9c212a547d4ba6c849a78e6e593
 msgid ""
@@ -94,14 +108,18 @@ msgid ""
 "tensor into FP16. Once the pulling data is received, GeoMX reverts it "
 "back into FP32 and continues model computing. This effectively halves the"
 " data traffic volume over both LANs and WANs."
-msgstr ""
+msgstr "GeoMX 也支持将模型数据量化为较低精度进行传输，例如"
+"以 FP16 数值精度格式。在这种方案中，GeoMX 使用 FP32 计算模型，但在传输时，它将模"
+"型数据张量转换为 FP16。一旦接收到拉取的数据，GeoMX 就会将其恢复为 FP32 并继续进行"
+"模型计算。这种方法可以有效地将局域网和广域网上传输的数据流量减半。"
 
 #: ../../source/accelerator.rst:95 c67ef41d62cf4dfab021e8ce95ea0310
 msgid ""
 "To quantify model data for transmission in FP16 format, we can simply "
 "convert the numerical precision of tensors in our Python code using "
 "``astype('float16')``:"
-msgstr ""
+msgstr "为了以 FP16 数值精度格式量化模型数据进行传输，我们可以简单地在 Python 代码"
+"中使用 ``astype('float16')`` 来转换张量的数值精度："
 
 #: ../../source/accelerator.rst:134 aeada72c8e6143719f0712a95e95906e
 msgid ""
@@ -109,11 +127,12 @@ msgid ""
 "/INET-RC/GeoMX/blob/main/examples/cnn_fp16.py>`_, we can run it using "
 "``bash scripts/xpu/run_fp16.sh``, where ``xpu`` should be ``cpu`` or "
 "``gpu``."
-msgstr ""
+msgstr "示例代码位于 `examples/cnn_fp16.py <https://github.com/INET-RC/GeoMX/blob/main/examples/cnn_fp16.py>`_，"
+"我们可以使用 ``bash scripts/xpu/run_fp16.sh`` 来运行它。"
 
 #: ../../source/accelerator.rst:142 c546dfa967a04b1fb04c080c66f47857
 msgid "Mixed-Precision Quantization"
-msgstr ""
+msgstr "混合精度量化"
 
 #: ../../source/accelerator.rst:144 7d2662abce5a4f4cac25b6084a6aa5d9
 msgid ""
@@ -124,49 +143,52 @@ msgid ""
 "before transmission. This precaution is taken to minimize the loss of "
 "crucial information and avoid significant degradation to model "
 "performance."
-msgstr ""
+msgstr "混合精度量化结合了双向梯度稀疏化和低精度量化两种技术。"
+"在这种方案中，小张量被量化为 FP16 格式进行传输，而大张量则保持为 FP32 格式。但是，"
+"这些大张量在传输前将经过稀疏化处理。这样设计是为了减少关键信息的丢失，避免对模型性能"
+"造成明显损伤。"
 
 #: ../../source/accelerator.rst:152 3d666e8325d848d799978f076f188f18
 msgid "Table 1: Summary of the application scope for Bi-Sparse, FP16, and MPQ."
-msgstr ""
+msgstr "表格 1：双向梯度稀疏化、低精度量化与混合精度量化的作用域汇总"
 
 #: ../../source/accelerator.rst:158 3c548b8bace94594835e132639bc09af
 msgid "Intra-Data Center"
-msgstr ""
+msgstr "数据中心内部"
 
 #: ../../source/accelerator.rst:160 c843c8619376427aa62f6cc010495cdb
 msgid "Inter-Data Centers"
-msgstr ""
+msgstr "数据中心之间"
 
 #: ../../source/accelerator.rst:163 ../../source/accelerator.rst:165
 #: b3333b6e8edf411d91d21ed074572fa7 c3ede880c3a244fb9bbafbe86024956d
 msgid "Large Tensors"
-msgstr ""
+msgstr "大张量"
 
 #: ../../source/accelerator.rst:164 ../../source/accelerator.rst:166
 #: 6122b5efe0d347cb91aeb917890815b9 dee77ed9c22e4473b558e9674e697ddf
 msgid "Tiny Tensors"
-msgstr ""
+msgstr "小张量"
 
 #: ../../source/accelerator.rst:167 350a4cfdf512475099498a80dcf488a8
 msgid "Bi-Sparse"
-msgstr ""
+msgstr "双向梯度稀疏化"
 
 #: ../../source/accelerator.rst:168 ../../source/accelerator.rst:169
 #: ../../source/accelerator.rst:171 ../../source/accelerator.rst:178
 #: 15d6179dd1cb49a8bd0cdb68fda86c79 53a41f5af0fb4c57ada2848a40c6f1cb
 #: 5e9a55bb0acc4591b6e447f07564188e 9200046f8f0846da835cc43473158883
 msgid "FP32, Dense"
-msgstr ""
+msgstr "单精度，密集张量"
 
 #: ../../source/accelerator.rst:170 ../../source/accelerator.rst:180
 #: 367a45ae031a4da4a06a20e666e68b1f bf19a8a56c3d4c868d2867a0efee8aaf
 msgid "FP32, Sparse"
-msgstr ""
+msgstr "单精度，稀疏张量"
 
 #: ../../source/accelerator.rst:172 a821c0cc4b204540b3c4d77966077b78
 msgid "FP16"
-msgstr ""
+msgstr "半精度量化"
 
 #: ../../source/accelerator.rst:173 ../../source/accelerator.rst:174
 #: ../../source/accelerator.rst:175 ../../source/accelerator.rst:176
@@ -175,18 +197,19 @@ msgstr ""
 #: 4f2817cdbfc742658921b58bf216c146 7b3e4be9784f43328fab6a1659c21cc5
 #: a31c33c3aa6b4945ac60651d2a39eca7 c665d97dd71945cb85b1472b74730f85
 msgid "FP16, Dense"
-msgstr ""
+msgstr "半精度，密集张量"
 
 #: ../../source/accelerator.rst:177 e9034b1dab59475fbec74ea8259d425f
 msgid "MPQ"
-msgstr ""
+msgstr "混合精度量化"
 
 #: ../../source/accelerator.rst:184 44acfce73d6e4e29b9edc72f7044a6b6
 msgid ""
 "For details on how to classify large and tiny tensors, please refer to "
 "the :ref:`bidirectional-gradient-sparsification` section. The demo code "
 "for using MPQ is given below:"
-msgstr ""
+msgstr "关于如何分类大张量和小张量，请参阅 :ref:`bidirectional-gradient-sparsification`。"
+"以下给出使用混合精度量化的示例代码："
 
 #: ../../source/accelerator.rst:235 c8543b5b8aa5480ba1115583d85e3a0e
 msgid ""
@@ -194,11 +217,12 @@ msgid ""
 "RC/GeoMX/blob/main/examples/cnn_mpq.py>`_ and run this demo by executing "
 "``scripts/xpu/run_mixed_precision.sh``, where ``xpu`` should be ``cpu`` "
 "or ``gpu``."
-msgstr ""
+msgstr "您可以在 `examples/cnn_mpq.py <https://github.com/INET-RC/GeoMX/blob/main/examples/cnn_mpq.py>`_ "
+"中找到它们，并执行 ``scripts/xpu/run_mixed_precision.sh`` 来运行。"
 
 #: ../../source/accelerator.rst:243 00d807fc4d2b4a07ac74bb37c853cc7d
 msgid "Differential Gradient Transmission"
-msgstr ""
+msgstr "差异梯度传输"
 
 #: ../../source/accelerator.rst:245 9d0b645b964d430188b11819462d0ca8
 msgid ""
@@ -215,19 +239,27 @@ msgid ""
 "<https://drive.google.com/file/d/1IbmpFybX_qXZM2g_8BrcD9IF080qci94/view>`__"
 " for more details and `this repo <https://github.com/zhouhuaman/dgt>`__ "
 "for individual use.)"
-msgstr ""
+msgstr "差异梯度传输是一种针对分布式机器学习任务进行了特别优化的新型"
+"传输协议，它利用梯度下降算法对部分梯度丢失的容忍性，使用多个具有不同可靠性和优先级的"
+"通道传输梯度。梯度被调度于哪个通道进行传输，取决于它们对模型收敛的贡献。通过这些优先"
+"级通道，重要梯度在传输中得到优先处理，而其他不太重要的梯度则以较低的优先级和可靠性进"
+"行尽力而为传输。这有助于减少分布式机器学习通信流量的尾流时延，从而减少参数同步的完成"
+"时间。关于 DGT 协议更加详细的说明请参考这篇文章"
+" (`Paper <https://drive.google.com/file/d/1IbmpFybX_qXZM2g_8BrcD9IF080qci94/view>`_)，"
+"如果希望独立使用 DGT 协议，请尝试这个代码库"
+" (`Repo <https://github.com/zhouhuaman/dgt>`_)。"
 
 #: ../../source/accelerator.rst:260 5dcb0ccd73ef428e953f1aaa8cb34ea7
 msgid "To enable DGT, set the following environment variables:"
-msgstr ""
+msgstr "要启用差异梯度传输协议，设置以下环境变量："
 
 #: ../../source/accelerator.rst:269 822d7d950a444ae6af21be05164f4aa2
 msgid "Use the demo script ``scripts/xpu/run_dgt.sh`` to try it!"
-msgstr ""
+msgstr "您可以使用示例脚本 ``scripts/xpu/run_dgt.sh`` 来尝试运行它。"
 
 #: ../../source/accelerator.rst:274 d77a713fd2e84747baf90412ebc7f80e
 msgid "TSEngine"
-msgstr ""
+msgstr "通信覆盖调度"
 
 #: ../../source/accelerator.rst:276 094269145c9145fb940f4415776b3731
 msgid ""
@@ -242,17 +274,24 @@ msgid ""
 "<https://drive.google.com/file/d/1ELfApVoCA8WCdOe3iBe-"
 "VreLJCSD7r8r/view>`__ for more details and `this repo "
 "<https://github.com/zhouhuaman/TSEngine>`__ for individual use.)"
-msgstr ""
+msgstr "为了解决分布式系统通信的 TCP Incast 问题，GeoMX 整合了"
+" TSEngine，这是一个为广域网中的高效通信覆盖设计的自适应通信调度器。TSEngine 可以"
+"根据实时网络条件，动态优化分布式节点之间的拓扑覆盖和通信逻辑。在系统通信效率和可扩"
+"展性方面，这种自适应调度器相较于现有的通信模式展现出明显优势。请参阅此文章"
+" (`Paper <https://drive.google.com/file/d/1ELfApVoCA8WCdOe3iBe-VreLJCSD7r8r/view>`_) "
+"获取更多详情，也可以使用这个代码库"
+" (`Repo <https://github.com/zhouhuaman/TSEngine>`_) "
+"独立应用 TSEngine。"
 
 #: ../../source/accelerator.rst:288 835e8ab0ceb0414282d1beaf054bb7f1
 msgid ""
 "Similar to DGT, only a few environment variables are required to enable "
 "TSEngine:"
-msgstr ""
+msgstr "与差异梯度传输类似，我们只需要设置一些环境变量就可以启用 TSEngine："
 
 #: ../../source/accelerator.rst:297 b2a433eb13b0487c86df8bfd875f07cb
 msgid "Use the demo script ``scripts/xpu/run_tsengine.sh`` to try it!"
-msgstr ""
+msgstr "使用示例脚本 ``scripts/xpu/run_tsengine.sh`` 来体验它！"
 
 #: ../../source/accelerator.rst:300 7ae7b496ffc244e6854101fbd666710a
 msgid ""

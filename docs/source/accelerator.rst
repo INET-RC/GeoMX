@@ -6,8 +6,8 @@ distributed training across data centers can potentially create
 communication bottlenecks. To mitigate these issues, GeoMX employs a
 variety of optimization techniques. These include gradient
 sparsification, mixed-precision quantization, advanced transmission
-protocols, synchronization algorithms, flow scheduling, and priority
-scheduling, among others (e.g., overlay scheduling, currently in
+protocols, synchronization algorithms, flow scheduling, priority
+scheduling, and load balancing, among others (e.g., overlay scheduling, currently in
 development). These techniques comprehensively tackle communication
 issues, further enhancing the efficiency and robustness of distributed
 machine learning training in GeoMX.
