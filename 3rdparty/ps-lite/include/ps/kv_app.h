@@ -48,8 +48,8 @@ struct KVPairs {
 /** \brief meta information about a kv request */
 struct KVMeta {
   //static const int kEmpty;
-  KVMeta():cmd(Meta::kEmpty),push(false),sender(Meta::kEmpty),timestamp(Meta::kEmpty),
-    key(Meta::kEmpty),version(0),num_merge(1),app_id(Meta::kEmpty),priority(Meta::kEmpty){}
+  KVMeta():cmd(Meta::kEmpty), push(false), sender(Meta::kEmpty), timestamp(Meta::kEmpty),
+    key(Meta::kEmpty), version(0), num_merge(1), app_id(Meta::kEmpty), priority(Meta::kEmpty) {}
   /** \brief the int cmd */
   int cmd;
   /** \brief whether or not this is a push request */
@@ -307,7 +307,8 @@ class KVWorker: public SimpleApp {
   void Response(const KVMeta& req);
 
   void Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs,
-            int uniq_key, int key_version, int app=-1, int customer=-1, int num_merge=-65535);
+            int uniq_key=Meta::kEmpty, int key_version=0, int app=Meta::kEmpty,
+            int customer=Meta::kEmpty, int num_merge=1);
 
   int TS_ZPush(const SArray <Key> &keys,
                const SArray <Val> &vals,
@@ -417,14 +418,6 @@ class KVWorker: public SimpleApp {
    * \param timestamp the timestamp of the callback
    */
   void RunCallback(int timestamp);
-
-  /**
-   * \brief send the kv list to all servers
-   * @param timestamp the timestamp of the request
-   * @param push whether or not it is a push request
-   * @param cmd command
-   */
-  void Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs);
 
   void P3_Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs);
 
@@ -726,7 +719,7 @@ class KVServer: public SimpleApp {
 
   int enable_intra_ts = 0;
   int enable_inter_ts = 0;
-  int enable_p3=0;
+  int enable_p3 = 0;
 
  private:
   /** \brief internal receive handle */
@@ -956,7 +949,8 @@ void KVServer<Val>::DefaultSlicer(
 }
 
 template <typename Val>
-void KVWorker<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs) {
+void KVWorker<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs,
+                         int uniq_key, int key_version, int app, int customer, int num_merge) {
   // slice the message
   SlicedKVs sliced;
   slicer_(kvs, Postoffice::Get()->GetServerKeyRanges(), &sliced);
@@ -967,23 +961,26 @@ void KVWorker<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& 
     if (!sliced[i].first) ++skipped;
   }
   obj_->AddResponse(timestamp, skipped);
-  if ((size_t)skipped == sliced.size()) {
+  if ((size_t) skipped == sliced.size()) {
     RunCallback(timestamp);
   }
 
   for (size_t i = 0; i < sliced.size(); ++i) {
-    const auto& s = sliced[i];
+    const auto &s = sliced[i];
     if (!s.first) continue;
     Message msg;
-    msg.meta.app_id = obj_->app_id();
-    msg.meta.customer_id = obj_->customer_id();
+    msg.meta.app_id      = (app != Meta::kEmpty) ? app : obj_->app_id();
+    msg.meta.customer_id = (customer != Meta::kEmpty) ? customer : obj_->customer_id();
     msg.meta.request     = true;
     msg.meta.push        = push;
     msg.meta.head        = cmd;
     msg.meta.timestamp   = timestamp;
-    msg.meta.iters       = 1;
-    msg.meta.recver      = Postoffice::Get()->ServerRankToID(i, false);
-    const auto& kvs = s.second;
+    msg.meta.sender      = (app != Meta::kEmpty) ? Postoffice::Get()->van()->my_node_.id : Meta::kEmpty;
+    msg.meta.recver      = (app != Meta::kEmpty) ? send_push : Postoffice::Get()->ServerRankToID(i, false);
+    msg.meta.key         = uniq_key;
+    msg.meta.version     = key_version;
+    msg.meta.iters       = (num_merge != 1) ? num_merge : 1;
+    const auto &kvs = s.second;
     if (kvs.keys.size()) {
       msg.AddData(kvs.keys);
       msg.AddData(kvs.vals);
@@ -992,6 +989,7 @@ void KVWorker<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& 
       }
     }
     CHECK_NE(Postoffice::Get()->van()->Send(msg), -1);
+    if (app != Meta::kEmpty) send_push = 0;
   }
 }
 
@@ -1481,52 +1479,6 @@ void KVWorker<Val>::Response(const KVMeta& req) {
   msg.meta.key         = req.key;
   msg.meta.version     = req.version;
   Postoffice::Get()->van()->Send(msg);
-}
-
-template <typename Val>
-void KVWorker<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs,
-                         int uniq_key, int key_version, int app, int customer, int num_merge) {
-  // slice the message
-  SlicedKVs sliced;
-  slicer_(kvs, Postoffice::Get()->GetServerKeyRanges(), &sliced);
-
-  // need to add response first, since it will not always trigger the callback
-  int skipped = 0;
-  bool use_tsengine_send = num_merge != -65535;
-  for (size_t i = 0; i < sliced.size(); ++i) {
-    if (!sliced[i].first) ++skipped;
-  }
-  obj_->AddResponse(timestamp, skipped);
-  if ((size_t) skipped == sliced.size()) {
-    RunCallback(timestamp);
-  }
-  for (size_t i = 0; i < sliced.size(); ++i) {
-    const auto &s = sliced[i];
-    if (!s.first) continue;
-    Message msg;
-    msg.meta.app_id      = use_tsengine_send ? app : obj_->app_id();
-    msg.meta.customer_id = use_tsengine_send ? customer : obj_->customer_id();
-    msg.meta.request     = true;
-    msg.meta.push        = push;
-    msg.meta.head        = cmd;
-    msg.meta.timestamp   = timestamp;
-    msg.meta.recver      = use_tsengine_send ? send_push : Postoffice::Get()->ServerRankToID(i);
-    msg.meta.key         = uniq_key;
-    msg.meta.version     = key_version;
-    msg.meta.iters       = use_tsengine_send ? num_merge : 1;
-    msg.meta.sender      = Postoffice::Get()->van()->my_node_.id;
-
-    const auto &kvs = s.second;
-    if (kvs.keys.size()) {
-      msg.AddData(kvs.keys);
-      msg.AddData(kvs.vals);
-      if (kvs.lens.size()) {
-        msg.AddData(kvs.lens);
-      }
-    }
-    Postoffice::Get()->van()->Send(msg);
-    if (use_tsengine_send) send_push = 0;
-  }
 }
 
 template <typename Val>
