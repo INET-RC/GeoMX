@@ -259,6 +259,8 @@ void GradientCompression::BSCompress(const mxnet::NDArray &from, mxnet::NDArray 
         out[send_grad_index + zipped_size] = -1;
       }
     };
+
+    // Push the compression function to engine to execute.
     mxnet::Engine::Get()->PushSync(bsc_compress, from.ctx(), {from.var()}, {to.var(), u_.var(), v_.var()},
                                    mxnet::FnProperty::kNormal, priority, "BSCompressCPU");
   } else {
@@ -266,7 +268,7 @@ void GradientCompression::BSCompress(const mxnet::NDArray &from, mxnet::NDArray 
   }
 }
 
-void GradientCompression::BSCSum(const mxnet::NDArray &from, mxnet::NDArray &to,
+void GradientCompression::BSCPullCompress(const mxnet::NDArray &from, mxnet::NDArray &to,
                                  const int multiplier, const int priority) {
   const float threshold = threshold_;
   if (type_ == CompressionType::kBiSparseCompression) {
@@ -277,26 +279,27 @@ void GradientCompression::BSCSum(const mxnet::NDArray &from, mxnet::NDArray &to,
       float *grad = from.data().dptr<float>();
       float *out = to.data().dptr<float>();
 
-      // filtering data
-      int flag = 0;
+      // Filtering data: only keep non-zero gradients.
+      int send_grad_index = 0;
       for (int i = 0; i < original_size; i++) {
-        if (grad[i] != 0) {
-          if (flag < zipped_size) {
-            out[flag] = grad[i];
-            out[flag + zipped_size] = i;
-            flag += 1;
-          }
+        // Keep the non-zero gradients and their indexes.
+        if (grad[i] != 0 && send_grad_index < zipped_size) {
+          out[send_grad_index] = grad[i];
+          out[send_grad_index + zipped_size] = i;
+          send_grad_index += 1;
         }
       }
-      if (flag < zipped_size) {
-        for (; flag < zipped_size; flag++) {
-          out[flag] = -65530;
-          out[flag + zipped_size] = -1;
-        }
+
+      // Fill up the remaining space with a placeholder.
+      for (; send_grad_index < zipped_size; send_grad_index++) {
+        out[send_grad_index] = -65530;
+        out[send_grad_index + zipped_size] = -1;
       }
     };
+
+    // Push the compression function to engine to execute.
     mxnet::Engine::Get()->PushSync(bsc_compress, from.ctx(), {from.var()}, {to.var()},
-                                   mxnet::FnProperty::kNormal, priority, "BSCSumCPU");
+                                   mxnet::FnProperty::kNormal, priority, "BSCPullCompress");
   }
   else
   {
@@ -304,29 +307,29 @@ void GradientCompression::BSCSum(const mxnet::NDArray &from, mxnet::NDArray &to,
   }
 }
 
-void GradientCompression::BSDecompress(const mxnet::NDArray &from, mxnet::NDArray &to, const int priority){
+void GradientCompression::BSCDecompress(const mxnet::NDArray &from, mxnet::NDArray &to, const int priority){
   if (type_ == CompressionType::kBiSparseCompression) {
-    auto dg_decompress = [this, from, to](mxnet::RunContext ctx) {
+    auto bsc_decompress = [this, from, to](mxnet::RunContext ctx) {
       int zipped_size = from.data().Size() / 2;
       int original_size = to.data().Size();
 
-      // mshadow::half::half_t *zip = from.data().dptr<mshadow::half::half_t>();
       float *zip = from.data().dptr<float>();
       float *out = to.data().dptr<float>();
-      
-      for (int i = 0; i < original_size; i++) {
-        out[i] = 0;
-      }
-      int index = 0;
+
+      // Initialize the output buffer to zero using memset.
+      std::memset(out, 0, original_size * sizeof(float));
+
+      // Decompress the gradients: for each gradient in the compressed array,
+      // place it at the corresponding index in the output buffer.
       for (int i = 0; i < zipped_size; i++) {
-        index = zip[i + zipped_size];
-        if (index >= 0) {
-          out[index] = zip[i];
-        }
+        int grad_index = zip[i + zipped_size];
+        if (grad_index >= 0) out[grad_index] = zip[i];
       }
     };
-    mxnet::Engine::Get()->PushSync(dg_decompress, from.ctx(), {from.var()}, {to.var()},
-                                   mxnet::FnProperty::kNormal, priority, "BSDecompressCPU");
+
+    // Push the decompression function to engine to execute.
+    mxnet::Engine::Get()->PushSync(bsc_decompress, from.ctx(), {from.var()}, {to.var()},
+                                   mxnet::FnProperty::kNormal, priority, "BSCDecompressCPU");
   } else {
     LOG(FATAL) << "Unsupported compression of type " << get_type_str();
   }

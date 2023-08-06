@@ -1003,7 +1003,7 @@ class KVStoreDistServer {
         const int original_size = stored.shape().Size();
         NDArray temp_array = NDArray(mxnet::TShape{static_cast<int64_t>(original_size)}, stored.ctx(), false, type.dtype);
         temp_array = 0;
-        gradient_compression_->BSDecompress(recved, temp_array, 0);
+        gradient_compression_->BSCDecompress(recved, temp_array, 0);
         temp_array.WaitToRead();
         if (use_hfa) {
             CHECK(!stored_milestone.is_none()) << "init stored_milestone first!";
@@ -1100,7 +1100,7 @@ class KVStoreDistServer {
         const int original_size = stored.shape().Size();
         NDArray temp_array = NDArray(mxnet::TShape{static_cast<int64_t>(original_size)}, stored.ctx(), false, type.dtype);
         temp_array = 0;
-        gradient_compression_->BSDecompress(recv_buf, temp_array, 0);
+        gradient_compression_->BSCDecompress(recv_buf, temp_array, 0);
         temp_array.WaitToRead();
         if (use_hfa) {
             CHECK(!stored_milestone.is_none()) << "init stored_milestone first!";
@@ -1200,7 +1200,7 @@ class KVStoreDistServer {
       NDArray stored_copy = NDArray(mxnet::TShape{static_cast<int64_t>(original_size)}, stored.ctx(), false, type.dtype);
       small_buf = 0;
       CopyFromTo(stored, stored_copy);
-      gradient_compression_->BSCSum(stored_copy, small_buf, numWorkers, 0);
+      gradient_compression_->BSCPullCompress(stored_copy, small_buf, numWorkers, 0);
       small_buf.WaitToRead();
       ps::KVPairs<char> response;
       response.keys = req_data.keys;
@@ -1506,9 +1506,9 @@ void DataHandleSyncBSCompressed(const DataHandleType type, const ps::KVMeta& req
                                  has_multi_precision_copy(type) ? mshadow::kFloat32 : type.dtype);
   }
   if (updates.request.empty()) {
-    gradient_compression_->BSDecompress(recved, updates.merged, 0);
+    gradient_compression_->BSCDecompress(recved, updates.merged, 0);
   } else {
-    gradient_compression_->BSDecompress(recved, updates.temp_array, 0);
+    gradient_compression_->BSCDecompress(recved, updates.temp_array, 0);
     updates.merged += updates.temp_array;
   }
   updates.merged.WaitToRead();

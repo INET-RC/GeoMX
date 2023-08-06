@@ -122,7 +122,7 @@ class GradientCompression {
   void BSCompress(const mxnet::NDArray &from, mxnet::NDArray &to, 
                   mxnet::NDArray &u_, mxnet::NDArray &v_, const int priority);
 
-  void BSCSum(const mxnet::NDArray &from, mxnet::NDArray &to, const int multiplier, const int priority);
+  void BSCPullCompress(const mxnet::NDArray &from, mxnet::NDArray &to, const int multiplier, const int priority);
   /*!
   * \brief Issues dequantize operation to be scheduled by the engine
   * Decompresses `from` into `to` using current parameters of `type` and `threshold`
@@ -132,7 +132,7 @@ class GradientCompression {
   */
   void Dequantize(const mxnet::NDArray &from, mxnet::NDArray *to, const int priority);
   
-  void BSDecompress(const mxnet::NDArray &from, mxnet::NDArray &to, const int priority);
+  void BSCDecompress(const mxnet::NDArray &from, mxnet::NDArray &to, const int priority);
 
  private:
   /*!
