@@ -307,8 +307,8 @@ class KVWorker: public SimpleApp {
   void Response(const KVMeta& req);
 
   void Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs,
-            int uniq_key=Meta::kEmpty, int key_version=0, int app=Meta::kEmpty,
-            int customer=Meta::kEmpty, int num_merge=1);
+            int uniq_key=Meta::kEmpty, int key_version=0,
+            int app=Meta::kEmpty, int customer=Meta::kEmpty, int num_merge=1);
 
   int TS_ZPush(const SArray <Key> &keys,
                const SArray <Val> &vals,
@@ -339,7 +339,7 @@ class KVWorker: public SimpleApp {
       request_handle_(meta,kvs,this);
       Postoffice::Get()->van()->Ask1(meta.app_id , meta.customer_id, ts);
     } else {
-      TS_Send(ts, true, cmd, kvs, uniq_key, version);
+      Send(ts, true, cmd, kvs, uniq_key, version);
     }
     return ts;
   }
@@ -420,8 +420,6 @@ class KVWorker: public SimpleApp {
   void RunCallback(int timestamp);
 
   void P3_Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs);
-
-  void TS_Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs, int uniq_key, int key_version);
 
   /** \brief internal receive handle */
   void Process(const Message& msg);
@@ -1031,48 +1029,6 @@ void KVWorker<Val>::P3_Send(int timestamp, bool push, int cmd, const KVPairs<Val
       }
     }
     Postoffice::Get()->van()->Push(msg);
-  }
-}
-
-template <typename Val>
-void KVWorker<Val>::TS_Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs,
-                            int uniq_key, int key_version) {
-  // slice the message
-  SlicedKVs sliced;
-  slicer_(kvs, Postoffice::Get()->GetServerKeyRanges(), &sliced);
-
-  // need to add response first, since it will not always trigger the callback
-  int skipped = 0;
-  for (size_t i = 0; i < sliced.size(); ++i) {
-    if (!sliced[i].first) ++skipped;
-  }
-  obj_->AddResponse(timestamp, skipped);
-  if ((size_t) skipped == sliced.size()) {
-    RunCallback(timestamp);
-  }
-  for (size_t i = 0; i < sliced.size(); ++i) {
-    const auto &s = sliced[i];
-    if (!s.first) continue;
-    Message msg;
-    msg.meta.app_id = obj_->app_id();
-    msg.meta.customer_id = obj_->customer_id();
-    msg.meta.request = true;
-    msg.meta.push = push;
-    msg.meta.head = cmd;
-    msg.meta.timestamp = timestamp;
-    msg.meta.recver = Postoffice::Get()->ServerRankToID(i);
-    msg.meta.key = uniq_key;
-    msg.meta.version = key_version;
-    msg.meta.iters = 1;
-    const auto &kvs = s.second;
-    if (kvs.keys.size()) {
-      msg.AddData(kvs.keys);
-      msg.AddData(kvs.vals);
-      if (kvs.lens.size()) {
-        msg.AddData(kvs.lens);
-      }
-    }
-    Postoffice::Get()->van()->Send(msg);
   }
 }
 
