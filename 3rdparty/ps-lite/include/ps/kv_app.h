@@ -307,7 +307,7 @@ class KVWorker: public SimpleApp {
   void Response(const KVMeta& req);
 
   void Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs,
-            int uniq_key, int key_version, int app=-1, int customer=-1, int merge=-1);
+            int uniq_key, int key_version, int app=-1, int customer=-1, int num_merge=-65535);
 
   int TS_ZPush(const SArray <Key> &keys,
                const SArray <Val> &vals,
@@ -1485,13 +1485,14 @@ void KVWorker<Val>::Response(const KVMeta& req) {
 
 template <typename Val>
 void KVWorker<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs,
-                         int uniq_key, int key_version, int app, int customer, int merge) {
+                         int uniq_key, int key_version, int app, int customer, int num_merge) {
   // slice the message
   SlicedKVs sliced;
   slicer_(kvs, Postoffice::Get()->GetServerKeyRanges(), &sliced);
 
   // need to add response first, since it will not always trigger the callback
   int skipped = 0;
+  bool use_tsengine_send = num_merge != -65535;
   for (size_t i = 0; i < sliced.size(); ++i) {
     if (!sliced[i].first) ++skipped;
   }
@@ -1503,18 +1504,17 @@ void KVWorker<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& 
     const auto &s = sliced[i];
     if (!s.first) continue;
     Message msg;
-    msg.meta.app_id      = (app == -1) ? obj_->app_id() : app;
-    msg.meta.customer_id = (customer == -1) ? obj_->customer_id() : customer;
+    msg.meta.app_id      = use_tsengine_send ? app : obj_->app_id();
+    msg.meta.customer_id = use_tsengine_send ? customer : obj_->customer_id();
     msg.meta.request     = true;
     msg.meta.push        = push;
     msg.meta.head        = cmd;
     msg.meta.timestamp   = timestamp;
-    msg.meta.recver      = Postoffice::Get()->ServerRankToID(i);
+    msg.meta.recver      = use_tsengine_send ? send_push : Postoffice::Get()->ServerRankToID(i);
     msg.meta.key         = uniq_key;
     msg.meta.version     = key_version;
-    msg.meta.iters       = (merge == -1) ? 1 : merge;
+    msg.meta.iters       = use_tsengine_send ? num_merge : 1;
     msg.meta.sender      = Postoffice::Get()->van()->my_node_.id;
-    msg.meta.recver      = send_push;
 
     const auto &kvs = s.second;
     if (kvs.keys.size()) {
@@ -1525,7 +1525,7 @@ void KVWorker<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& 
       }
     }
     Postoffice::Get()->van()->Send(msg);
-    send_push=0;
+    if (use_tsengine_send) send_push = 0;
   }
 }
 
