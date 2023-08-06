@@ -78,7 +78,7 @@ inline void StartAsync(int customer_id, const char* argv0 = nullptr) {
 inline void Finalize(int customer_id, const bool do_barrier = true) {
   Postoffice::Get()->Finalize(customer_id, do_barrier, false);
   if (Postoffice::Get()->is_server() ||
-      Postoffice::Get()->is_global_scheduler()) {
+    Postoffice::Get()->is_global_scheduler()) {
     Postoffice::Get()->Finalize(customer_id, do_barrier, true);
   }
 }
