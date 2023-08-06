@@ -911,11 +911,11 @@ void Van::Receiving() {
         ProcessBarrierCommand(&msg);
       } else if (ctrl.cmd == Control::HEARTBEAT) {
         ProcessHeartbeat(&msg);
-      } else if (ctrl.cmd == Control::AUTOPULLRPY) {
+      } else if (ctrl.cmd == Control::AUTOPULLREPLY) {
           ProcessAutopullrpy();
-      } else if (ctrl.cmd == Control::ASK) {//vbc
+      } else if (ctrl.cmd == Control::ASK) {
           ProcessAskCommand(&msg);
-      } else if (ctrl.cmd == Control::ASK1) {//vbc
+      } else if (ctrl.cmd == Control::ASK1) {
           ProcessAsk1Command(&msg);
       } else if (ctrl.cmd == Control::REPLY) {
           ProcessReplyCommand(&msg);
@@ -954,7 +954,7 @@ void Van::ReceivingGlobal() {
         ProcessBarrierCommand(&msg, true);
       } else if (ctrl.cmd == Control::HEARTBEAT) {
         // TODO: perform heartbeat
-      } else if (ctrl.cmd == Control::AUTOPULLRPY) {
+      } else if (ctrl.cmd == Control::AUTOPULLREPLY) {
           ProcessAutopullrpyGlobal();
       } else if (ctrl.cmd == Control::ASK) {//vbc
           ProcessAskGlobalCommand(&msg);

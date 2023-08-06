@@ -440,7 +440,7 @@ class KVWorker: public SimpleApp {
                      const std::vector<Range>& ranges,
                      SlicedKVs* sliced);
 
-  void AutoPullRpy(const int sender);
+  void AutoPullReply(const int sender);
   void AutoPullUpdate(const int version,const int iters, const int req, const KVPairs<Val>& kvs);
 
   /** \brief data buffer for received kvs for each timestamp */
@@ -731,8 +731,8 @@ class KVServer: public SimpleApp {
  private:
   /** \brief internal receive handle */
   void Process(const Message& msg);
-    //void TS_Process(const Message& msg);
-  void AutoPullRpy(const int sender);
+
+  void AutoPullReply(const int sender);
   /** \brief default kv slicer */
   void DefaultSlicer(const KVPairs<Val>& send,
                      const std::vector<Range>& ranges,
@@ -1566,10 +1566,10 @@ void KVWorker<Val>::AutoPullUpdate(const int version, const int iters, const int
 }
 
 template <typename Val>
-void KVWorker<Val>::AutoPullRpy(const int sender){
+void KVWorker<Val>::AutoPullReply(const int sender){
   Message rpy;
   rpy.meta.recver = sender;
-  rpy.meta.control.cmd = Control::AUTOPULLRPY;
+  rpy.meta.control.cmd = Control::AUTOPULLREPLY;
   Postoffice::Get()->van()->Send(rpy);
 }
 
@@ -1637,11 +1637,9 @@ void KVWorker<Val>::TS_Process(const Message& msg) {
         CHECK_EQ(kvs.keys.size(), kvs.lens.size());
       }
       if (msg.meta.request){
-        if(enable_intra_ts)
-          AutoPullRpy(msg.meta.sender);
+        if(enable_intra_ts) AutoPullReply(msg.meta.sender);
         CHECK_EQ(kvs.keys.size(), (size_t)1);
-        if(enable_intra_ts)
-          AutoPullUpdate(version, msg.meta.iters, key, kvs);
+        if(enable_intra_ts) AutoPullUpdate(version, msg.meta.iters, key, kvs);
         ts_mu_.lock();
         auto_pull_kvs_[key][kvs.keys[0]] = kvs;
         ts_mu_.unlock();
@@ -1705,7 +1703,7 @@ void KVServer<Val>::Process(const Message& msg) {
   if (enable_inter_ts && !Postoffice::Get()->is_global_server() && \
       msg.meta.sender < 100 && !msg.meta.push && msg.data.size() && \
       msg.meta.request) {
-    AutoPullRpy(msg.meta.sender);
+    AutoPullReply(msg.meta.sender);
     AutoPullUpdate2(msg.meta.version, msg.meta.iters, msg.meta.key,msg.meta.head, data);
   }
 
@@ -1750,10 +1748,10 @@ void KVServer<Val>::Process(const Message& msg) {
 }
 
 template <typename Val>
-void KVServer<Val>::AutoPullRpy(const int sender){
+void KVServer<Val>::AutoPullReply(const int sender){
   Message rpy;
   rpy.meta.recver = sender;
-  rpy.meta.control.cmd = Control::AUTOPULLRPY;
+  rpy.meta.control.cmd = Control::AUTOPULLREPLY;
   Postoffice::Get()->van()->Send(rpy,true);
 }
 
