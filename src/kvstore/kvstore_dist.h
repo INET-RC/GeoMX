@@ -88,7 +88,9 @@ class KVStoreDist : public KVStoreLocal {
   }
 
   // Merge data from other worker nodes.
-  void WorkersMerge(const ps::KVMeta& req_meta, const ps::KVPairs<char> &req_data, ps::KVWorker<char>* worker) {
+  void WorkersMerge(const ps::KVMeta& req_meta,
+                    const ps::KVPairs<char> &req_data,
+                    ps::KVWorker<char>* worker) {
     // Check if there is data to be merged.
     if(req_meta.num_merge == -1) {
       // Get the key for the data to be sent.
@@ -104,7 +106,16 @@ class KVStoreDist : public KVStoreLocal {
       update_buf_[key].merged.WaitToRead();
 
       // Send the data.
-      ps_worker_->Send(req_meta_buf[key].timestamp, req_meta_buf[key].push, req_meta_buf[key].cmd, req_data_buf[key], req_meta_buf[key].key , req_meta_buf[key].version, req_meta_buf[key].app_id, req_meta_buf[key].customer_id,req_meta_buf[key].num_merge);
+      ps_worker_->Send(req_meta_buf[key].timestamp,
+                       req_meta_buf[key].push,
+                       req_meta_buf[key].cmd,
+                       req_data_buf[key],
+                       req_meta_buf[key].key,
+                       req_meta_buf[key].version,
+                       req_meta_buf[key].app_id,
+                       req_meta_buf[key].customer_id,
+                       req_meta_buf[key].num_merge);
+
       std::unique_lock<std::mutex> send_lk(send_mu);
       send_q.pop();
       send_lk.unlock();
