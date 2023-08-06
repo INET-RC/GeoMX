@@ -192,74 +192,74 @@ void GradientCompression::BSCompress(const mxnet::NDArray &from, mxnet::NDArray 
                                       mxnet::NDArray &u_, mxnet::NDArray &v_, const int priority) {
   const float threshold = threshold_;
   if (type_ == CompressionType::kBiSparseCompression) {
-    auto dg_compress = [this, from, to, u_, v_, threshold](mxnet::RunContext ctx) {
+    auto bsc_compress = [this, from, to, u_, v_, threshold](mxnet::RunContext ctx) {
       const int original_size = from.data().Size();
       const int zipped_size = float(original_size) * threshold;
 
-      float momentumn = 0.9;
-      // const int sample_size = original_size * 0.005 * threshold >= 10 ? original_size * 0.005 : original_size * 0.025;
-      // const unsigned int top_k = sample_size * threshold >= 2 ? sample_size * threshold : 2;
+      // The momentum coef for momentum correction.
+      float momentum = 0.9;
+
+      // The purpose of this line is to ensure that the sample size
+      // is neither too small (always at least 10) nor too large
+      // (limited to 0.5% of the original size, scaled by the threshold).
+      // The sample size is 0.5% of the original size, scaled by the
+      // threshold, provided that this number is at least 10.
       const int sample_size = original_size * 0.005 * threshold >= 10
-                                  ? original_size * 0.005
-                                  : 10 / threshold;
+                                ? original_size * 0.005 : 10 / threshold;
+
+      // The number of important gradients to transfer.
       const unsigned int top_k = sample_size * threshold;
 
       float *grad = from.data().dptr<float>();
       float *u = u_.data().dptr<float>();
       float *v = v_.data().dptr<float>();
-      // mshadow::half::half_t *out = to.data().dptr<mshadow::half::half_t>();
       float *out = to.data().dptr<float>();
-      // first step sampling
-      std::vector<float> grad_abs;
+
+      // Apply momentum correction to all gradients.
       for (int i = 0; i < original_size; i++) {
-        u[i] = u[i] * momentumn + grad[i];
+        u[i] = u[i] * momentum + grad[i];
         v[i] = v[i] + u[i];
-        grad_abs.push_back(fabs(v[i]));
       }
-//       std::random_device rd;
-//       std::mt19937 g(rd());
-//       std::shuffle(grad_abs.begin(), grad_abs.end(), g);
-      // std::mt19937 g(42);
-      std::shuffle(grad_abs.begin(), grad_abs.end(), std::default_random_engine(42));
-      std::vector<float>::const_iterator first_index = grad_abs.begin();
-      std::vector<float>::const_iterator last_index = grad_abs.begin() + sample_size;
-      std::vector<float> samples(first_index, last_index);
 
-      // second step sampling
+      // Shuffle indices for random sampling.
+      std::vector<int> indices(original_size);
+      std::iota(indices.begin(), indices.end(), 0);
+      std::shuffle(indices.begin(), indices.end(), std::default_random_engine(42));
+
+      // Initialize the priority queue for top_k sampling.
       std::priority_queue<float, std::vector<float>, std::greater<float> > q;
-      for (float val : samples) {
-        if (q.size() < top_k)
-          q.push(val);
-        else {
-          if (val > q.top()) {
-            q.pop();
-            q.push(val);
-          }
+
+      for (int i = 0; i < sample_size; i++) {
+        // Top_k sampling among the randomly sampled gradients.
+        float abs_val = fabs(v[indices[i]]);
+        if (q.size() < top_k || abs_val > q.top()) {
+          if (q.size() == top_k) q.pop();
+          q.push(abs_val);
         }
       }
 
-      // filtering data
+      // Use the top-k-th sampled gradients as the boundary.
       float boundary = q.top();
-      int flag = 0;
+
+      // Keep only gradients larger than the boundary and reset their residual tensors.
+      int send_grad_index = 0;
       for (int i = 0; i < original_size; i++) {
-        if (fabs(v[i]) >= boundary) {
-          if (flag < zipped_size) {
-            out[flag] = v[i];
-            out[flag + zipped_size] = i;
-            v[i] = 0;
-            u[i] = 0;
-            flag += 1;
-          }
+        if (fabs(v[i]) >= boundary && send_grad_index < zipped_size) {
+          out[send_grad_index] = v[i];
+          out[send_grad_index + zipped_size] = i;
+          v[i] = 0;
+          u[i] = 0;
+          send_grad_index += 1;
         }
       }
-      if (flag < zipped_size) {
-        for (; flag < zipped_size; flag++) {
-          out[flag] = -65530;
-          out[flag + zipped_size] = -1;
-        }
+
+      // Fill the remaining space with placeholders.
+      for (; send_grad_index < zipped_size; send_grad_index++) {
+        out[send_grad_index] = -65530;
+        out[send_grad_index + zipped_size] = -1;
       }
     };
-    mxnet::Engine::Get()->PushSync(dg_compress, from.ctx(), {from.var()}, {to.var(), u_.var(), v_.var()},
+    mxnet::Engine::Get()->PushSync(bsc_compress, from.ctx(), {from.var()}, {to.var(), u_.var(), v_.var()},
                                    mxnet::FnProperty::kNormal, priority, "BSCompressCPU");
   } else {
     LOG(FATAL) << "Unsupported compression of type " << get_type_str();
@@ -270,7 +270,7 @@ void GradientCompression::BSCSum(const mxnet::NDArray &from, mxnet::NDArray &to,
                                  const int multiplier, const int priority) {
   const float threshold = threshold_;
   if (type_ == CompressionType::kBiSparseCompression) {
-    auto dg_compress = [this, from, to, threshold, multiplier](mxnet::RunContext ctx) {
+    auto bsc_compress = [this, from, to, threshold, multiplier](mxnet::RunContext ctx) {
       const int original_size = from.data().Size();
       const int zipped_size = float(original_size) * threshold * multiplier;
 
@@ -295,7 +295,7 @@ void GradientCompression::BSCSum(const mxnet::NDArray &from, mxnet::NDArray &to,
         }
       }
     };
-    mxnet::Engine::Get()->PushSync(dg_compress, from.ctx(), {from.var()}, {to.var()},
+    mxnet::Engine::Get()->PushSync(bsc_compress, from.ctx(), {from.var()}, {to.var()},
                                    mxnet::FnProperty::kNormal, priority, "BSCSumCPU");
   }
   else
