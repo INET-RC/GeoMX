@@ -12,9 +12,9 @@ message PBNode {
   optional int32 id = 2;
   // hostname or ip
   optional string hostname = 3;
-  // the port this node is binding
+  // the tcp port this node is binding
   optional int32 port = 4;
-  //added by huaman
+  // the udp port this node is binding
   repeated int32 udp_port = 5;
   // whether this node is created by failover
   optional bool is_recovery = 6;
