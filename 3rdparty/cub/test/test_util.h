@@ -194,7 +194,7 @@ struct CommandLineArgs
             vals.clear();
 
             // Recover from multi-value string
-            for (int i = 0; i < keys.size(); ++i)
+            for (size_t i = 0; i < keys.size(); ++i)
             {
                 if (keys[i] == string(arg_name))
                 {

@@ -94,7 +94,7 @@ class ZMQVan : public Van {
 
   std::vector<int> Bind_UDP(const Node& node, int max_retry) override {
     std::vector<int> tmp_udp_port;
-    for(unsigned int i = 0; i < node.udp_port.size(); ++i) {
+    for(size_t i = 0; i < node.udp_port.size(); ++i) {
       udp_receiver_ = zmq_socket(context_, ZMQ_ROUTER);
       CHECK(udp_receiver_ != NULL) << "create udp_receiver ["
         << i << "] socket failed: " << zmq_strerror(errno);
@@ -137,14 +137,14 @@ class ZMQVan : public Van {
     int id = node.id;
     auto it = udp_senders_.find(id);
     if (it != udp_senders_.end()) {
-      for (unsigned int i = 0; i < it->second.size(); ++i)
+      for (size_t i = 0; i < it->second.size(); ++i)
         zmq_close(it->second[i]);
     }
     // worker doesn't need to connect to the other workers. same for server
     if ((node.role == my_node_global_.role) &&
         (node.id != my_node_global_.id)) return;
 
-    for(unsigned int i = 0; i < node.udp_port.size(); ++i){
+    for(size_t i = 0; i < node.udp_port.size(); ++i){
       PS_VLOG(1) << node.udp_port[i];
       void *udp_sender = zmq_socket(context_, ZMQ_DEALER);
       CHECK(udp_sender != NULL)

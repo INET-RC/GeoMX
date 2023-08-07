@@ -79,7 +79,7 @@ namespace ps {
                  (role == GLOBAL_SERVER ? "global server" : "global scheduler"))))
          << (id != kEmpty ? ", id=" + std::to_string(id) : "")
          << ", ip=" << hostname << ", port=" << port << ", is_recovery=" << is_recovery;
-      for(unsigned int i = 0; i < udp_port.size(); ++i){
+      for(size_t i = 0; i < udp_port.size(); ++i){
         ss << "udp[channel "<< i+1 << "] port = " << udp_port[i];
       }
       return ss.str();
