@@ -287,52 +287,44 @@ void Van::ProcessBarrierCommand(Message* msg, bool is_global) {
   }
 }
 
-void Van::MergeMsg(Message* msg1, Message* msg2){
-    std::lock_guard<std::mutex> lk(merge_mu_);
-    float *p1 = (float*)msg1->data[1].data();
-    float *p2 = (float*)msg2->data[1].data();
-    int nlen1 = msg1->data[1].size() / sizeof(float);
-    int nlen2 = msg2->data[1].size() / sizeof(float);
-    assert(nlen1 == nlen2);
-
-    struct timespec req;
-    req.tv_sec = 0;
-    req.tv_nsec = 1;
-    float* merged = (float*)malloc(nlen1*sizeof(float));
-    float* n = (float*)malloc(nlen1*sizeof(float));
-    memcpy(merged,p1,nlen1*sizeof(float));
-    memcpy(n,p2,nlen1*sizeof(float));
-    for(int i = 0; i < nlen1; i++){
-        merged[i] += n[i];
-    }
-    msg1->data[1].reset((char *)merged,nlen1*sizeof(float), [merged](char* buf) {
-        free(merged);
-    });
-    free(n);
+void Van::MergeMsg(Message* msg1, Message* msg2) {
+  std::lock_guard<std::mutex> lk(merge_mu_);
+  float *p1 = (float*)msg1->data[1].data();
+  float *p2 = (float*)msg2->data[1].data();
+  int nlen1 = msg1->data[1].size() / sizeof(float);
+  int nlen2 = msg2->data[1].size() / sizeof(float);
+  assert(nlen1 == nlen2);
+  float* merged = (float*)malloc(nlen1 * sizeof(float));
+  float* n = (float*)malloc(nlen1 * sizeof(float));
+  memcpy(merged, p1, nlen1 * sizeof(float));
+  memcpy(n, p2, nlen1 * sizeof(float));
+  for(int i = 0; i < nlen1; i++) {
+    merged[i] += n[i];
+  }
+  msg1->data[1].reset((char*)merged, nlen1 * sizeof(float), [merged](char* buf) {
+    free(merged);
+  });
+  free(n);
 }
 
-void Van::MergeMsg_HALF(Message* msg1, Message* msg2){
-    std::lock_guard<std::mutex> lk(merge_mu_);
-    half *p1 = (half*)msg1->data[1].data();
-    half *p2 = (half*)msg2->data[1].data();
-    int nlen1 = msg1->data[1].size() / 16;
-    int nlen2 = msg2->data[1].size() / 16;
-    assert(nlen1 == nlen2);
-
-    struct timespec req;
-    req.tv_sec = 0;
-    req.tv_nsec = 1;
-    half* merged = (half*)malloc(nlen1*16);
-    half* n = (half*)malloc(nlen1*sizeof(half));
-    memcpy(merged,p1,nlen1*sizeof(half));
-    memcpy(n,p2,nlen1*sizeof(half));
-    for(int i = 0; i < nlen1; i++){
-        merged[i] += n[i];
-    }
-    msg1->data[1].reset((char *)merged,nlen1*sizeof(half), [merged](char* buf) {
-        free(merged);
-    });
-    free(n);
+void Van::MergeMsg_HALF(Message* msg1, Message* msg2) {
+  std::lock_guard<std::mutex> lk(merge_mu_);
+  half *p1 = (half*)msg1->data[1].data();
+  half *p2 = (half*)msg2->data[1].data();
+  int nlen1 = msg1->data[1].size() / 16;
+  int nlen2 = msg2->data[1].size() / 16;
+  assert(nlen1 == nlen2);
+  half* merged = (half*)malloc(nlen1 * 16);
+  half* n = (half*)malloc(nlen1 * sizeof(half));
+  memcpy(merged, p1, nlen1 * sizeof(half));
+  memcpy(n, p2, nlen1 * sizeof(half));
+  for(int i = 0; i < nlen1; i++) {
+    merged[i] += n[i];
+  }
+  msg1->data[1].reset((char *)merged, nlen1 * sizeof(half), [merged](char* buf) {
+    free(merged);
+  });
+  free(n);
 }
 
 void Van::ProcessDataMsg(Message* msg) {
@@ -346,38 +338,35 @@ void Van::ProcessDataMsg(Message* msg) {
   CHECK(obj) << "timeout (5 sec) to wait App " << app_id << " customer " << customer_id \
     << " ready at " << my_node_.role;
 
-   if(enable_dgt && DepairDataHandleType(msg->meta.head).requestType == RequestType::kDefaultPushPull && \
-       my_node_global_.role == 3 && msg->meta.msg_type == 1){ //If i am global_server, and recv push msg
-       if(enable_dgt == 3){
-            decode(*msg);
-        }
-        if(msg_map[msg->meta.sender][msg->meta.first_key].find(msg->meta.seq) == msg_map[msg->meta.sender][msg->meta.first_key].end()){
-            msg_map[msg->meta.sender][msg->meta.first_key][msg->meta.seq] = *msg;
-        }else{
-            if(DepairDataHandleType(msg->meta.head).dtype == 0){ //kFloat32
-                MergeMsg(&msg_map[msg->meta.sender][msg->meta.first_key][msg->meta.seq],msg);
-            }else if(DepairDataHandleType(msg->meta.head).dtype == 2){ //kFloat16
-                MergeMsg_HALF(&msg_map[msg->meta.sender][msg->meta.first_key][msg->meta.seq],msg);
-            }
+  if(enable_dgt && DepairDataHandleType(msg->meta.head).requestType == RequestType::kDefaultPushPull && \
+    my_node_global_.role == 3 && msg->meta.msg_type == 1) { // If I am global_server, and recv push msg
+    if(enable_dgt == 3) decode(*msg);
+    if(msg_map[msg->meta.sender][msg->meta.first_key].find(msg->meta.seq) \
+      == msg_map[msg->meta.sender][msg->meta.first_key].end()) {
+      msg_map[msg->meta.sender][msg->meta.first_key][msg->meta.seq] = *msg;
+    } else {
+      if(DepairDataHandleType(msg->meta.head).dtype == 0) { // kFloat32
+        MergeMsg(&msg_map[msg->meta.sender][msg->meta.first_key][msg->meta.seq], msg);
+      } else if (DepairDataHandleType(msg->meta.head).dtype == 2) { // kFloat16
+        MergeMsg_HALF(&msg_map[msg->meta.sender][msg->meta.first_key][msg->meta.seq], msg);
+      }
+    }
 
-        }
-        
-       if(msg->meta.seq == msg->meta.seq_end){
-           char* buf = (char *)malloc(msg->meta.total_bytes);
-           memset(buf,0,msg->meta.total_bytes);
-           for(auto &m : msg_map[msg->meta.sender][msg->meta.first_key]){
-           memcpy(buf+m.second.meta.val_bytes, m.second.data[1].data(), m.second.data[1].size());
-        }
-       msg_map[msg->meta.sender][msg->meta.first_key].clear();
-       msg->data[1].reset(buf, msg->meta.total_bytes, [buf](char* p) {
-           free(buf);
-       });
-       obj->Accept(*msg);
-
-       }
-   }else{
-        obj->Accept(*msg);
-   }
+    if(msg->meta.seq == msg->meta.seq_end) {
+      char* buf = (char *)malloc(msg->meta.total_bytes);
+      memset(buf, 0, msg->meta.total_bytes);
+      for(auto &m : msg_map[msg->meta.sender][msg->meta.first_key]) {
+        memcpy(buf + m.second.meta.val_bytes, m.second.data[1].data(), m.second.data[1].size());
+      }
+      msg_map[msg->meta.sender][msg->meta.first_key].clear();
+      msg->data[1].reset(buf, msg->meta.total_bytes, [buf](char* p) {
+        free(buf);
+      });
+      obj->Accept(*msg);
+    }
+  } else {
+    obj->Accept(*msg);
+  }
 }
 
 void Van::ProcessAddNodeCommand(Message* msg, Meta* nodes, Meta* recovery_nodes) {
@@ -415,9 +404,9 @@ void Van::ProcessAddGlobalNodeCommand(Message* msg, Meta* nodes) {
       if (connected_nodes_.find(addr_str) == connected_nodes_.end()) {
         Connect(node, true);
         PS_VLOG(1) << "Connected to" << node.DebugString();
-        if(node.role != Node::Role::GLOBAL_SCHEDULER){
-            PS_VLOG(1) << my_node_global_.DebugString()<< "ready to connect " << node.DebugString();
-           Connect_UDP(node); 
+        if(node.role != Node::Role::GLOBAL_SCHEDULER) {
+          PS_VLOG(1) << my_node_global_.DebugString()<< "ready to connect " << node.DebugString();
+          Connect_UDP(node);
         }
         connected_nodes_[addr_str] = node.id;
       }
@@ -445,31 +434,30 @@ void Van::Start(int customer_id) {
       if (is_scheduler_) {
         my_node_ = scheduler_;
         if (getenv("MAX_GREED_RATE_TS") == nullptr) {
-            #ifdef _MSC_VER
-                _putenv_s("MAX_GREED_RATE_TS", "0.9");
-            #else
-                setenv("MAX_GREED_RATE_TS", "0.9", true);
-            #endif
+          #ifdef _MSC_VER
+            _putenv_s("MAX_GREED_RATE_TS", "0.9");
+          #else
+            setenv("MAX_GREED_RATE_TS", "0.9", true);
+          #endif
         }
-        max_greed_rate= atof(Environment::Get()->find("MAX_GREED_RATE_TS"));
-        int num_servers= Postoffice::Get()->num_servers();
-        int num_workers= Postoffice::Get()->num_workers();
-        int num_max=num_servers > num_workers ? num_servers : num_workers;
-        int num_node_id=2*num_max;
-        std::vector<int> temp(num_node_id,-1);
-        int i;
-        for(i=0;i<num_node_id;i++){
-            A.push_back(temp);
-            lifetime.push_back(temp);
+        max_greed_rate = atof(Environment::Get()->find("MAX_GREED_RATE_TS"));
+        int num_servers = Postoffice::Get()->num_servers();
+        int num_workers = Postoffice::Get()->num_workers();
+        int num_max = num_servers > num_workers ? num_servers : num_workers;
+        int num_node_id = 2 * num_max;
+        std::vector<int> temp(num_node_id, -1);
+        for(int i = 0; i < num_node_id; i++) {
+          A.push_back(temp);
+          lifetime.push_back(temp);
         }
-        for(i=0;i<num_node_id;i++){
-            B.push_back(0);
-            B1.push_back(0);
+        for(int i = 0; i < num_node_id; i++) {
+          B.push_back(0);
+          B1.push_back(0);
         }
         ask_q.push(0);
       } else {
         auto role = is_scheduler_ ? Node::SCHEDULER :
-                    (Postoffice::Get()->is_worker() ? Node::WORKER : Node::SERVER);
+          (Postoffice::Get()->is_worker() ? Node::WORKER : Node::SERVER);
         const char *nhost = Environment::Get()->find("DMLC_NODE_HOST");
         std::string ip;
         if (nhost) ip = std::string(nhost);
@@ -498,7 +486,7 @@ void Van::Start(int customer_id) {
         my_node_.customer_id = customer_id;
       }
 
-      // bind.
+      // bind
       my_node_.port = Bind(my_node_, is_scheduler_ ? 0 : 40);
       PS_VLOG(1) << "Bind to " << my_node_.DebugString();
       CHECK_NE(my_node_.port, -1) << "bind failed";
@@ -549,17 +537,15 @@ void Van::Start(int customer_id) {
         heartbeat_thread_ = std::unique_ptr<std::thread>(new std::thread(&Van::Heartbeat, this));
         // start sender thread
         if (getenv("ENABLE_P3") == nullptr) {
-            #ifdef _MSC_VER
-                _putenv_s("ENABLE_P3", "0");
-            #else
-                setenv("ENABLE_P3", "0", true);
-            #endif
+          #ifdef _MSC_VER
+            _putenv_s("ENABLE_P3", "0");
+          #else
+            setenv("ENABLE_P3", "0", true);
+          #endif
         }
         enable_p3 = atoi(Environment::Get()->find("ENABLE_P3"));
-        if(enable_p3){
-          // start sender thread
-          sender_thread_ = std::unique_ptr<std::thread>(
-                  new std::thread(&Van::Sending, this));
+        if(enable_p3) {
+          sender_thread_ = std::unique_ptr<std::thread>(new std::thread(&Van::Sending, this));
         }
       }
       init_stage++;
@@ -581,24 +567,23 @@ void Van::StartGlobal(int customer_id) {
     if (is_global_scheduler_) {
       my_node_global_ = global_scheduler_;
       if (getenv("MAX_GREED_RATE_TS") == nullptr) {
-          #ifdef _MSC_VER
-              _putenv_s("MAX_GREED_RATE_TS", "0.9");
-          #else
-              setenv("MAX_GREED_RATE_TS", "0.9", true);
-          #endif
+        #ifdef _MSC_VER
+          _putenv_s("MAX_GREED_RATE_TS", "0.9");
+        #else
+          setenv("MAX_GREED_RATE_TS", "0.9", true);
+        #endif
       }
       max_greed_rate= atof(Environment::Get()->find("MAX_GREED_RATE_TS"));
       int num_servers= Postoffice::Get()->num_global_servers();
       int num_workers= Postoffice::Get()->num_global_workers();
-      int num_max=num_servers > num_workers ? num_servers : num_workers;
-      int num_node_id=2*num_max+8;
-      std::vector<int> temp(num_node_id,-1);
-      int i;
-      for(i=0;i<num_node_id;i++){
+      int num_max = num_servers > num_workers ? num_servers : num_workers;
+      int num_node_id = 2 * num_max + 8;
+      std::vector<int> temp(num_node_id, -1);
+      for(int i = 0; i < num_node_id; i++) {
         A.push_back(temp);
         lifetime.push_back(temp);
       }
-      for(i=0;i<num_node_id;i++){
+      for(int i = 0; i < num_node_id; i++) {
         B.push_back(0);
         B1.push_back(0);
       }
@@ -607,14 +592,13 @@ void Van::StartGlobal(int customer_id) {
       auto role = Postoffice::Get()->is_global_server() ? Node::GLOBAL_SERVER : Node::SERVER;
       std::string ip(my_node_.hostname);
       int port = GetAvailablePort();
-      CHECK(!ip.empty()) << "failed to get ip";
-      CHECK(port) << "failed to get port";
+      CHECK(!ip.empty()) << "Failed to get ip.";
+      CHECK(port) << "Failed to get port.";
       my_node_global_.role = role;
       my_node_global_.hostname = ip;
       my_node_global_.port = port;
       my_node_global_.id = Node::kEmpty;
       my_node_global_.customer_id = customer_id;
-
     }
     
     // bind
@@ -625,41 +609,41 @@ void Van::StartGlobal(int customer_id) {
     // start receiver
     receiver_global_thread_ = std::unique_ptr<std::thread>(new std::thread(&Van::ReceivingGlobal, this));
 
-    if(!is_global_scheduler_){
-        if (getenv("ENABLE_DGT") == nullptr) {
-            #ifdef _MSC_VER
-                _putenv_s("ENABLE_DGT", "0");
-            #else
-                setenv("ENABLE_DGT", "0", true);
-            #endif
+    if(!is_global_scheduler_) {
+      if (getenv("ENABLE_DGT") == nullptr) {
+        #ifdef _MSC_VER
+          _putenv_s("ENABLE_DGT", "0");
+        #else
+          setenv("ENABLE_DGT", "0", true);
+        #endif
+      }
+      enable_dgt = atoi(Environment::Get()->find("ENABLE_DGT"));
+      if(enable_dgt) {
+        if (getenv("DMLC_UDP_CHANNEL_NUM") == nullptr) {
+          #ifdef _MSC_VER
+            _putenv_s("DMLC_UDP_CHANNEL_NUM", "3");
+          #else
+            setenv("DMLC_UDP_CHANNEL_NUM", "3", true);
+          #endif
         }
-        enable_dgt = atoi(Environment::Get()->find("ENABLE_DGT"));
-        if(enable_dgt){
-            if (getenv("DMLC_UDP_CHANNEL_NUM") == nullptr) {
-                #ifdef _MSC_VER
-                    _putenv_s("DMLC_UDP_CHANNEL_NUM", "3");
-                #else
-                    setenv("DMLC_UDP_CHANNEL_NUM", "3", true);
-                #endif
-            }
-            int udp_ch_num = atoi(Environment::Get()->find("DMLC_UDP_CHANNEL_NUM"));
-            for(int i = 0; i < udp_ch_num; ++i){
-              int p = GetAvailablePort();
-              my_node_global_.udp_port.push_back(p);
-            } 
-            my_node_global_.udp_port = Bind_UDP(my_node_global_, is_global_scheduler_ ? 0 : 40);
-            PS_VLOG(1) << "(UDP)Bind to " << my_node_global_.DebugString();
-            // start udp receiver
-            for(int i = 0; i < my_node_global_.udp_port.size(); ++i){
-                udp_receiver_thread_[i] = std::unique_ptr<std::thread>(
-                  new std::thread(&Van::Receiving_UDP,this,i));
-            }
-            //start dgt send scheduler
-            important_scheduler_thread_ = std::unique_ptr<std::thread>(
-                new std::thread(&Van::Important_scheduler, this));
-            unimportant_scheduler_thread_ = std::unique_ptr<std::thread>(
-                new std::thread(&Van::Unimportant_scheduler, this));
+        int udp_ch_num = atoi(Environment::Get()->find("DMLC_UDP_CHANNEL_NUM"));
+        for(int i = 0; i < udp_ch_num; ++i) {
+          int p = GetAvailablePort();
+          my_node_global_.udp_port.push_back(p);
         }
+        my_node_global_.udp_port = Bind_UDP(my_node_global_, is_global_scheduler_ ? 0 : 40);
+        PS_VLOG(1) << "(UDP) Bind to " << my_node_global_.DebugString();
+        // start udp receiver
+        for(size_t i = 0; i < my_node_global_.udp_port.size(); ++i) {
+          udp_receiver_thread_[i] = std::unique_ptr<std::thread>(
+            new std::thread(&Van::Receiving_UDP, this, i));
+        }
+        //start dgt send scheduler
+        important_scheduler_thread_ = std::unique_ptr<std::thread>(
+          new std::thread(&Van::Important_scheduler, this));
+        unimportant_scheduler_thread_ = std::unique_ptr<std::thread>(
+          new std::thread(&Van::Unimportant_scheduler, this));
+      }
     }
             
     // connect to the global scheduler
@@ -702,10 +686,10 @@ void Van::Stop(bool is_global) {
       receiver_thread_->join();
     }
     receiver_global_thread_->join();
-    for(int i = 0; i < udp_receiver_thread_vec.size(); ++i){
+    for(size_t i = 0; i < udp_receiver_thread_vec.size(); ++i) {
         udp_receiver_thread_[i]->join();
     }
-    if(!is_scheduler_){
+    if(!is_scheduler_) {
         important_scheduler_thread_->join();
         unimportant_scheduler_thread_->join();
     }
@@ -720,12 +704,9 @@ void Van::Stop(bool is_global) {
   if (is_global) ready_global_ = false;
 }
 
-int Van::Classifier( Message& msg, int channel, int tag) {
-    if(channel == 0){
-        important_queue_.Push(msg);
-    }else{
-        unimportant_queue_.Push(msg);
-    }
+void Van::Classifier(Message& msg, int channel, int tag) {
+  if(channel == 0) important_queue_.Push(msg);
+  else unimportant_queue_.Push(msg);
 }
 
 void Van::Important_scheduler() {
@@ -738,13 +719,14 @@ void Van::Important_scheduler() {
 
 void Van::Unimportant_scheduler() {
   while (true) {
-    if(important_queue_.empty()){
-        Message msg;
-        unimportant_queue_.WaitAndPop(&msg);
-        Unimportant_send(msg);
+    if(important_queue_.empty()) {
+      Message msg;
+      unimportant_queue_.WaitAndPop(&msg);
+      Unimportant_send(msg);
     }
   }
 }
+
 int Van::Important_send(Message& msg) {
   int send_bytes = SendMsg(msg, true);
   CHECK_NE(send_bytes, -1);
@@ -753,53 +735,56 @@ int Van::Important_send(Message& msg) {
 
 int Van::Unimportant_send(Message& msg) {
   int send_bytes = 0;
-  if(enable_dgt == 1){
-      send_bytes = SendMsg_UDP(msg.meta.channel-1, msg, 0);
-  }else if(enable_dgt == 2){
-      send_bytes = SendMsg(msg, true); //for tcp-dgt
-  }else if(enable_dgt == 3){
-      encode(msg,4);
-      send_bytes = SendMsg(msg, true); //for tcp-dgt and encode
+  if(enable_dgt == 1) {
+    send_bytes = SendMsg_UDP(msg.meta.channel - 1, msg, 0);
+  } else if (enable_dgt == 2) {
+    send_bytes = SendMsg(msg, true); // for tcp-dgt
+  } else if (enable_dgt == 3) {
+    encode(msg, 4);
+    send_bytes = SendMsg(msg, true); // for tcp-dgt and encode
   }
   CHECK_NE(send_bytes, -1);
   return send_bytes;
 }
 
-float Van::encode(Message& msg, int bits_num){
+void Van::encode(Message& msg, int bits_num) {
   std::lock_guard<std::mutex> lk(encode_mu_);
   SArray<char>& s_val = msg.data[1];
   float *ps = (float*)s_val.data();
   int d_val_size = 0;
 
-  if(s_val.size()%(msg.meta.bits_num/bits_num) == 0){
-      d_val_size = s_val.size()/(msg.meta.bits_num/bits_num);
-  }else{
-      d_val_size = s_val.size()/(msg.meta.bits_num/bits_num) + 1;
+  if(s_val.size() % (msg.meta.bits_num / bits_num) == 0) {
+      d_val_size = s_val.size() / (msg.meta.bits_num / bits_num);
+  } else {
+      d_val_size = s_val.size() / (msg.meta.bits_num / bits_num) + 1;
   }
   SArray<char> d_val(d_val_size);
   char *pd = d_val.data();
   auto it = residual[msg.meta.first_key].find(msg.meta.seq);
-  if(it == residual[msg.meta.first_key].end()) residual[msg.meta.first_key][msg.meta.seq] = SArray<char>(s_val.size());
+  if(it == residual[msg.meta.first_key].end()) {
+    residual[msg.meta.first_key][msg.meta.seq] = SArray<char>(s_val.size());
+  }
   float *pr = (float*)residual[msg.meta.first_key][msg.meta.seq].data();
 
   int param_n = s_val.size() / sizeof(float);
   float max_v = 0.0, min_v = 0.0;
-  for(int i = 0; i < param_n; ++i){
+  for(int i = 0; i < param_n; ++i) {
     *(pr+i) += *(ps+i);
   }
-  for(int i = 0; i < param_n; ++i){
-    max_v = std::max(max_v, *(pr+i));
-    min_v = std::min(min_v, *(pr+i));
+  for(int i = 0; i < param_n; ++i) {
+    max_v = std::max(max_v, *(pr + i));
+    min_v = std::min(min_v, *(pr + i));
   }
-  for(int i = 0; i < pow(2,bits_num); ++i){
-    float zv = ((min_v + i*(max_v-min_v)/pow(2,bits_num)) + (min_v + (i+1)*(max_v-min_v)/pow(2,bits_num)))/2;
+  for(int i = 0; i < pow(2, bits_num); ++i) {
+    float zv = ((min_v + i * (max_v - min_v) / pow(2, bits_num)) \
+      + (min_v + (i + 1) * (max_v - min_v) / pow(2, bits_num))) / 2;
     msg.meta.compr.push_back(zv);
   }
   char qj = 0;
-  for(int i = 0; i < param_n; ++i){
-    qj = (*(pr+i) - min_v)/((max_v-min_v)/pow(2,bits_num));
-    *pd |= (qj << (((8/bits_num)-1-i%(8/bits_num))*bits_num));
-    if(i%(8/bits_num) == 0) pd += 1;
+  for(int i = 0; i < param_n; ++i) {
+    qj = (*(pr + i) - min_v) / ((max_v - min_v) / pow(2, bits_num));
+    *pd |= (qj << (((8 / bits_num) - 1 - i % (8 / bits_num)) * bits_num));
+    if(i % (8 / bits_num) == 0) pd += 1;
     *(pr+i) -= msg.meta.compr[qj];
   }
   msg.meta.bits_num = bits_num;
@@ -807,10 +792,12 @@ float Van::encode(Message& msg, int bits_num){
 }
 
 void Van::decode(Message& msg) {
-  if(DepairDataHandleType(msg.meta.head).dtype == 0 && msg.meta.bits_num == 32){ //kFloat32
-      return;
-  }else if(DepairDataHandleType(msg.meta.head).dtype == 2 && msg.meta.bits_num == 16){ //kFloat16
-      return;
+  if(DepairDataHandleType(msg.meta.head).dtype == 0
+    && msg.meta.bits_num == 32) { // kFloat32
+    return;
+  } else if (DepairDataHandleType(msg.meta.head).dtype == 2
+    && msg.meta.bits_num == 16) { // kFloat16
+    return;
   }
 
   SArray<char>& s_val = msg.data[1];
@@ -820,13 +807,13 @@ void Van::decode(Message& msg) {
   float *pd = (float*)d_val.data();
   int nlen = s_val.size();
   char qj = 0;
-  int param_n = d_val_size/sizeof(float);
+  int param_n = d_val_size / sizeof(float);
   int bits_num  = msg.meta.bits_num;
-  assert(pow(2,bits_num) == msg.meta.compr.size());
-  char mask = pow(2,bits_num) - 1;
-  for(int i = 0; i < nlen; ++i){
-    for(int j =0; j<8/bits_num; ++j){
-      qj = (*(ps+i) >> (8-bits_num-bits_num*j)) & mask;
+  assert(pow(2, bits_num) == msg.meta.compr.size());
+  char mask = pow(2, bits_num) - 1;
+  for(int i = 0; i < nlen; ++i) {
+    for(int j = 0; j < 8 / bits_num; ++j) {
+      qj = (*(ps + i) >> (8 - bits_num - bits_num * j)) & mask;
       *pd = msg.meta.compr[qj];
       pd += 1;
       param_n -= 1;
@@ -838,7 +825,7 @@ void Van::decode(Message& msg) {
 
 int Van::DGT_Send(const Message& msg, int channel, int tag) {
   int send_bytes;
-  send_bytes = SendMsg_UDP(channel-1, msg, tag);
+  send_bytes = SendMsg_UDP(channel - 1, msg, tag);
   CHECK_NE(send_bytes, -1);
   send_bytes_ += send_bytes;
   if (resender_) resender_->AddOutgoing(msg);
@@ -866,8 +853,7 @@ void Van::Sending() {
     Message msg;
     send_queue_.WaitAndPop(&msg);
     Send(msg);
-    if (!msg.meta.control.empty() &&
-        msg.meta.control.cmd == Control::TERMINATE) {
+    if (!msg.meta.control.empty() && msg.meta.control.cmd == Control::TERMINATE) {
       break;
     }
   }
@@ -889,7 +875,6 @@ void Van::Receiving() {
         continue;
       }
     }
-    //PS_VLOG(2)<<"in van.cc receiving";
     CHECK_NE(recv_bytes, -1);
     recv_bytes_ += recv_bytes;
     if (Postoffice::Get()->verbose() >= 2) {
@@ -912,13 +897,13 @@ void Van::Receiving() {
       } else if (ctrl.cmd == Control::HEARTBEAT) {
         ProcessHeartbeat(&msg);
       } else if (ctrl.cmd == Control::AUTOPULLREPLY) {
-          ProcessAutopullrpy();
+        ProcessAutoPullReply();
       } else if (ctrl.cmd == Control::ASK) {
-          ProcessAskCommand(&msg);
+        ProcessAskCommand(&msg);
       } else if (ctrl.cmd == Control::ASK1) {
-          ProcessAsk1Command(&msg);
+        ProcessAsk1Command(&msg);
       } else if (ctrl.cmd == Control::REPLY) {
-          ProcessReplyCommand(&msg);
+        ProcessReplyCommand(&msg);
       } else {
         LOG(WARNING) << "Drop unknown typed message " << msg.DebugString();
       }
@@ -955,13 +940,13 @@ void Van::ReceivingGlobal() {
       } else if (ctrl.cmd == Control::HEARTBEAT) {
         // TODO: perform heartbeat
       } else if (ctrl.cmd == Control::AUTOPULLREPLY) {
-          ProcessAutopullrpyGlobal();
-      } else if (ctrl.cmd == Control::ASK) {//vbc
-          ProcessAskGlobalCommand(&msg);
-      } else if (ctrl.cmd == Control::ASK1) {//vbc
-          ProcessAsk1GlobalCommand(&msg);
+        ProcessAutoPullReplyGlobal();
+      } else if (ctrl.cmd == Control::ASK) {
+        ProcessAskGlobalCommand(&msg);
+      } else if (ctrl.cmd == Control::ASK1) {
+        ProcessAsk1GlobalCommand(&msg);
       } else if (ctrl.cmd == Control::REPLY) {
-          ProcessReplyGlobalCommand(&msg);
+        ProcessReplyGlobalCommand(&msg);
       } else {
         LOG(WARNING) << "Drop unknown typed message " << msg.DebugString();
       }
@@ -975,7 +960,7 @@ void Van::Receiving_UDP(int channel) {
   Meta nodes;
   Meta recovery_nodes;  // store recovery nodes
   recovery_nodes.control.cmd = Control::ADD_NODE;
-  PS_VLOG(1) << "Start thread {Receiving_UDP} in UDP channel [" << channel+1 << "]";
+  PS_VLOG(1) << "Start thread {Receiving_UDP} in UDP channel [" << channel + 1 << "]";
   
   while (true) {
     Message msg;
@@ -1005,7 +990,7 @@ void Van::Receiving_UDP(int channel) {
         ProcessBarrierCommand(&msg);
       } else if (ctrl.cmd == Control::HEARTBEAT) {
         ProcessHeartbeat(&msg);
-	  }else {
+	  } else {
         LOG(WARNING) << "Drop unknown typed message " << msg.DebugString();
       }
     } else {
@@ -1020,14 +1005,12 @@ void Van::PackMeta(const Meta& meta, char** meta_buf, int* buf_size, bool is_glo
   pb.set_head(meta.head);
   if (meta.app_id != Meta::kEmpty) pb.set_app_id(meta.app_id);
   if (meta.timestamp != Meta::kEmpty) pb.set_timestamp(meta.timestamp);
-  if(meta.version != Meta::kEmpty) pb.set_version(meta.version);
+  if (meta.version != Meta::kEmpty) pb.set_version(meta.version);
   if (meta.key != Meta::kEmpty) pb.set_key(meta.key);
   if (meta.iters != Meta::kEmpty) pb.set_iters(meta.iters);
   if (meta.body.size()) pb.set_body(meta.body);
-  if(is_global)
-    pb.set_sender(my_node_global_.id);
-  else
-    pb.set_sender(my_node_.id);
+  if (is_global) pb.set_sender(my_node_global_.id);
+  else pb.set_sender(my_node_.id);
   pb.set_recver(meta.recver);
   pb.set_bits_num(meta.bits_num);
   pb.set_first_key(meta.first_key);
@@ -1063,9 +1046,7 @@ void Van::PackMeta(const Meta& meta, char** meta_buf, int* buf_size, bool is_glo
       p->set_id(n.id);
       p->set_role(n.role);
       p->set_port(n.port);
-      for(auto up : n.udp_port){
-          p->add_udp_port(up);
-      }
+      for(auto up : n.udp_port) p->add_udp_port(up);
       p->set_hostname(n.hostname);
       p->set_is_recovery(n.is_recovery);
       p->set_customer_id(n.customer_id);
@@ -1074,7 +1055,7 @@ void Van::PackMeta(const Meta& meta, char** meta_buf, int* buf_size, bool is_glo
 
   // to string
   *buf_size = pb.ByteSize();
-  *meta_buf = new char[*buf_size+1];
+  *meta_buf = new char[*buf_size + 1];
   CHECK(pb.SerializeToArray(*meta_buf, *buf_size))
     << "failed to serialize protbuf";
 }
@@ -1108,16 +1089,16 @@ void Van::UnpackMeta(const char* meta_buf, int buf_size, Meta* meta) {
   meta->vals_len = pb.vals_len();
   meta->lens_len = pb.lens_len();
   meta->priority = pb.priority();
-    for(int i = 0; i < pb.compr_size();++i){
-        meta->compr.push_back(pb.compr(i));
-    }
+  for(int i = 0; i < pb.compr_size(); ++i) {
+      meta->compr.push_back(pb.compr(i));
+  }
   meta->request = pb.request();
   meta->push = pb.push();
   meta->simple_app = pb.simple_app();
   meta->body = pb.body();
   meta->customer_id = pb.customer_id();
   meta->data_type.resize(pb.data_type_size());
-  for (int i = 0; i < pb.data_type_size(); ++i) {
+  for(int i = 0; i < pb.data_type_size(); ++i) {
     meta->data_type[i] = static_cast<DataType>(pb.data_type(i));
   }
   if (pb.has_control()) {
@@ -1130,8 +1111,8 @@ void Van::UnpackMeta(const char* meta_buf, int buf_size, Meta* meta) {
       Node n;
       n.role = static_cast<Node::Role>(p.role());
       n.port = p.port();
-      for(int i = 0; i < p.udp_port_size();++i){
-          n.udp_port.push_back(p.udp_port(i));
+      for(int i = 0; i < p.udp_port_size(); ++i) {
+        n.udp_port.push_back(p.udp_port(i));
       }
       n.hostname = p.hostname();
       n.id = p.has_id() ? p.id() : Node::kEmpty;
@@ -1158,64 +1139,53 @@ void Van::Heartbeat() {
   }
 }
 
-void Van::Wait_for_finished(){
+void Van::Wait_for_finished() {
   std::unique_lock<std::mutex> ver_lk(ver_mu);
-  while(!ver_flag){
+  while(!ver_flag) {
     ver_cond.wait(ver_lk);
   }
-  ver_flag=false;
+  ver_flag = false;
   ver_lk.unlock();
 }
-void Van::Wait_for_global_finished(){
+
+void Van::Wait_for_global_finished() {
   std::unique_lock<std::mutex> ver_global_lk(ver_global_mu);
-  while(!ver_global_flag){
-      ver_global_cond.wait(ver_global_lk);
+  while(!ver_global_flag) {
+    ver_global_cond.wait(ver_global_lk);
   }
-  ver_global_flag=false;
+  ver_global_flag = false;
   ver_global_lk.unlock();
 }
 
-void Van::ProcessAutopullrpy(){
+void Van::ProcessAutoPullReply() {
   std::unique_lock<std::mutex> ver_lk(ver_mu);
-  ver_flag=true;
+  ver_flag = true;
   ver_lk.unlock();
   ver_cond.notify_one();
 }
 
-void Van::ProcessAutopullrpyGlobal(){
+void Van::ProcessAutoPullReplyGlobal() {
   std::unique_lock<std::mutex> ver_global_lk(ver_global_mu);
-  ver_global_flag=true;
+  ver_global_flag = true;
   ver_global_lk.unlock();
   ver_global_cond.notify_one();
 }
 
-void Van::Ask(int throughput, int last_recv_id, int version){
+void Van::Ask(int throughput, int last_recv_id, int version, bool is_global) {
   Message msg;
-  msg.meta.customer_id = last_recv_id; //last receiver id
-  msg.meta.app_id = throughput;
-  msg.meta.sender=my_node_.id;
-  msg.meta.recver = kScheduler;
+  msg.meta.customer_id = last_recv_id;
+  msg.meta.app_id      = throughput;
+  msg.meta.sender      = (is_global) ? my_node_global_.id : my_node_.id;
+  msg.meta.recver      = (is_global) ? kSchedulerGlobal : kScheduler;
   msg.meta.control.cmd = Control::ASK;
-  msg.meta.version=version;
-  msg.meta.timestamp = timestamp_++;
-  Send(msg);
+  msg.meta.version     = version;
+  msg.meta.timestamp   = timestamp_++;
+  Send(msg, is_global);
 }
 
-void Van::AskGlobal(int throughput, int last_recv_id, int version){
+void Van::Ask1(int app, int customer, int timestamp) {
   Message msg;
-  msg.meta.customer_id = last_recv_id; //last receiver id
-  msg.meta.app_id = throughput;
-  msg.meta.sender=my_node_global_.id;
-  msg.meta.recver = kSchedulerGlobal;
-  msg.meta.control.cmd = Control::ASK;
-  msg.meta.version=version;
-  msg.meta.timestamp = timestamp_++;
-  Send(msg,true);
-}
-
-void Van::Ask1(int app,int customer, int timestamp){
-  Message msg;
-  msg.meta.sender=my_node_.id;
+  msg.meta.sender = my_node_.id;
   msg.meta.recver = kScheduler;
   msg.meta.control.cmd = Control::ASK1;
   msg.meta.timestamp = timestamp;
@@ -1224,328 +1194,314 @@ void Van::Ask1(int app,int customer, int timestamp){
   Send(msg);
 }
 
-void Van::Ask1Global(int app,int customer, int timestamp){
+void Van::Ask1Global(int app,int customer, int timestamp) {
   Message msg;
-  msg.meta.sender=my_node_global_.id;
+  msg.meta.sender = my_node_global_.id;
   msg.meta.recver = kSchedulerGlobal;
   msg.meta.control.cmd = Control::ASK1;
   msg.meta.timestamp = timestamp;
   msg.meta.app_id = app;
   msg.meta.customer_id = customer;
-  Send(msg,true);
+  Send(msg, true);
 }
 
-void Van::ProcessAsk1Command(Message* msg){
-    if(ask_q.size()==1 && ask_q.front()==(msg->meta.sender-100)){
-        return;
-    }
-    Message rpl;
-    rpl.meta.sender = my_node_.id;
-    rpl.meta.app_id=msg->meta.app_id;
-    rpl.meta.customer_id = msg->meta.customer_id;
-    rpl.meta.timestamp = msg->meta.timestamp;
-    rpl.meta.push=true;
-    rpl.meta.request=true;
-    std::unique_lock<std::mutex> lk_sch1(sched1);
-    ask_q.push(msg->meta.sender-100);
+void Van::ProcessAsk1Command(Message* msg) {
+  if(ask_q.size() == 1 && ask_q.front() == (msg->meta.sender - 100)) return;
 
-    if(ask_q.size()>1){
-        int node_a=ask_q.front();
-        ask_q.pop();
-        int node_b=ask_q.front();
-        ask_q.pop();
-        if(node_a==0 ||node_b==0){
-            if(node_a==0){
-                rpl.meta.iters=node_a+100;
-                rpl.meta.recver = node_b+100;
-                B1[node_b]=1;
-                Send(rpl);
-                PS_VLOG(2)<<"in local push, "<<node_b<<" send to server 100";
-            }else{
-                rpl.meta.iters=node_b+100;
-                rpl.meta.recver = node_a+100;
-                B1[node_a]=1;
-                Send(rpl);
-                PS_VLOG(2)<<"in local push, "<<node_a<<" send to server 100";
-            }
-        }else{
-            if(A[node_a][node_b]>A[node_b][node_a]){
-                rpl.meta.iters=node_b+100;
-                rpl.meta.recver = node_a+100;
-                Send(rpl);
-                B1[node_a]=1;
-                PS_VLOG(2)<<"in local push, sender is "<<node_a<<" and receiver is "<<node_b;
-            }else {
-                rpl.meta.iters=node_a+100;
-                rpl.meta.recver = node_b+100;
-                Send(rpl);
-                B1[node_b]=1;
-                PS_VLOG(2)<<"in local push, sender is "<<node_b<<" and receiver is "<<node_a;
-            }
-        }
-    }
+  Message rpl;
+  rpl.meta.sender = my_node_.id;
+  rpl.meta.app_id = msg->meta.app_id;
+  rpl.meta.customer_id = msg->meta.customer_id;
+  rpl.meta.timestamp = msg->meta.timestamp;
+  rpl.meta.push = true;
+  rpl.meta.request = true;
+  std::unique_lock<std::mutex> lk_sch1(sched1);
+  ask_q.push(msg->meta.sender - 100);
 
-    int count=0;
-    for(auto it:B1)count+=it;
-    if(count==Postoffice::Get()->num_workers()){
-        for(std::size_t i=0;i<B1.size();i++)B1[i]=0;
-        PS_VLOG(2)<<"local push is over!";
+  if(ask_q.size() > 1) {
+    int node_a = ask_q.front();
+    ask_q.pop();
+    int node_b = ask_q.front();
+    ask_q.pop();
+    if(node_a == 0 || node_b == 0) {
+      if(node_a == 0) {
+        rpl.meta.iters = node_a + 100;
+        rpl.meta.recver = node_b + 100;
+        B1[node_b] = 1;
+        Send(rpl);
+        PS_VLOG(2) << "In local push, " << node_b << " send to server 100";
+      } else {
+        rpl.meta.iters = node_b + 100;
+        rpl.meta.recver = node_a + 100;
+        B1[node_a] = 1;
+        Send(rpl);
+        PS_VLOG(2) << "In local push, " << node_a << " send to server 100";
+      }
+    } else {
+      if(A[node_a][node_b] > A[node_b][node_a]) {
+        rpl.meta.iters = node_b + 100;
+        rpl.meta.recver = node_a + 100;
+        Send(rpl);
+        B1[node_a] = 1;
+        PS_VLOG(2) << "In local push, sender is " << node_a << " and receiver is " << node_b;
+      } else {
+        rpl.meta.iters = node_a + 100;
+        rpl.meta.recver = node_b + 100;
+        Send(rpl);
+        B1[node_b] = 1;
+        PS_VLOG(2) << "In local push, sender is " << node_b << " and receiver is " << node_a;
+      }
     }
-
-    lk_sch1.unlock();
+  }
+  int count = 0;
+  for(auto it: B1) count += it;
+  if(count == Postoffice::Get()->num_workers()) {
+    for(std::size_t i = 0; i < B1.size(); i++) B1[i] = 0;
+    PS_VLOG(2) << "Local push over.";
+  }
+  lk_sch1.unlock();
 }
 
-void Van::ProcessAsk1GlobalCommand(Message* msg){
-    if(ask_q.size()==1 && ask_q.front()==msg->meta.sender){
-        return;
-    }
-    Message rpl;
-    rpl.meta.sender = my_node_global_.id;
-    rpl.meta.app_id=msg->meta.app_id;
-    rpl.meta.customer_id = msg->meta.customer_id;
-    rpl.meta.timestamp = msg->meta.timestamp;
-    rpl.meta.push=true;
-    rpl.meta.request=true;
-    std::unique_lock<std::mutex> lk_sch1(sched1);
-    ask_q.push(msg->meta.sender);
+void Van::ProcessAsk1GlobalCommand(Message* msg) {
+  if(ask_q.size() == 1 && ask_q.front() == msg->meta.sender) return;
 
-    if(ask_q.size()>1){
-        int node_a=ask_q.front();
-        ask_q.pop();
-        int node_b=ask_q.front();
-        ask_q.pop();
-        if(node_a==8 ||node_b==8){
-            if(node_a==8){
-                rpl.meta.iters=node_a;
-                rpl.meta.recver = node_b;
-                B1[node_b]=1;
-                Send(rpl,true);
-                PS_VLOG(2)<<"in global push, "<<node_b<<" send to server 8";
-            }else{
-                rpl.meta.iters=node_b;
-                rpl.meta.recver = node_a;
-                B1[node_a]=1;
-                Send(rpl,true);
-                PS_VLOG(2)<<"in global push,"<<node_a<<" send to server 8";
-            }
-        }else{
-            if(A[node_a][node_b]>A[node_b][node_a]){
-                rpl.meta.iters=node_b;
-                rpl.meta.recver = node_a;
-                Send(rpl,true);
-                B1[node_a]=1;
-                PS_VLOG(2)<<"in global push, sender is "<<node_a<<" and receiver is "<<node_b;
-            }else {
-                rpl.meta.iters=node_a;
-                rpl.meta.recver = node_b;
-                Send(rpl,true);
-                B1[node_b]=1;
-                PS_VLOG(2)<<"in global push, sender is "<<node_b<<" and receiver is "<<node_a;
-            }
-        }
-    }
+  Message rpl;
+  rpl.meta.sender = my_node_global_.id;
+  rpl.meta.app_id = msg->meta.app_id;
+  rpl.meta.customer_id = msg->meta.customer_id;
+  rpl.meta.timestamp = msg->meta.timestamp;
+  rpl.meta.push = true;
+  rpl.meta.request = true;
+  std::unique_lock<std::mutex> lk_sch1(sched1);
+  ask_q.push(msg->meta.sender);
 
-    int count=0;
-    for(auto it:B1)count+=it;
-    if(count==Postoffice::Get()->num_global_workers()){
-        for(std::size_t i=0;i<B1.size();i++)B1[i]=0;
-        PS_VLOG(2)<<"global push is over!";
+  if(ask_q.size() > 1) {
+    int node_a = ask_q.front();
+    ask_q.pop();
+    int node_b = ask_q.front();
+    ask_q.pop();
+    if(node_a == 8 || node_b == 8) {
+      if(node_a == 8) {
+        rpl.meta.iters = node_a;
+        rpl.meta.recver = node_b;
+        B1[node_b] = 1;
+        Send(rpl, true);
+        PS_VLOG(2) << "In global push, " << node_b << " send to server 8";
+      } else {
+        rpl.meta.iters = node_b;
+        rpl.meta.recver = node_a;
+        B1[node_a] = 1;
+        Send(rpl, true);
+        PS_VLOG(2) << "In global push," << node_a << " send to server 8";
+      }
+    } else {
+      if(A[node_a][node_b] > A[node_b][node_a]) {
+        rpl.meta.iters = node_b;
+        rpl.meta.recver = node_a;
+        Send(rpl, true);
+        B1[node_a] = 1;
+        PS_VLOG(2) << "In global push, sender is " << node_a << " and receiver is " << node_b;
+      } else {
+        rpl.meta.iters = node_a;
+        rpl.meta.recver = node_b;
+        Send(rpl, true);
+        B1[node_b] = 1;
+        PS_VLOG(2) << "In global push, sender is " << node_b << " and receiver is " << node_a;
+      }
     }
+  }
 
-    lk_sch1.unlock();
+  int count = 0;
+  for(auto it: B1) count += it;
+  if(count == Postoffice::Get()->num_global_workers()) {
+      for(std::size_t i = 0; i < B1.size(); i++) B1[i] = 0;
+      PS_VLOG(2) << "Global push is over.";
+  }
+  lk_sch1.unlock();
 }
 
-void Van::ProcessAskCommand(Message* msg){
-    //update A and B
-    std::unique_lock<std::mutex> lks(sched);
-    int req_node_id = msg->meta.sender-100;
-    if (msg->meta.app_id != -1) { //isn't the first ask
-        A[req_node_id][msg->meta.customer_id-100] = msg->meta.app_id;
-        lifetime[req_node_id][msg->meta.customer_id-100] = msg->meta.version;
-    }
-    //create reply message
-    Message rpl;
-    rpl.meta.sender = my_node_.id;
-    rpl.meta.recver = req_node_id+100;
-    rpl.meta.control.cmd = Control::REPLY;
-    rpl.meta.timestamp = timestamp_++;
+void Van::ProcessAskCommand(Message* msg) {
+  // update A and B
+  std::unique_lock<std::mutex> lks(sched);
+  int req_node_id = msg->meta.sender - 100;
+  if (msg->meta.app_id != -1) { // not the first ask
+    A[req_node_id][msg->meta.customer_id - 100] = msg->meta.app_id;
+    lifetime[req_node_id][msg->meta.customer_id - 100] = msg->meta.version;
+  }
+  // create reply message
+  Message reply;
+  reply.meta.sender = my_node_.id;
+  reply.meta.recver = req_node_id + 100;
+  reply.meta.control.cmd = Control::REPLY;
+  reply.meta.timestamp = timestamp_++;
 
-    int temp=0;
-    for(std::size_t i=0;i<B.size();i++)temp+=B[i];
+  int temp = 0;
+  for(std::size_t i = 0; i < B.size(); i++) temp += B[i];
 
-    if(temp== Postoffice::Get()->num_workers()){
-        for(std::size_t i=0;i<B.size();i++)B[i]=0;
-        iters++;
-    }
+  if(temp == Postoffice::Get()->num_workers()) {
+    for(std::size_t i = 0; i < B.size(); i++) B[i] = 0;
+    iters++;
+  }
 
-    if(msg->meta.version<=iters){
-        rpl.meta.customer_id = -1;
+  if(msg->meta.version <= iters) {
+    reply.meta.customer_id = -1;
+  } else {
+    int receiver_id = -1;
+    int num_know_node = 0, num_unknow_node = 0;
+    for(std::size_t i = 0; i < A[req_node_id].size(); i++) {
+      if((i % 2) && B[i] == 0) {
+        if(A[req_node_id][i] != -1) num_know_node++;
+        else num_unknow_node++;
+      }
     }
-    else{
-        int receiver_id=-1;
-        int num_know_node=0, num_unknow_node=0;
-        for(std::size_t i=0;i<A[req_node_id].size();i++)//statistic number of known and unknown node about throughput
-        {
-            if((i%2) && B[i]==0){
-                if(A[req_node_id][i]!=-1)num_know_node++;
-                else num_unknow_node++;
-            }
+    unsigned seed;
+    seed = time(0);
+    srand(seed);
+    int rand_number = rand() % 10;
+    double greed_rate = double(num_know_node / (num_know_node + num_unknow_node)) < max_greed_rate ?
+      double(num_know_node / (num_know_node + num_unknow_node)) : max_greed_rate;
+    if((num_know_node != 0) && (rand_number <= (greed_rate * 10))) { // greedy mode
+      int throughput = -1;
+      for (std::size_t i = 0; i < A[req_node_id].size(); i++) {
+        if (B[i] == 0 && (A[req_node_id][i] > throughput)) {
+          receiver_id = i;
+          throughput = A[req_node_id][i];
         }
-        unsigned seed;
-        seed=time(0);
-        srand(seed);
-        int rand_number=rand()%10;
-        double greed_rate=double(num_know_node/(num_know_node+num_unknow_node)) < max_greed_rate ?
-                double(num_know_node/(num_know_node+num_unknow_node)):max_greed_rate;
-        if((num_know_node!=0) && (rand_number<=(greed_rate*10)))//greedy mode
-        {
-            int throughput = -1;
-            for (std::size_t i = 0; i<A[req_node_id].size(); i++) {
-                if (B[i]==0 && (A[req_node_id][i] > throughput)) {
-                    receiver_id = i;
-                    throughput = A[req_node_id][i];
-                }
-            }
-        }
-        else { //random mode
-            rand_number = (rand() % (num_unknow_node+num_know_node))+1;
-            int counter = 0;
-            for (std::size_t i = 0; i < A[req_node_id].size(); i++){
-                if (B[i]==0 && (i%2)) {//&&(A[req_node_id][i] == -1)
-                    counter++;
-                    if (counter == rand_number) {
-                        receiver_id = i;
-                        break;
-                    }
-                }
-            }
-        }
-        //send reply message
-        rpl.meta.customer_id = receiver_id;
+      }
     }
-
-    if(rpl.meta.customer_id!=-1){
-        B[rpl.meta.customer_id] = 1;
-        rpl.meta.customer_id +=100;
+    else { //random mode
+      rand_number = (rand() % (num_unknow_node + num_know_node)) + 1;
+      int counter = 0;
+      for (std::size_t i = 0; i < A[req_node_id].size(); i++) {
+        if (B[i] == 0 && (i % 2)) {
+          counter++;
+          if (counter == rand_number) {
+            receiver_id = i;
+            break;
+          }
+        }
+      }
     }
+    // send reply message
+    reply.meta.customer_id = receiver_id;
+  }
 
-    PS_VLOG(2)<<"in local pull, node "<<rpl.meta.sender<<" send to node "<<rpl.meta.customer_id;
-    lks.unlock();
-    Send(rpl);
+  if(reply.meta.customer_id != -1) {
+    B[reply.meta.customer_id] = 1;
+    reply.meta.customer_id += 100;
+  }
+
+  PS_VLOG(2) << "In local pull, node " << reply.meta.sender << " send to node " << reply.meta.customer_id;
+  lks.unlock();
+  Send(reply);
 }
 
-void Van::ProcessAskGlobalCommand(Message* msg){
-    //update A and B
-    std::unique_lock<std::mutex> lks(sched);
-    int req_node_id = msg->meta.sender;
-    if (msg->meta.app_id != -1) {//isn't the first ask
-        A[req_node_id][msg->meta.customer_id] = msg->meta.app_id;
-        lifetime[req_node_id][msg->meta.customer_id] = msg->meta.version;
-    }
-    //create reply message
-    Message rpl;
-    rpl.meta.sender = my_node_global_.id;
-    rpl.meta.recver = req_node_id;
-    rpl.meta.control.cmd = Control::REPLY;
-    rpl.meta.timestamp = timestamp_++;
+void Van::ProcessAskGlobalCommand(Message* msg) {
+  // update A and B
+  std::unique_lock<std::mutex> lks(sched);
+  int req_node_id = msg->meta.sender;
+  if (msg->meta.app_id != -1) { // not the first ask
+    A[req_node_id][msg->meta.customer_id] = msg->meta.app_id;
+    lifetime[req_node_id][msg->meta.customer_id] = msg->meta.version;
+  }
+  // create reply message
+  Message reply;
+  reply.meta.sender = my_node_global_.id;
+  reply.meta.recver = req_node_id;
+  reply.meta.control.cmd = Control::REPLY;
+  reply.meta.timestamp = timestamp_++;
 
-    int temp=0;
-    for(std::size_t i=0;i<B.size();i++)temp+=B[i];
+  int temp = 0;
+  for(std::size_t i = 0; i < B.size(); i++) temp += B[i];
 
-    if(temp== Postoffice::Get()->num_global_workers()){
-        for(std::size_t i=0;i<B.size();i++)B[i]=0;
-        iters++;
+  if(temp== Postoffice::Get()->num_global_workers()) {
+    for(std::size_t i = 0;i < B.size(); i++) B[i] = 0;
+    iters++;
+  }
+  if(msg->meta.version <= iters) {
+    reply.meta.customer_id = -1;
+  } else {
+    int receiver_id = -1;
+    int num_know_node = 0, num_unknow_node = 0;
+    for(std::size_t i = 0; i < A[req_node_id].size(); i++) {
+      if((i % 2) && B[i] == 0) {
+        if(A[req_node_id][i] != -1) num_know_node++;
+        else num_unknow_node++;
+      }
     }
-    if(msg->meta.version<=iters){
-        rpl.meta.customer_id = -1;
-    }
-    else{
-        int receiver_id=-1;
-        int num_know_node=0, num_unknow_node=0;
-        for(std::size_t i=0;i<A[req_node_id].size();i++) //statistic number of known and unknown node about throughput
-        {
-            if((i%2) && B[i]==0){
-                if(A[req_node_id][i]!=-1)num_know_node++;
-                else num_unknow_node++;
-            }
+    num_unknow_node -= 4;
+    unsigned seed;
+    seed = time(0);
+    srand(seed);
+    int rand_number=rand() % 10;
+    double greed_rate = double(num_know_node / (num_know_node + num_unknow_node)) < max_greed_rate ?
+      double(num_know_node / (num_know_node + num_unknow_node)) : max_greed_rate;
+    if((num_know_node != 0) && (rand_number <= (greed_rate * 10))) { // greedy mode
+      int throughput = -1;
+      for (std::size_t i = 0; i < A[req_node_id].size(); i++) {
+        if (B[i] == 0 && (A[req_node_id][i] > throughput)) {
+          receiver_id = i;
+          throughput = A[req_node_id][i];
         }
-        num_unknow_node-=4;
-        unsigned seed;
-        seed=time(0);
-        srand(seed);
-        int rand_number=rand()%10;
-        double greed_rate=double(num_know_node/(num_know_node+num_unknow_node)) < max_greed_rate ?
-                          double(num_know_node/(num_know_node+num_unknow_node)):max_greed_rate;
-        if((num_know_node!=0) && (rand_number<=(greed_rate*10)))//greedy mode
-        {
-            int throughput = -1;
-            for (std::size_t i = 0; i<A[req_node_id].size(); i++) {
-                if (B[i]==0 && (A[req_node_id][i] > throughput)) {
-                    receiver_id = i;
-                    throughput = A[req_node_id][i];
-                }
-            }
+      }
+    } else { // random mode
+      rand_number = (rand() % (num_unknow_node + num_know_node)) + 5;
+      int counter = 0;
+      for (std::size_t i = 0; i < A[req_node_id].size(); i++) {
+        if (B[i]==0 && (i % 2)) {
+          counter++;
+          if (counter == rand_number) {
+            receiver_id = i;
+            break;
+          }
         }
-        else { //random mode
-            rand_number = (rand() % (num_unknow_node+num_know_node))+5;
-            int counter = 0;
-            for (std::size_t i = 0; i < A[req_node_id].size(); i++){
-                if (B[i]==0 && (i%2)) {//&& (A[req_node_id][i] == -1)
-                    counter++;
-                    if (counter == rand_number) {
-                        receiver_id = i;
-                        break;
-                    }
-                }
-            }
-        }
-
-        //send reply message
-        rpl.meta.customer_id = receiver_id;
+      }
     }
-    if(rpl.meta.customer_id!=-1){
-        B[rpl.meta.customer_id] = 1;
-    }
-
-    PS_VLOG(2)<<"in global pull, node "<<rpl.meta.sender<<" send to node "<<rpl.meta.customer_id;
-    lks.unlock();
-    Send(rpl,true);
+    // send reply message
+    reply.meta.customer_id = receiver_id;
+  }
+  if(reply.meta.customer_id != -1) {
+    B[reply.meta.customer_id] = 1;
+  }
+  PS_VLOG(2) << "In global pull, node " << reply.meta.sender << " send to node " << reply.meta.customer_id;
+  lks.unlock();
+  Send(reply, true);
 }
 
 void Van::ProcessReplyCommand(Message* reply) {
   std::unique_lock<std::mutex> ask_lk(ask_mu);
-  receiver_=reply->meta.customer_id;
+  receiver_ = reply->meta.customer_id;
   ask_lk.unlock();
   ask_cond.notify_one();
 }
 
 void Van::ProcessReplyGlobalCommand(Message* reply) {
   std::unique_lock<std::mutex> ask_global_lk(ask_global_mu);
-  receiver_global=reply->meta.customer_id;
+  receiver_global = reply->meta.customer_id;
   ask_global_lk.unlock();
   ask_global_cond.notify_one();
 }
 
-int Van::GetReceiver(int throughput, int last_recv_id, int version){
-  Ask(throughput, last_recv_id, version);
+int Van::GetReceiver(int throughput, int last_recv_id, int version) {
+  Ask(throughput, last_recv_id, version, false);
   std::unique_lock<std::mutex> ask_lk(ask_mu);
-  while(receiver_==-2){
+  while(receiver_ == -2) {
     ask_cond.wait(ask_lk);
   }
-  int temp=receiver_;
-  receiver_=-2 ;
+  int temp = receiver_;
+  receiver_ = -2 ;
   ask_lk.unlock();
   return temp;
 }
 
-int Van::GetGlobalReceiver(int throughput, int last_recv_id, int version){
-  AskGlobal(throughput, last_recv_id, version);
+int Van::GetGlobalReceiver(int throughput, int last_recv_id, int version) {
+  Ask(throughput, last_recv_id, version, true);
   std::unique_lock<std::mutex> ask_global_lk(ask_global_mu);
-  while(receiver_global==-2){
+  while(receiver_global == -2) {
     ask_global_cond.wait(ask_global_lk);
   }
-  int temp=receiver_global;
-  receiver_global=-2 ;
+  int temp = receiver_global;
+  receiver_global = -2;
   ask_global_lk.unlock();
   return temp;
 }

@@ -232,16 +232,15 @@ class KVWorker: public SimpleApp {
 
     if(enable_intra_ts && kvs.keys.size()) {
       KVMeta meta;
-      meta.cmd       = cmd;
-      meta.push      = true;
-      meta.sender    = Postoffice::Get()->van()->my_node_.id;
-      meta.timestamp = ts;
-      meta.app_id = obj_->app_id();
+      meta.cmd         = cmd;
+      meta.push        = true;
+      meta.sender      = Postoffice::Get()->van()->my_node_.id;
+      meta.timestamp   = ts;
+      meta.app_id      = obj_->app_id();
       meta.customer_id = obj_->customer_id();
-      meta.key = uniq_key;
-      meta.version = version;
-      meta.num_merge = 1;
-
+      meta.key         = uniq_key;
+      meta.version     = version;
+      meta.num_merge   = 1;
       request_handle_(meta, kvs, this);
       Postoffice::Get()->van()->Ask1(meta.app_id, meta.customer_id, ts);
     } else {
@@ -556,12 +555,12 @@ class KVServer: public SimpleApp {
   void Response(const KVMeta& req, const KVPairs<Val>& res, bool is_global = false);
   void Response(const KVMeta& req, bool is_global = false) { Response(req, KVPairs<Val>(), is_global); }
 
-  void AutoPullUpdate2(const int version, const int iters, const int key,const int cmd, const KVPairs<Val>& kvs) {
-    int throughput=-1;
-    int last_recv_id=-1;
-    while(1){
-      int receiver=Postoffice::Get()->van()->GetGlobalReceiver(throughput, last_recv_id, iters);
-      if(receiver==-1) break; // whether transmition is over
+  void AutoPullUpdate2(const int version, const int iters, const int key, const int cmd, const KVPairs<Val>& kvs) {
+    int throughput = -1;
+    int last_recv_id = -1;
+    while(true) {
+      int receiver = Postoffice::Get()->van()->GetGlobalReceiver(throughput, last_recv_id, iters);
+      if(receiver == -1) break; // whether transmition is over
       if(kvs.keys.size()){
         Message msg;
         msg.meta.head = cmd;
@@ -633,7 +632,7 @@ class KVServer: public SimpleApp {
     int throughput = -1;
     int last_recv_id = -1;
     while(1) {
-      int receiver=Postoffice::Get()->van()->GetReceiver(throughput, last_recv_id, iter);
+      int receiver = Postoffice::Get()->van()->GetReceiver(throughput, last_recv_id, iter);
       if(receiver == -1) break; // whether transmition is over
       if(kvs.keys.size()) {
         Message msg;
@@ -1823,7 +1822,7 @@ int KVWorker<Val>::AutoPull(int uniq_key, const SArray <Key> &keys, SArray <Val>
     p_lens = lens->data();
   }
   // fill vals and lens
-  for (int i = 0; i < keys.size(); i++){
+  for (size_t i = 0; i < keys.size(); i++){
     memcpy(p_vals, autokvs[keys[i]].vals.data(), autokvs[keys[i]].vals.size() * sizeof(Val));
     p_vals += autokvs[keys[i]].vals.size();
     if (p_lens) {

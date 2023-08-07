@@ -339,7 +339,7 @@ class KVStoreDist : public KVStoreLocal {
     std::vector<int> uniq_keys;
     std::vector<std::vector<NDArray*> > grouped_vals;
     GroupKVPairsPull(keys, values, &uniq_keys, &grouped_vals, true);
-    if(!ps_worker_->enable_p3){
+    if(!ps_worker_->enable_p3) {
       for (size_t i = 0; i < uniq_keys.size(); ++i) {
         int key = uniq_keys[i];
         // use the same array for merging to guarantee that pull always happens
@@ -347,22 +347,82 @@ class KVStoreDist : public KVStoreLocal {
         auto& recv_buf = comm_buf_[key];
         const auto storage_type = grouped_vals[i][0]->storage_type();
         CHECK_EQ(storage_type, kDefaultStorage)
-                << "Expected stype of value to be kDefaultStorage";
+          << "Expected stype of value to be kDefaultStorage";
         if (recv_buf.is_none()) {
           // it may happen for the first time a no-rank-0 worker pull the weight.
           recv_buf = NDArray(grouped_vals[i][0]->shape(), pinned_ctx_,
                              true, grouped_vals[i][0]->dtype());
         }
         auto pull_from_servers = [this, key, recv_buf](
-                RunContext rctx, Engine::CallbackOnComplete cb) {
+          RunContext rctx, Engine::CallbackOnComplete cb) {
+          // convert to ps keys
+          size_t size = recv_buf.shape().Size();
+          const int dtype = recv_buf.dtype();
+          const int num_bytes = mshadow::mshadow_sizeof(dtype);
+          PSKV& pskv = (gradient_compression_->get_type() == CompressionType::kTwoBit) ?
+                       EncodeCompressedKey(key, size, false, num_bytes):
+                       EncodeDefaultKey(key, size, num_bytes);
+          char* data = static_cast<char*> (recv_buf.data().dptr_);
+          // false means not to delete data when SArray is deleted
+          auto vals = new ps::SArray<char>(data, size * num_bytes, false);
+          // issue pull
+          RequestType mode = RequestType::kDefaultPushPull;
+          switch (gradient_compression_->get_type()) {
+            case CompressionType::kNone:
+              mode = RequestType::kDefaultPushPull;
+              break;
+            case CompressionType::kTwoBit:
+              mode = RequestType::kCompressedPushPull;
+              break;
+            case CompressionType::kBiSparseCompression:
+              mode = RequestType::kDefaultPushPull;
+              break;
+            default:
+              LOG(FATAL) << "Unsupported compression of type " << gradient_compression_->get_type_str();
+          }
+          const int cmd = GetCommandType(mode, dtype);
+
+          if(gradient_compression_->get_type() == CompressionType::kNone && ps_worker_->enable_intra_ts){
+            CHECK_NOTNULL(ps_worker_)->AutoPull(
+              key, pskv.keys, vals, &pskv.lens, cmd, [vals, cb](){ delete vals; cb(); });
+          } else {
+            CHECK_NOTNULL(ps_worker_)->ZPull(
+              pskv.keys, vals, &pskv.lens, cmd, [vals, cb](){ delete vals; cb(); });
+          }
+        };
+        CHECK_NOTNULL(Engine::Get())->PushAsync(
+          pull_from_servers,
+          pinned_ctx_,
+          {},
+          {recv_buf.var()},
+          FnProperty::kNormal,
+          priority,
+          "KVStoreDistDefaultStoragePull");
+        comm_->Broadcast(key, recv_buf, grouped_vals[i], priority);
+      }
+    } else {
+      for (size_t i = 0; i < uniq_keys.size(); ++i) {
+        int key = uniq_keys[i];
+        // use the same array for merging to guarantee that pull always happens
+        // after the previous push on this key
+        auto& recv_buf = comm_buf_[key];
+        const auto storage_type = grouped_vals[i][0]->storage_type();
+        CHECK_EQ(storage_type, kDefaultStorage)
+          << "Expected stype of value to be kDefaultStorage";
+        if (recv_buf.is_none()) {
+          // it may happen for the first time a non-rank-0 worker pull the weight.
+          recv_buf = NDArray(grouped_vals[i][0]->shape(), pinned_ctx_,
+                             true, grouped_vals[i][0]->dtype());
+          auto pull_from_servers = [this, key, recv_buf, priority](
+            RunContext rctx, Engine::CallbackOnComplete cb) {
             // convert to ps keys
             size_t size = recv_buf.shape().Size();
             const int dtype = recv_buf.dtype();
             const int num_bytes = mshadow::mshadow_sizeof(dtype);
-            PSKV& pskv = (gradient_compression_->get_type() == CompressionType::kTwoBit) ?
-                         EncodeCompressedKey(key, size, false, num_bytes):
-                         EncodeDefaultKey(key, size, num_bytes);
-            char* data = static_cast<char*> (recv_buf.data().dptr_);
+            PSKV &pskv = (gradient_compression_->get_type() == CompressionType::kTwoBit) ?
+                         EncodeCompressedKey(key, size, false, num_bytes) :
+                         P3_EncodeDefaultKey(key, size, num_bytes);
+            char *data = static_cast<char *> (recv_buf.data().dptr_);
             // false means not to delete data when SArray is deleted
             auto vals = new ps::SArray<char>(data, size * num_bytes, false);
             // issue pull
@@ -382,106 +442,43 @@ class KVStoreDist : public KVStoreLocal {
             }
             const int cmd = GetCommandType(mode, dtype);
 
-            if(gradient_compression_->get_type() == CompressionType::kNone && ps_worker_->enable_intra_ts){
-              CHECK_NOTNULL(ps_worker_)->AutoPull(
-                      key, pskv.keys, vals, &pskv.lens, cmd, [vals, cb](){ delete vals; cb(); });
-            } else {
-              CHECK_NOTNULL(ps_worker_)->ZPull(
-                      pskv.keys, vals, &pskv.lens, cmd, [vals, cb](){ delete vals; cb(); });
+            int len = 0;
+            auto *counter = new std::atomic<int>(pskv.keys.size());
+            for (size_t i = 0; i < pskv.keys.size(); i++) {
+              auto vs = new ps::SArray<char>(std::move(vals->segment(len, len + pskv.lens[i])));
+              auto ls = new ps::SArray<int>(std::move(pskv.lens.segment(i, i + 1)));
+              CHECK_NOTNULL(ps_worker_)->P3_ZPull(
+                std::move(pskv.keys.segment(i, i + 1)), vs, ls, cmd,
+                [vs, ls, vals, cb, counter]() {
+                  delete vs;
+                  delete ls;
+                  (*counter)--;
+                  if (counter->load() == 0) {
+                    delete vals;
+                    delete counter;
+                    cb();
+                  }
+                }, priority);
+              len += pskv.lens[i];
             }
-        };
-
-        CHECK_NOTNULL(Engine::Get())->PushAsync(
-                pull_from_servers,
-                pinned_ctx_,
-                {},
-                {recv_buf.var()},
-                FnProperty::kNormal,
-                priority,
-                "KVStoreDistDefaultStoragePull");
-
-        comm_->Broadcast(key, recv_buf, grouped_vals[i], priority);
-      }
-    } else {
-      for (size_t i = 0; i < uniq_keys.size(); ++i) {
-        int key = uniq_keys[i];
-        // use the same array for merging to guarantee that pull always happens
-        // after the previous push on this key
-        auto& recv_buf = comm_buf_[key];
-        const auto storage_type = grouped_vals[i][0]->storage_type();
-        CHECK_EQ(storage_type, kDefaultStorage)
-                << "Expected stype of value to be kDefaultStorage";
-        if (recv_buf.is_none()) {
-          // it may happen for the first time a no-rank-0 worker pull the weight.
-          recv_buf = NDArray(grouped_vals[i][0]->shape(), pinned_ctx_,
-                             true, grouped_vals[i][0]->dtype());
-
-          auto pull_from_servers = [this, key, recv_buf, priority](
-                  RunContext rctx, Engine::CallbackOnComplete cb) {
-              // convert to ps keys
-              size_t size = recv_buf.shape().Size();
-              const int dtype = recv_buf.dtype();
-              const int num_bytes = mshadow::mshadow_sizeof(dtype);
-              PSKV &pskv = (gradient_compression_->get_type() == CompressionType::kTwoBit) ?
-                           EncodeCompressedKey(key, size, false, num_bytes) :
-                           P3_EncodeDefaultKey(key, size, num_bytes);
-              char *data = static_cast<char *> (recv_buf.data().dptr_);
-              // false means not to delete data when SArray is deleted
-              auto vals = new ps::SArray<char>(data, size * num_bytes, false);
-              // issue pull
-              RequestType mode = RequestType::kDefaultPushPull;
-              switch (gradient_compression_->get_type()) {
-                case CompressionType::kNone:
-                  mode = RequestType::kDefaultPushPull;
-                  break;
-                case CompressionType::kTwoBit:
-                  mode = RequestType::kCompressedPushPull;
-                  break;
-                case CompressionType::kBiSparseCompression:
-                  mode = RequestType::kDefaultPushPull;
-                  break;
-                default:
-                  LOG(FATAL) << "Unsupported compression of type " << gradient_compression_->get_type_str();
-              }
-              const int cmd = GetCommandType(mode, dtype);
-
-              int len=0;
-              auto *counter = new std::atomic<int>(pskv.keys.size());
-              for (int i=0; i<pskv.keys.size(); i++) {
-                auto vs = new ps::SArray<char>(std::move(vals->segment(len, len+pskv.lens[i])));
-                auto ls = new ps::SArray<int>(std::move(pskv.lens.segment(i, i+1)));
-                CHECK_NOTNULL(ps_worker_)->P3_ZPull(
-                        std::move(pskv.keys.segment(i, i+1)), vs, ls, cmd,
-                        [vs, ls, vals, cb, counter]() {
-                            delete vs;
-                            delete ls;
-                            (*counter)--;
-                            if (counter->load() == 0) {
-                              delete vals;
-                              delete counter;
-                              cb();
-                            }
-                        }, priority);
-                len+=pskv.lens[i];
-              }
           };
           CHECK_NOTNULL(Engine::Get())->PushAsync(
-                  pull_from_servers,
-                  pinned_ctx_,
-                  {},
-                  {recv_buf.var()},
-                  FnProperty::kNormal,
-                  priority,
-                  "KVStoreDistDefaultStoragePull");
+            pull_from_servers,
+            pinned_ctx_,
+            {},
+            {recv_buf.var()},
+            FnProperty::kNormal,
+            priority,
+            "KVStoreDistDefaultStoragePull");
         } else {
           CHECK_NOTNULL(Engine::Get())->PushAsync(
-                  [] (RunContext rctx, Engine::CallbackOnComplete cb) { cb(); },
-                  pinned_ctx_,
-                  {},
-                  {recv_buf.var()},
-                  FnProperty::kNormal,
-                  priority,
-                  "KVStoreDistDefaultStoragePull");
+            [] (RunContext rctx, Engine::CallbackOnComplete cb) { cb(); },
+            pinned_ctx_,
+            {},
+            {recv_buf.var()},
+            FnProperty::kNormal,
+            priority,
+            "KVStoreDistDefaultStoragePull");
         }
         comm_->Broadcast(key, recv_buf, grouped_vals[i], priority);
       }
@@ -630,66 +627,64 @@ class KVStoreDist : public KVStoreLocal {
   }
 
   void PushDefault(int key, const NDArray &send_buf, const PSKV& pskv, int priority) {
-    if(!ps_worker_->enable_p3){
+    if(ps_worker_->enable_p3) {
       auto push_to_servers =
-         [this, key, pskv, send_buf](RunContext rctx, Engine::CallbackOnComplete cb) {
-             const int dtype = send_buf.dtype();
-             // convert to ps keys
-             const size_t size = send_buf.shape().Size() * mshadow::mshadow_sizeof(dtype);
-             char* data = static_cast<char *>(send_buf.data().dptr_);
-             // do push. false means no delete
-             ps::SArray<char> vals(data, size, false);
-             int cmd = GetCommandType(RequestType::kDefaultPushPull, dtype);
-             CHECK_NOTNULL(ps_worker_)->ZPush(
-                 pskv.keys, vals, pskv.lens,
-                 cmd, [cb]() { cb(); }, key, 0);
-          };
+        [this, key, pskv, send_buf, priority](RunContext rctx, Engine::CallbackOnComplete cb) {
+          const int dtype = send_buf.dtype();
+          // convert to ps keys
+          const size_t size = send_buf.shape().Size() * mshadow::mshadow_sizeof(dtype);
+          char* data = static_cast<char *>(send_buf.data().dptr_);
+          // do push. false means no delete
+          ps::SArray<char> vals(data, size, false);
+          int cmd = GetCommandType(RequestType::kDefaultPushPull, dtype);
+          auto *counter = new std::atomic<int>(pskv.keys.size());
+          int len = 0;
+          for (size_t i = 0; i < pskv.keys.size(); i++) {
+            CHECK_NOTNULL(ps_worker_)->P3_ZPush(
+              std::move(pskv.keys.segment(i, i + 1)),
+              std::move(vals.segment(len, len + pskv.lens[i])),
+              std::move(pskv.lens.segment(i, i + 1)),
+              cmd,
+              [cb, counter]() {
+                (*counter)--;
+                if (counter->load() == 0) {
+                  delete counter;
+                  cb();
+                }
+              }, priority);
+            len += pskv.lens[i];
+          }
+        };
       Engine::Get()->PushAsync(
-              push_to_servers,
-              pinned_ctx_,
-              {send_buf.var()},
-              {},
-              FnProperty::kNormal,
-              priority,
-              "KVStoreDistDefaultPush");
+        push_to_servers,
+        pinned_ctx_,
+        {send_buf.var()},
+        {},
+        FnProperty::kNormal,
+        priority,
+        "KVStoreDistDefaultPush");
     } else {
       auto push_to_servers =
-          [this, key, pskv, send_buf, priority](RunContext rctx, Engine::CallbackOnComplete cb) {
-              const int dtype = send_buf.dtype();
-              // convert to ps keys
-              const size_t size = send_buf.shape().Size() * mshadow::mshadow_sizeof(dtype);
-              char* data = static_cast<char *>(send_buf.data().dptr_);
-              // do push. false means no delete
-              ps::SArray<char> vals(data, size, false);
-              int cmd = GetCommandType(RequestType::kDefaultPushPull, dtype);
-              auto *counter = new std::atomic<int>(pskv.keys.size());
-              int len=0;
-              for (int i=0; i<pskv.keys.size(); i++) {
-                CHECK_NOTNULL(ps_worker_)->P3_ZPush(
-                    std::move(pskv.keys.segment(i, i+1)),
-                    std::move(vals.segment(len, len+pskv.lens[i])),
-                    std::move(pskv.lens.segment(i, i+1)),
-                    cmd,
-                    [cb, counter]() {
-                        //engine::SetOprEnd(opr_stat);
-                        (*counter)--;
-                        if (counter->load() == 0) {
-                          delete counter;
-                          cb();
-                        }
-                    }, priority);
-                len+=pskv.lens[i];
-              }
-          };
+        [this, key, pskv, send_buf](RunContext rctx, Engine::CallbackOnComplete cb) {
+          const int dtype = send_buf.dtype();
+          // convert to ps keys
+          const size_t size = send_buf.shape().Size() * mshadow::mshadow_sizeof(dtype);
+          char* data = static_cast<char *>(send_buf.data().dptr_);
+          // do push. false means no delete
+          ps::SArray<char> vals(data, size, false);
+          int cmd = GetCommandType(RequestType::kDefaultPushPull, dtype);
+          CHECK_NOTNULL(ps_worker_)->ZPush(
+              pskv.keys, vals, pskv.lens,
+              cmd, [cb]() { cb(); }, key, 0);
+        };
       Engine::Get()->PushAsync(
-          push_to_servers,
-          pinned_ctx_,
-          {send_buf.var()},
-          {},
-          FnProperty::kNormal,
-          priority,
-          "KVStoreDistDefaultPush"
-       );
+        push_to_servers,
+        pinned_ctx_,
+        {send_buf.var()},
+        {},
+        FnProperty::kNormal,
+        priority,
+        "KVStoreDistDefaultPush");
     }
   }
 
@@ -840,27 +835,27 @@ class KVStoreDist : public KVStoreLocal {
     size_t pskv_size = num_arr_elems * num_bytes;
     if (!pskv.keys.empty()) {
       CHECK_EQ(static_cast<size_t>(pskv.size), pskv_size)
-              << "The value size cannot be changed " << pskv_size << ". Key is " << key;
+        << "The value size cannot be changed " << pskv_size << ". Key is " << key;
     } else {
       auto krs = ps::Postoffice::Get()->GetServerKeyRanges();
       const int num_servers = krs.size();
       CHECK_GT(num_servers, 0);
       // parition to all servers
-      if(key==0) key_temp=0;
+      if(key == 0) key_temp = 0;
       pskv.size = 0;
-      int s = num_arr_elems;
-      int i=0;
+      size_t s = num_arr_elems;
+      int i = 0;
       while(true) {
-        ps::Key ps_key=krs[i%num_servers].begin() + (ps::Key)(key_temp);
+        ps::Key ps_key = krs[i % num_servers].begin() + (ps::Key)(key_temp);
         key_temp++;
-        CHECK_LT(ps_key, krs[i%num_servers].end());
+        CHECK_LT(ps_key, krs[i % num_servers].end());
         pskv.keys.push_back(ps_key);
         if (s > bigarray_bound_) {
           pskv.lens.push_back(bigarray_bound_*num_bytes);
           pskv.size += (bigarray_bound_*num_bytes);
         } else {
-          pskv.lens.push_back(s*num_bytes);
-          pskv.size += (s*num_bytes);
+          pskv.lens.push_back(s * num_bytes);
+          pskv.size += (s * num_bytes);
           break;
         }
         s -= bigarray_bound_;

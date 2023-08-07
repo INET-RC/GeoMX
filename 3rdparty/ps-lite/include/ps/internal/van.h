@@ -60,9 +60,9 @@ class Van {
   /**
    * \brief send a message, It is thread-safe
    * \return the number of bytes sent. -1 if failed
-   */ //modify by huaman, add (int channel = 0, int tag = 0)
-  int Send(const Message &msg,bool is_global = false);
-  int DGT_Send(const Message& msg, int channel=0, int tag=0);
+   */
+  int Send(const Message &msg, bool is_global = false);
+  int DGT_Send(const Message& msg, int channel = 0, int tag = 0);
   /**
    * \brief return my node
    */
@@ -89,15 +89,15 @@ class Van {
    */
   inline bool IsReady() { return ready_; }
 
-  int Classifier( Message& msg, int channel, int tag);
-
+  void Classifier(Message& msg, int channel, int tag);
   void Wait_for_finished();
   void Wait_for_global_finished();
-  int GetReceiver(int throughput, int last_recv_id ,int version);
-  int GetGlobalReceiver(int throughput, int last_recv_id ,int version);
+  int GetReceiver(int throughput, int last_recv_id, int version);
+  int GetGlobalReceiver(int throughput, int last_recv_id, int version);
   void Ask1(int app, int customer1, int timestamp);
   void Ask1Global(int app, int customer1, int timestamp);
   Node my_node_, my_node_global_;
+
  protected:
   /**
    * \brief connect to a node
@@ -163,9 +163,8 @@ class Van {
   /** thread function for receving */
   void Receiving();
   void ReceivingGlobal();
-  //added by vbc,ask for scheduler to get receiver_id
-  void Ask(int throughput, int last_recv_id, int version);
-  void AskGlobal(int throughput, int last_recv_id, int version);
+  // ask for scheduler to get receiver_id
+  void Ask(int throughput, int last_recv_id, int version, bool is_global=false);
   /** thread function for heartbeat */
   void Heartbeat();
 
@@ -202,21 +201,18 @@ class Van {
   std::vector<int> B1;
   std::queue<int> ask_q;
   std::vector<std::vector<int>> lifetime;
-  int iters=-1;
+  int iters = -1;
   double max_greed_rate;
 
-  void ProcessAutopullrpy();
-  void ProcessAutopullrpyGlobal();
-  // process ask command
+  int enable_p3 = 0;
+  void ProcessAutoPullReply();
+  void ProcessAutoPullReplyGlobal();
   void ProcessAskCommand(Message* msg);
   void ProcessAskGlobalCommand(Message* msg);
   void ProcessAsk1Command(Message* msg);
   void ProcessAsk1GlobalCommand(Message* msg);
-  // process reply command
   void ProcessReplyCommand(Message* reply);
   void ProcessReplyGlobalCommand(Message* reply);
-  int enable_p3 = 0;
-
   void Important_scheduler();
   void Unimportant_scheduler();
   int Important_send(Message& msg);
@@ -224,33 +220,33 @@ class Van {
   void Receiving_UDP(int channel);
   void MergeMsg(Message* msg1, Message* msg2);
   void MergeMsg_HALF(Message* msg1, Message* msg2);
-  float encode(Message& msg, int bits_num);
+  void encode(Message& msg, int bits_num);
   void decode(Message& msg);
   enum class RequestType {
-      kDefaultPushPull, kRowSparsePushPull, kCompressedPushPull, kDGCompressedPushOnly
+    kDefaultPushPull, kRowSparsePushPull, kCompressedPushPull, kDGCompressedPushOnly
   };
   struct DataHandleType {
-      RequestType requestType;
-      int dtype;
+    RequestType requestType;
+    int dtype;
   };
   static DataHandleType DepairDataHandleType(int cmd) {
-      int w = std::floor((std::sqrt(8 * cmd + 1) - 1) / 2);
-      int t = ((w * w) + w) / 2;
-      int y = cmd - t;
-      int x = w - y;
-      CHECK_GE(x, 0);
-      CHECK_GE(y, 0);
-      DataHandleType type;
-      type.requestType = static_cast<RequestType>(x);
-      type.dtype = y;
-      return type;
+    int w = std::floor((std::sqrt(8 * cmd + 1) - 1) / 2);
+    int t = ((w * w) + w) / 2;
+    int y = cmd - t;
+    int x = w - y;
+    CHECK_GE(x, 0);
+    CHECK_GE(y, 0);
+    DataHandleType type;
+    type.requestType = static_cast<RequestType>(x);
+    type.dtype = y;
+    return type;
   }
 
   int enable_dgt = 0;
   std::unique_ptr<std::thread> udp_receiver_thread_[8];
   std::unique_ptr<std::thread> important_scheduler_thread_;
   std::unique_ptr<std::thread> unimportant_scheduler_thread_;
-  std::unordered_map<int,std::unordered_map<int, std::unordered_map<int,Message>>> msg_map;
+  std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, Message>>> msg_map;
   std::mutex merge_mu_;
   std::mutex encode_mu_;
   std::mutex decode_mu_;
@@ -258,7 +254,7 @@ class Van {
   ThreadsafeQueue important_queue_;
   ThreadsafeQueue unimportant_queue_;
   ThreadsafeQueue send_queue_;
-  std::unordered_map<int,std::unordered_map<int, SArray<char>>> residual;
+  std::unordered_map<int, std::unordered_map<int, SArray<char>>> residual;
 
   /**
    * \brief processing logic of AddNode message for scheduler and global scheduler
