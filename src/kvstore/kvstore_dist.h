@@ -640,9 +640,9 @@ class KVStoreDist : public KVStoreLocal {
              // do push. false means no delete
              ps::SArray<char> vals(data, size, false);
              int cmd = GetCommandType(RequestType::kDefaultPushPull, dtype);
-             CHECK_NOTNULL(ps_worker_)->TS_ZPush(
-                     pskv.keys, vals, pskv.lens,
-                     cmd, [cb]() { cb(); }, key, 0);
+             CHECK_NOTNULL(ps_worker_)->ZPush(
+                 pskv.keys, vals, pskv.lens,
+                 cmd, [cb]() { cb(); }, key, 0);
           };
       Engine::Get()->PushAsync(
               push_to_servers,

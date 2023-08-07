@@ -160,18 +160,6 @@ class KVWorker: public SimpleApp {
       SArray<Key>(keys), SArray<Val>(vals), SArray<int>(lens), cmd, cb);
   }
 
-  int TS_Push(const std::vector <Key> &keys,
-              const std::vector <Val> &vals,
-              const std::vector<int> &lens = {},
-              int cmd = 0,
-              const Callback &cb = nullptr,
-              int uniq_key=0,
-              int key_version=0) {
-    return TS_ZPush(
-      SArray<Key>(keys), SArray<Val>(vals), SArray<int>(lens), cmd, cb, uniq_key, key_version
-    );
-  }
-
   /**
    * \brief Pulls the values associated with the keys from the server nodes
    *
@@ -232,14 +220,33 @@ class KVWorker: public SimpleApp {
             const SArray<Val>& vals,
             const SArray<int>& lens = {},
             int cmd = 0,
-            const Callback& cb = nullptr) {
+            const Callback& cb = nullptr,
+            int uniq_key = Meta::kEmpty,
+            int version = 0) {
     int ts = obj_->NewRequest(kServerGroup);
     AddCallback(ts, cb);
     KVPairs<Val> kvs;
     kvs.keys = keys;
     kvs.vals = vals;
     kvs.lens = lens;
-    Send(ts, true, cmd, kvs);
+
+    if(enable_intra_ts && kvs.keys.size()) {
+      KVMeta meta;
+      meta.cmd       = cmd;
+      meta.push      = true;
+      meta.sender    = Postoffice::Get()->van()->my_node_.id;
+      meta.timestamp = ts;
+      meta.app_id = obj_->app_id();
+      meta.customer_id = obj_->customer_id();
+      meta.key = uniq_key;
+      meta.version = version;
+      meta.num_merge = 1;
+
+      request_handle_(meta, kvs, this);
+      Postoffice::Get()->van()->Ask1(meta.app_id, meta.customer_id, ts);
+    } else {
+      Send(ts, true, cmd, kvs, uniq_key, version);
+    }
     return ts;
   }
 
@@ -309,40 +316,6 @@ class KVWorker: public SimpleApp {
   void Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs,
             int uniq_key=Meta::kEmpty, int key_version=0,
             int app=Meta::kEmpty, int customer=Meta::kEmpty, int num_merge=1);
-
-  int TS_ZPush(const SArray <Key> &keys,
-               const SArray <Val> &vals,
-               const SArray<int> &lens = {},
-               int cmd = 0,
-               const Callback &cb = nullptr,
-               int uniq_key = 0,
-               int version = 0) {
-    int ts = obj_->NewRequest(kServerGroup);
-    AddCallback(ts, cb);
-    KVPairs<Val> kvs;
-    kvs.keys = keys;
-    kvs.vals = vals;
-    kvs.lens = lens;
-
-    if(enable_intra_ts && kvs.keys.size()) {
-      KVMeta meta;
-      meta.cmd       = cmd;
-      meta.push      = true;
-      meta.sender    = Postoffice::Get()->van()->my_node_.id;
-      meta.timestamp = ts;
-      meta.app_id = obj_->app_id();
-      meta.customer_id = obj_->customer_id();
-      meta.key = uniq_key;
-      meta.version = version;
-      meta.num_merge = 1;
-
-      request_handle_(meta,kvs,this);
-      Postoffice::Get()->van()->Ask1(meta.app_id , meta.customer_id, ts);
-    } else {
-      Send(ts, true, cmd, kvs, uniq_key, version);
-    }
-    return ts;
-  }
 
   /**
    * \brief zero-copy Pull
@@ -1308,7 +1281,7 @@ void KVServer<Val>::TS_Send(int timestamp, bool push, int uniq_key, int cmd, con
 }
 
 template <typename Val>
-void KVServer<Val>:: TS_Send(int timestamp, bool push, int uniq_key, int cmd,
+void KVServer<Val>::TS_Send(int timestamp, bool push, int uniq_key, int cmd,
                              const KVPairs<Val>& kvs, int key_version,int app, int customer, int merge) {
   // slice the message
   SlicedKVs sliced;
