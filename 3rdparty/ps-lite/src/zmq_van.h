@@ -132,67 +132,67 @@ class ZMQVan : public Van {
   }
 
   void Connect_UDP(const Node& node) override {
-      CHECK_NE(node.id, node.kEmpty);
-      CHECK(node.hostname.size());
-      int id = node.id;
-      auto it = udp_senders_.find(id);
-      if (it != udp_senders_.end()) {
-        for (unsigned int i = 0; i < it->second.size(); ++i)
-          zmq_close(it->second[i]);
-      }
-      // worker doesn't need to connect to the other workers. same for server
-      if ((node.role == my_node_global_.role) &&
-          (node.id != my_node_global_.id)) return;
+    CHECK_NE(node.id, node.kEmpty);
+    CHECK(node.hostname.size());
+    int id = node.id;
+    auto it = udp_senders_.find(id);
+    if (it != udp_senders_.end()) {
+      for (unsigned int i = 0; i < it->second.size(); ++i)
+        zmq_close(it->second[i]);
+    }
+    // worker doesn't need to connect to the other workers. same for server
+    if ((node.role == my_node_global_.role) &&
+        (node.id != my_node_global_.id)) return;
 
-      for(unsigned int i = 0; i < node.udp_port.size(); ++i){
-        PS_VLOG(1) << node.udp_port[i];
-        void *udp_sender = zmq_socket(context_, ZMQ_DEALER);
-        CHECK(udp_sender != NULL)
-          << zmq_strerror(errno)
-          << ". it often can be solved by \"sudo ulimit -n 65536\""
-          << " or edit /etc/security/limits.conf";
-        if (my_node_global_.id != Node::kEmpty) {
-          std::string my_id = "ps" + std::to_string(my_node_global_.id);
-          zmq_setsockopt(udp_sender, ZMQ_IDENTITY, my_id.data(), my_id.size());
-          int tos = (node.udp_port.size() - i - 1) * 32;
-          if(zmq_setsockopt(udp_sender, ZMQ_TOS, &tos, sizeof(tos)) == 0) {
-            int dscp = (node.udp_port.size() - i - 1) * 8;
-            std::string command = "iptables -t mangle -A OUTPUT -p udp --dst "
-              + node.hostname + " --dport "+ std::to_string(node.udp_port[i])
-              + " -j DSCP --set-dscp " + std::to_string(dscp);
-            std::cout << "command = " << command << std::endl;
-            system(command.c_str());
-            std::cout << "Success to set " << "udp[" << i + 1 << "]:"
-              << my_node_global_.id << "=>" << node.id << "("
-              << node.hostname.c_str() << ":" << node.udp_port[i]
-              << "):" << "tos=" << tos << std::endl;
-          } else {
-            std::cout << "Failed to set " << "udp[" << i + 1 << "]:"
-              << my_node_global_.id << "=>" << node.id << "("
-              << node.hostname.c_str() << ":" << node.udp_port[i]
-              << "):" << "tos=" << tos << std::endl;
-          }
-        }
-
-        int udp_send_buf_size = 4 * 1024 * 1024;
-        int rc = zmq_setsockopt(udp_sender, ZMQ_SNDBUF, &udp_send_buf_size, sizeof(udp_send_buf_size));
-        assert(rc == 0);
-
-        // connect
-        std::string addr = "udp://" + node.hostname + ":" + std::to_string(node.udp_port[i]);
-
-        if (GetEnv("DMLC_LOCAL", 0)) {
-          addr = "ipc:///tmp/" + std::to_string(node.udp_port[i]);
-        }
-        if (zmq_connect(udp_sender, addr.c_str()) != 0) {
-          PS_VLOG(1) << "UDP[channel " << i + 1 << "]:connect to "
-            + addr + " failed: " + zmq_strerror(errno);
+    for(unsigned int i = 0; i < node.udp_port.size(); ++i){
+      PS_VLOG(1) << node.udp_port[i];
+      void *udp_sender = zmq_socket(context_, ZMQ_DEALER);
+      CHECK(udp_sender != NULL)
+        << zmq_strerror(errno)
+        << ". it often can be solved by \"sudo ulimit -n 65536\""
+        << " or edit /etc/security/limits.conf";
+      if (my_node_global_.id != Node::kEmpty) {
+        std::string my_id = "ps" + std::to_string(my_node_global_.id);
+        zmq_setsockopt(udp_sender, ZMQ_IDENTITY, my_id.data(), my_id.size());
+        int tos = (node.udp_port.size() - i - 1) * 32;
+        if(zmq_setsockopt(udp_sender, ZMQ_TOS, &tos, sizeof(tos)) == 0) {
+          int dscp = (node.udp_port.size() - i - 1) * 8;
+          std::string command = "iptables -t mangle -A OUTPUT -p udp --dst "
+            + node.hostname + " --dport "+ std::to_string(node.udp_port[i])
+            + " -j DSCP --set-dscp " + std::to_string(dscp);
+          std::cout << "command = " << command << std::endl;
+          CHECK_NE(system(command.c_str()), -1) << "Execute system command failed";
+          std::cout << "Success to set " << "udp[" << i + 1 << "]:"
+            << my_node_global_.id << "=>" << node.id << "("
+            << node.hostname.c_str() << ":" << node.udp_port[i]
+            << "):" << "tos=" << tos << std::endl;
         } else {
-          PS_VLOG(1) << "UDP[channel " << i + 1 << "]:connect to "
-            + addr + " success.";
+          std::cout << "Failed to set " << "udp[" << i + 1 << "]:"
+            << my_node_global_.id << "=>" << node.id << "("
+            << node.hostname.c_str() << ":" << node.udp_port[i]
+            << "):" << "tos=" << tos << std::endl;
         }
-        udp_senders_[id].push_back(udp_sender);
       }
+
+      int udp_send_buf_size = 4 * 1024 * 1024;
+      int rc = zmq_setsockopt(udp_sender, ZMQ_SNDBUF, &udp_send_buf_size, sizeof(udp_send_buf_size));
+      assert(rc == 0);
+
+      // connect
+      std::string addr = "udp://" + node.hostname + ":" + std::to_string(node.udp_port[i]);
+
+      if (GetEnv("DMLC_LOCAL", 0)) {
+        addr = "ipc:///tmp/" + std::to_string(node.udp_port[i]);
+      }
+      if (zmq_connect(udp_sender, addr.c_str()) != 0) {
+        PS_VLOG(1) << "UDP[channel " << i + 1 << "]:connect to "
+          + addr + " failed: " + zmq_strerror(errno);
+      } else {
+        PS_VLOG(1) << "UDP[channel " << i + 1 << "]:connect to "
+          + addr + " success.";
+      }
+      udp_senders_[id].push_back(udp_sender);
+    }
   }
 
   int SendMsg_UDP(int channel, const Message& msg, int tag) override {
