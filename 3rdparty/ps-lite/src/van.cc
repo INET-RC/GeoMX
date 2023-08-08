@@ -1171,7 +1171,7 @@ void Van::ProcessAutoPullReplyGlobal() {
   ver_global_cond.notify_one();
 }
 
-void Van::Ask(int throughput, int last_recv_id, int version, bool is_global) {
+void Van::AskForReceiver(int throughput, int last_recv_id, int version, bool is_global) {
   Message msg;
   msg.meta.customer_id = last_recv_id;
   msg.meta.app_id      = throughput;
@@ -1483,7 +1483,7 @@ void Van::ProcessReplyGlobalCommand(Message* reply) {
 }
 
 int Van::GetReceiver(int throughput, int last_recv_id, int version) {
-  Ask(throughput, last_recv_id, version, false);
+  AskForReceiver(throughput, last_recv_id, version, false);
   std::unique_lock<std::mutex> ask_lk(ask_mu);
   while(receiver_ == -2) {
     ask_cond.wait(ask_lk);
@@ -1495,7 +1495,7 @@ int Van::GetReceiver(int throughput, int last_recv_id, int version) {
 }
 
 int Van::GetGlobalReceiver(int throughput, int last_recv_id, int version) {
-  Ask(throughput, last_recv_id, version, true);
+  AskForReceiver(throughput, last_recv_id, version, true);
   std::unique_lock<std::mutex> ask_global_lk(ask_global_mu);
   while(receiver_global == -2) {
     ask_global_cond.wait(ask_global_lk);

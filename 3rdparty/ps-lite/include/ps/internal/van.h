@@ -164,7 +164,7 @@ class Van {
   void Receiving();
   void ReceivingGlobal();
   // ask for scheduler to get receiver_id
-  void Ask(int throughput, int last_recv_id, int version, bool is_global=false);
+  void AskForReceiver(int throughput, int last_recv_id, int version, bool is_global=false);
   /** thread function for heartbeat */
   void Heartbeat();
 
