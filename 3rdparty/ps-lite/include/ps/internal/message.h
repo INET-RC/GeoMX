@@ -276,10 +276,10 @@ namespace ps {
   };
 
   /**
-   * \brief messages that communicated amaong nodes.
+   * \brief messages that communicated among nodes.
    */
   struct Message {
-    float contri;
+    float contribution;
     float p_loss;
     int rank;
 

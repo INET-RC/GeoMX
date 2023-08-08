@@ -719,7 +719,7 @@ class KVServer: public SimpleApp {
 
   void InitDGT();
 
-  float Evaluate_msg_contri(int key, Message& msg);
+  float EvalMsgContribution(int key, Message& msg);
 
   int Get_channel(int index, int max_index, int C, float k);
 
@@ -990,7 +990,7 @@ void KVServer<Val>::InitDGT(){
 }
 
 template <typename Val>
-float KVServer<Val>::Evaluate_msg_contri(int key, Message& msg) {
+float KVServer<Val>::EvalMsgContribution(int key, Message& msg) {
   /*calculate p_N of a msg*/
   float *pd = (float*)msg.data[1].data();
   int nlen = msg.data[1].size() / sizeof(float);
@@ -1097,16 +1097,16 @@ void KVServer<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& 
               msg.meta.lens_len = msg.data.back().size();
             }
           }
-          msg.contri = Evaluate_msg_contri((int)kvs.keys[0], msg);
+          msg.contribution = EvalMsgContribution((int)kvs.keys[0], msg);
 
-          if(msg.contri != 0 || msg.meta.seq == msg.meta.seq_end)
+          if(msg.contribution != 0 || msg.meta.seq == msg.meta.seq_end)
             msg_vector.push_back(msg);
           remain_bytes -= l;
           seq++;
           msg.data.clear();
         }
         std::sort(msg_vector.begin(), msg_vector.end() - 1, [](const Message& msg1, const Message& msg2){
-          return msg1.contri > msg2.contri;
+          return msg1.contribution > msg2.contribution;
         });
         for(size_t j = 0; j < msg_vector.size(); ++j){
             msg_vector[j].meta.channel = Get_channel(j, msg_vector.size() - 1, udp_channel_num, dmlc_k);
@@ -1207,16 +1207,16 @@ void KVServer<Val>::TS_Send(int timestamp, bool push, int uniq_key, int cmd, con
             msg.meta.lens_len = msg.data.back().size();
           }
         }
-        msg.contri = Evaluate_msg_contri((int)kvs.keys[0], msg);
+        msg.contribution = EvalMsgContribution((int)kvs.keys[0], msg);
 
-        if(msg.contri != 0 || msg.meta.seq == msg.meta.seq_end)
+        if(msg.contribution != 0 || msg.meta.seq == msg.meta.seq_end)
           msg_vector.push_back(msg);
         remain_bytes -= l;
         seq++;
         msg.data.clear();
       }
       std::sort(msg_vector.begin(), msg_vector.end() - 1, [](const Message& msg1, const Message& msg2) {
-        return msg1.contri > msg2.contri;
+        return msg1.contribution > msg2.contribution;
       });
       for(size_t j = 0; j < msg_vector.size(); ++j){
           msg_vector[j].meta.channel = Get_channel(j, msg_vector.size() - 1, udp_channel_num, dmlc_k);
@@ -1320,16 +1320,16 @@ void KVServer<Val>::TS_Send(int timestamp, bool push, int uniq_key, int cmd,
             msg.meta.lens_len = msg.data.back().size();
           }
         }
-        msg.contri = Evaluate_msg_contri((int)kvs.keys[0], msg);
+        msg.contribution = EvalMsgContribution((int)kvs.keys[0], msg);
 
-        if(msg.contri != 0 || msg.meta.seq == msg.meta.seq_end)
+        if(msg.contribution != 0 || msg.meta.seq == msg.meta.seq_end)
           msg_vector.push_back(msg);
         remain_bytes -= l;
         seq++;
         msg.data.clear();
       }
       std::sort(msg_vector.begin(), msg_vector.end() - 1, [](const Message& msg1, const Message& msg2){
-        return msg1.contri > msg2.contri;
+        return msg1.contribution > msg2.contribution;
       });
       for(size_t j = 0; j < msg_vector.size(); ++j) {
         msg_vector[j].meta.channel = Get_channel(j, msg_vector.size() - 1, udp_channel_num, dmlc_k);
