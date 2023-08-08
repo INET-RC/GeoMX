@@ -119,7 +119,7 @@ namespace ps {
         if (empty()) return "";
         std::vector<std::string> cmds = {
                 "EMPTY", "TERMINATE", "ADD_NODE", "ADD_GLOBAL_NODE", "BARRIER", "BARRIER_GLOBAL",
-                "ACK", "HEARTBEAT","AUTOPULLREPLY","ASK","REPLY", "ASK1"};
+                "ACK", "HEARTBEAT", "AUTOPULLREPLY", "ASKPULL", "ASKPUSH", "REPLY"};
         std::stringstream ss;
         ss << "cmd=" << cmds[cmd];
         if (node.size()) {
@@ -133,7 +133,7 @@ namespace ps {
       }
       /** \brief all commands */
       enum Command {EMPTY, TERMINATE, ADD_NODE, ADD_GLOBAL_NODE, BARRIER, BARRIER_GLOBAL,
-                    ACK, HEARTBEAT, AUTOPULLREPLY, ASK, REPLY, ASK1};
+                    ACK, HEARTBEAT, AUTOPULLREPLY, ASKPULL, ASKPUSH, REPLY};
       /** \brief the command */
       Command cmd;
       /** \brief node infos */

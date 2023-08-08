@@ -94,8 +94,7 @@ class Van {
   void Wait_for_global_finished();
   int GetReceiver(int throughput, int last_recv_id, int version);
   int GetGlobalReceiver(int throughput, int last_recv_id, int version);
-  void Ask1(int app, int customer1, int timestamp);
-  void Ask1Global(int app, int customer1, int timestamp);
+  void AskForReceiverPush(int app, int customer1, int timestamp, bool is_global = false);
   Node my_node_, my_node_global_;
 
  protected:
@@ -164,7 +163,7 @@ class Van {
   void Receiving();
   void ReceivingGlobal();
   // ask for scheduler to get receiver_id
-  void AskForReceiver(int throughput, int last_recv_id, int version, bool is_global=false);
+  void AskForReceiverPull(int throughput, int last_recv_id, int version, bool is_global=false);
   /** thread function for heartbeat */
   void Heartbeat();
 

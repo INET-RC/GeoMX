@@ -898,9 +898,9 @@ void Van::Receiving() {
         ProcessHeartbeat(&msg);
       } else if (ctrl.cmd == Control::AUTOPULLREPLY) {
         ProcessAutoPullReply();
-      } else if (ctrl.cmd == Control::ASK) {
+      } else if (ctrl.cmd == Control::ASKPULL) {
         ProcessAskCommand(&msg);
-      } else if (ctrl.cmd == Control::ASK1) {
+      } else if (ctrl.cmd == Control::ASKPUSH) {
         ProcessAsk1Command(&msg);
       } else if (ctrl.cmd == Control::REPLY) {
         ProcessReplyCommand(&msg);
@@ -941,9 +941,9 @@ void Van::ReceivingGlobal() {
         // TODO: perform heartbeat
       } else if (ctrl.cmd == Control::AUTOPULLREPLY) {
         ProcessAutoPullReplyGlobal();
-      } else if (ctrl.cmd == Control::ASK) {
+      } else if (ctrl.cmd == Control::ASKPULL) {
         ProcessAskGlobalCommand(&msg);
-      } else if (ctrl.cmd == Control::ASK1) {
+      } else if (ctrl.cmd == Control::ASKPUSH) {
         ProcessAsk1GlobalCommand(&msg);
       } else if (ctrl.cmd == Control::REPLY) {
         ProcessReplyGlobalCommand(&msg);
@@ -1171,38 +1171,27 @@ void Van::ProcessAutoPullReplyGlobal() {
   ver_global_cond.notify_one();
 }
 
-void Van::AskForReceiver(int throughput, int last_recv_id, int version, bool is_global) {
+void Van::AskForReceiverPull(int throughput, int last_recv_id, int version, bool is_global) {
   Message msg;
   msg.meta.customer_id = last_recv_id;
   msg.meta.app_id      = throughput;
   msg.meta.sender      = (is_global) ? my_node_global_.id : my_node_.id;
   msg.meta.recver      = (is_global) ? kSchedulerGlobal : kScheduler;
-  msg.meta.control.cmd = Control::ASK;
+  msg.meta.control.cmd = Control::ASKPULL;
   msg.meta.version     = version;
   msg.meta.timestamp   = timestamp_++;
   Send(msg, is_global);
 }
 
-void Van::Ask1(int app, int customer, int timestamp) {
+void Van::AskForReceiverPush(int app, int customer, int timestamp, bool is_global) {
   Message msg;
-  msg.meta.sender = my_node_.id;
-  msg.meta.recver = kScheduler;
-  msg.meta.control.cmd = Control::ASK1;
+  msg.meta.sender = (is_global) ? my_node_global_.id : my_node_.id;
+  msg.meta.recver = (is_global) ? kSchedulerGlobal : kScheduler;
+  msg.meta.control.cmd = Control::ASKPUSH;
   msg.meta.timestamp = timestamp;
   msg.meta.app_id = app;
   msg.meta.customer_id = customer;
-  Send(msg);
-}
-
-void Van::Ask1Global(int app,int customer, int timestamp) {
-  Message msg;
-  msg.meta.sender = my_node_global_.id;
-  msg.meta.recver = kSchedulerGlobal;
-  msg.meta.control.cmd = Control::ASK1;
-  msg.meta.timestamp = timestamp;
-  msg.meta.app_id = app;
-  msg.meta.customer_id = customer;
-  Send(msg, true);
+  Send(msg, is_global);
 }
 
 void Van::ProcessAsk1Command(Message* msg) {
@@ -1483,7 +1472,7 @@ void Van::ProcessReplyGlobalCommand(Message* reply) {
 }
 
 int Van::GetReceiver(int throughput, int last_recv_id, int version) {
-  AskForReceiver(throughput, last_recv_id, version, false);
+  AskForReceiverPull(throughput, last_recv_id, version, false);
   std::unique_lock<std::mutex> ask_lk(ask_mu);
   while(receiver_ == -2) {
     ask_cond.wait(ask_lk);
@@ -1495,7 +1484,7 @@ int Van::GetReceiver(int throughput, int last_recv_id, int version) {
 }
 
 int Van::GetGlobalReceiver(int throughput, int last_recv_id, int version) {
-  AskForReceiver(throughput, last_recv_id, version, true);
+  AskForReceiverPull(throughput, last_recv_id, version, true);
   std::unique_lock<std::mutex> ask_global_lk(ask_global_mu);
   while(receiver_global == -2) {
     ask_global_cond.wait(ask_global_lk);

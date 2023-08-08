@@ -242,7 +242,7 @@ class KVWorker: public SimpleApp {
       meta.version     = version;
       meta.num_merge   = 1;
       request_handle_(meta, kvs, this);
-      Postoffice::Get()->van()->Ask1(meta.app_id, meta.customer_id, ts);
+      Postoffice::Get()->van()->AskForReceiverPush(meta.app_id, meta.customer_id, ts);
     } else {
       Send(ts, true, cmd, kvs, uniq_key, version);
     }
@@ -532,7 +532,7 @@ class KVServer: public SimpleApp {
       meta.version = 0;
       meta.num_merge = 1;
       request_handle_global(meta,kvs,this);
-      Postoffice::Get()->van()->Ask1Global(meta.app_id , meta.customer_id, ts);
+      Postoffice::Get()->van()->AskForReceiverPush(meta.app_id , meta.customer_id, ts, true);
     } else {
       TS_Send(ts, true, uniq_key,  cmd, kvs);
     }
@@ -1506,7 +1506,7 @@ void KVWorker<Val>::TS_Process(const Message& msg) {
       kvs.lens = msg.data[2];
 
       request_handle_(meta, kvs, this);
-      Postoffice::Get()->van()->Ask1(msg.meta.app_id, msg.meta.customer_id, msg.meta.timestamp);
+      Postoffice::Get()->van()->AskForReceiverPush(msg.meta.app_id, msg.meta.customer_id, msg.meta.timestamp);
     } else {
       CHECK_GE(msg.data.size(), (size_t)2);
       KVPairs<Val> kvs;
@@ -1577,7 +1577,7 @@ void KVServer<Val>::Process(const Message& msg) {
 
   // notice here to normalize it later !!!warning!!! number of field should less than 50
   if (enable_intra_ts && msg.meta.sender > 100 && msg.meta.push && msg.meta.request) {
-      Postoffice::Get()->van()->Ask1(msg.meta.app_id, msg.meta.customer_id, msg.meta.timestamp);
+      Postoffice::Get()->van()->AskForReceiverPush(msg.meta.app_id, msg.meta.customer_id, msg.meta.timestamp);
   }
 
   if (enable_inter_ts && !Postoffice::Get()->is_global_server() && \
@@ -1589,7 +1589,7 @@ void KVServer<Val>::Process(const Message& msg) {
 
   if (enable_inter_ts && Postoffice::Get()->is_global_server() && msg.meta.sender < 100 && \
       msg.meta.push && msg.meta.request) {
-    Postoffice::Get()->van()->Ask1Global(msg.meta.app_id, msg.meta.customer_id, msg.meta.timestamp);
+    Postoffice::Get()->van()->AskForReceiverPush(msg.meta.app_id, msg.meta.customer_id, msg.meta.timestamp, true);
   }
 
   if (enable_inter_ts && !Postoffice::Get()->is_global_server() && msg.meta.sender < 100 &&  \
@@ -1611,7 +1611,7 @@ void KVServer<Val>::Process(const Message& msg) {
       kvs.lens = msg.data[2];
 
       request_handle_global(meta, kvs, this);
-      Postoffice::Get()->van()->Ask1Global(msg.meta.app_id, msg.meta.customer_id, msg.meta.timestamp);
+      Postoffice::Get()->van()->AskForReceiverPush(msg.meta.app_id, msg.meta.customer_id, msg.meta.timestamp, true);
     } else {
       send_push = msg.meta.iters;
       KVMeta meta;
