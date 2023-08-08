@@ -454,7 +454,7 @@ class KVServer: public SimpleApp {
     enable_intra_ts = dmlc::GetEnv("ENABLE_INTRA_TS", 0);
     enable_dgt = dmlc::GetEnv("ENABLE_DGT", 0);
     enable_p3 = dmlc::GetEnv("ENABLE_P3", 0);
-    if(enable_dgt) init_dgt();
+    if(enable_dgt) InitDGT();
   }
 
   /** \brief deconstructor */
@@ -717,7 +717,7 @@ class KVServer: public SimpleApp {
   /** \brief kv list slicer */
   Slicer slicer_;
 
-  void init_dgt();
+  void InitDGT();
 
   float Evaluate_msg_contri(int key, Message& msg);
 
@@ -978,7 +978,7 @@ void KVWorker<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& 
 }
 
 template <typename Val>
-void KVServer<Val>::init_dgt(){
+void KVServer<Val>::InitDGT(){
   contri_alpha = dmlc::GetEnv("DGT_CONTRI_ALPHA", 0.3);
   dgt_info = dmlc::GetEnv("DGT_INFO", 0);
   block_size = dmlc::GetEnv("DGT_BLOCK_SIZE", 4096);
