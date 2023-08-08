@@ -1360,7 +1360,7 @@ void KVServer<Val>::TS_Send(int timestamp, bool push, int uniq_key, int cmd,
         }
       }
       CHECK_NE(Postoffice::Get()->van()->Send(msg, true), -1);
-      send_push=0;
+      send_push = 0;
     }
   }
 }
@@ -1384,10 +1384,10 @@ template <typename Val>
 void KVWorker<Val>::AutoPullUpdate(const int version, const int iters, const int req, const KVPairs<Val>& kvs) {
   int throughput = -1;
   int last_recv_id = -1;
-  while(1) {
+  while(true) {
     int receiver = Postoffice::Get()->van()->GetReceiver(throughput, last_recv_id, iters);
     if(receiver == -1)  break; // whether transmission is over
-    if(kvs.keys.size()){
+    if(kvs.keys.size()) {
       Message msg;
       msg.meta.app_id      = obj_->app_id();
       msg.meta.customer_id = obj_->customer_id();
@@ -1451,16 +1451,18 @@ void KVWorker<Val>::Process(const Message& msg) {
 
 template <typename Val>
 void KVWorker<Val>::TS_Process(const Message& msg) {
+  CHECK_EQ(enable_intra_ts, 1);
   if (msg.meta.simple_app) {
     SimpleApp::Process(msg);
     return;
   }
+
   // store the data for pulling
   int ts = msg.meta.timestamp;
   int key = msg.meta.key;
-  int version = msg.meta.version;
+
   if (msg.data.size()) {
-    if(msg.meta.push && msg.meta.request && enable_intra_ts){
+    if(msg.meta.push && msg.meta.request){
       KVMeta meta;
       meta.cmd         = msg.meta.head;
       meta.push        = msg.meta.push;
@@ -1487,10 +1489,12 @@ void KVWorker<Val>::TS_Process(const Message& msg) {
         kvs.lens = msg.data[2];
         CHECK_EQ(kvs.keys.size(), kvs.lens.size());
       }
-      if (msg.meta.request){
-        if(enable_intra_ts) AutoPullReply(msg.meta.sender);
+      if (msg.meta.request) {
         CHECK_EQ(kvs.keys.size(), (size_t)1);
-        if(enable_intra_ts) AutoPullUpdate(version, msg.meta.iters, key, kvs);
+        if(enable_intra_ts)
+          AutoPullReply(msg.meta.sender);
+        if(enable_intra_ts)
+          AutoPullUpdate(msg.meta.version, msg.meta.iters, msg.meta.key, kvs);
         ts_mu_.lock();
         auto_pull_kvs_[key][kvs.keys[0]] = kvs;
         ts_mu_.unlock();
@@ -1502,14 +1506,12 @@ void KVWorker<Val>::TS_Process(const Message& msg) {
         ts_mu_.unlock();
       }
     }
-  } else {
-    if(msg.meta.push && msg.meta.request){
-      send_push = msg.meta.iters;
-      KVMeta meta;
-      meta.num_merge = -1;
-      KVPairs<char> kvs;
-      request_handle_(meta,kvs,this);
-    }
+  } else if (msg.meta.push && msg.meta.request) {
+    send_push = msg.meta.iters;
+    KVMeta meta;
+    meta.num_merge = -1;
+    KVPairs<char> kvs;
+    request_handle_(meta, kvs, this);
   }
   // finished, run callbacks
   if (!msg.meta.request && obj_->NumResponse(ts) == Postoffice::Get()->num_servers() - 1)  {
