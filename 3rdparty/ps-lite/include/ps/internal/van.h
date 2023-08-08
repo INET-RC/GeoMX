@@ -206,10 +206,10 @@ class Van {
   int enable_p3 = 0;
   void ProcessAutoPullReply();
   void ProcessAutoPullReplyGlobal();
-  void ProcessAskCommand(Message* msg);
+  void ProcessAskPullCommand(Message* msg);
   void ProcessAskGlobalCommand(Message* msg);
-  void ProcessAsk1Command(Message* msg);
-  void ProcessAsk1GlobalCommand(Message* msg);
+  void ProcessAskPushCommand(Message* msg);
+  void ProcessAskPushGlobalCommand(Message* msg);
   void ProcessReplyCommand(Message* reply);
   void ProcessReplyGlobalCommand(Message* reply);
   void Important_scheduler();

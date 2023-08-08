@@ -899,9 +899,9 @@ void Van::Receiving() {
       } else if (ctrl.cmd == Control::AUTOPULLREPLY) {
         ProcessAutoPullReply();
       } else if (ctrl.cmd == Control::ASKPULL) {
-        ProcessAskCommand(&msg);
+        ProcessAskPullCommand(&msg);
       } else if (ctrl.cmd == Control::ASKPUSH) {
-        ProcessAsk1Command(&msg);
+        ProcessAskPushCommand(&msg);
       } else if (ctrl.cmd == Control::REPLY) {
         ProcessReplyCommand(&msg);
       } else {
@@ -944,7 +944,7 @@ void Van::ReceivingGlobal() {
       } else if (ctrl.cmd == Control::ASKPULL) {
         ProcessAskGlobalCommand(&msg);
       } else if (ctrl.cmd == Control::ASKPUSH) {
-        ProcessAsk1GlobalCommand(&msg);
+        ProcessAskPushGlobalCommand(&msg);
       } else if (ctrl.cmd == Control::REPLY) {
         ProcessReplyGlobalCommand(&msg);
       } else {
@@ -1194,7 +1194,7 @@ void Van::AskForReceiverPush(int app, int customer, int timestamp, bool is_globa
   Send(msg, is_global);
 }
 
-void Van::ProcessAsk1Command(Message* msg) {
+void Van::ProcessAskPushCommand(Message* msg) {
   if(ask_q.size() == 1 && ask_q.front() == (msg->meta.sender - 100)) return;
 
   Message rpl;
@@ -1251,7 +1251,7 @@ void Van::ProcessAsk1Command(Message* msg) {
   lk_sch1.unlock();
 }
 
-void Van::ProcessAsk1GlobalCommand(Message* msg) {
+void Van::ProcessAskPushGlobalCommand(Message* msg) {
   if(ask_q.size() == 1 && ask_q.front() == msg->meta.sender) return;
 
   Message rpl;
@@ -1309,7 +1309,7 @@ void Van::ProcessAsk1GlobalCommand(Message* msg) {
   lk_sch1.unlock();
 }
 
-void Van::ProcessAskCommand(Message* msg) {
+void Van::ProcessAskPullCommand(Message* msg) {
   // update A and B
   std::unique_lock<std::mutex> lks(sched);
   int req_node_id = msg->meta.sender - 100;
