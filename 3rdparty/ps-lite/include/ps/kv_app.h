@@ -367,7 +367,7 @@ class KVWorker: public SimpleApp {
     CHECK(slicer); slicer_ = slicer;
   }
   int enable_intra_ts = 0;
-  int enable_p3=0;
+  int enable_p3 = 0;
 
  private:
   ReqHandle request_handle_;
@@ -600,7 +600,7 @@ class KVServer: public SimpleApp {
     global_iter++;
     int throughput = -1;
     int last_recv_id = -1;
-    while(1) {
+    while(true) {
       int receiver=Postoffice::Get()->van()->GetGlobalReceiver(throughput, last_recv_id, global_iter);
       if(receiver == -1) break; // whether transmition is over
       if(kvs.keys.size()) {
@@ -614,19 +614,19 @@ class KVServer: public SimpleApp {
         msg.meta.recver = receiver;
         msg.meta.key = req.key;
         msg.meta.version = version;
-        msg.meta.iters=global_iter;
+        msg.meta.iters = global_iter;
         msg.meta.timestamp = -1;
         msg.AddData(kvs.keys);
         msg.AddData(kvs.vals);
         if (kvs.lens.size()) {
           msg.AddData(kvs.lens);
         }
-        clock_t starts ,ends;
+        clock_t starts, ends;
         starts = clock();
-        Postoffice::Get()->van()->Send(msg,true);
+        Postoffice::Get()->van()->Send(msg, true);
         Postoffice::Get()->van()->Wait_for_global_finished();
         ends = clock();
-        throughput= (int) (1/((double)(ends - starts) / CLOCKS_PER_SEC));
+        throughput = (int) (1/((double)(ends - starts) / CLOCKS_PER_SEC));
         last_recv_id = receiver;
       }
     }
@@ -637,7 +637,7 @@ class KVServer: public SimpleApp {
     iter++;
     int throughput = -1;
     int last_recv_id = -1;
-    while(1) {
+    while(true) {
       int receiver = Postoffice::Get()->van()->GetReceiver(throughput, last_recv_id, iter);
       if(receiver == -1) break; // whether transmition is over
       if(kvs.keys.size()) {
@@ -650,19 +650,19 @@ class KVServer: public SimpleApp {
         msg.meta.recver = receiver;
         msg.meta.key = req.key;
         msg.meta.version = version;
-        msg.meta.iters=iter;
+        msg.meta.iters = iter;
         msg.meta.timestamp = -1;
         msg.AddData(kvs.keys);
         msg.AddData(kvs.vals);
         if (kvs.lens.size()) {
           msg.AddData(kvs.lens);
         }
-        clock_t starts ,ends;
+        clock_t starts, ends;
         starts = clock();
         Postoffice::Get()->van()->Send(msg);
         Postoffice::Get()->van()->Wait_for_finished();
         ends = clock();
-        throughput= (int) (1/((double)(ends - starts) / CLOCKS_PER_SEC));
+        throughput = (int) (1/((double)(ends - starts) / CLOCKS_PER_SEC));
         last_recv_id = receiver;
       }
     }
