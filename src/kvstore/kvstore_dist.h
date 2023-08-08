@@ -349,7 +349,7 @@ class KVStoreDist : public KVStoreLocal {
       auto &recv_buf = comm_buf_[key];
       const auto storage_type = grouped_vals[i][0]->storage_type();
       CHECK_EQ(storage_type, kDefaultStorage)
-          << "Expected stype of value to be kDefaultStorage";
+        << "Expected stype of value to be kDefaultStorage";
 
       bool recv_buf_first_init = recv_buf.is_none();
       if (recv_buf.is_none()) {
@@ -359,13 +359,13 @@ class KVStoreDist : public KVStoreLocal {
 
       if (ps_worker_->enable_p3 && !recv_buf_first_init) {
         CHECK_NOTNULL(Engine::Get())->PushAsync(
-            [](RunContext rctx, Engine::CallbackOnComplete cb) { cb(); },
-            pinned_ctx_,
-            {},
-            {recv_buf.var()},
-            FnProperty::kNormal,
-            priority,
-            "KVStoreDistDefaultStoragePull");
+          [](RunContext rctx, Engine::CallbackOnComplete cb) { cb(); },
+          pinned_ctx_,
+          {},
+          {recv_buf.var()},
+          FnProperty::kNormal,
+          priority,
+          "KVStoreDistDefaultStoragePull");
       } else {
         auto pull_from_servers = [this, key, recv_buf](
           RunContext rctx, Engine::CallbackOnComplete cb) {
@@ -374,8 +374,7 @@ class KVStoreDist : public KVStoreLocal {
           const int dtype = recv_buf.dtype();
           const int num_bytes = mshadow::mshadow_sizeof(dtype);
           PSKV &pskv = (gradient_compression_->get_type() == CompressionType::kTwoBit) ?
-                       EncodeCompressedKey(key, size, false, num_bytes) :
-                       EncodeDefaultKey(key, size, num_bytes);
+            EncodeCompressedKey(key, size, false, num_bytes) : EncodeDefaultKey(key, size, num_bytes);
           char *data = static_cast<char *> (recv_buf.data().dptr_);
           // false means not to delete data when SArray is deleted
           auto vals = new ps::SArray<char>(data, size * num_bytes, false);
@@ -398,26 +397,26 @@ class KVStoreDist : public KVStoreLocal {
 
           if (gradient_compression_->get_type() == CompressionType::kNone && ps_worker_->enable_intra_ts) {
             CHECK_NOTNULL(ps_worker_)->AutoPull(
-                key, pskv.keys, vals, &pskv.lens, cmd, [vals, cb]() {
-                  delete vals;
-                  cb();
-                });
+              key, pskv.keys, vals, &pskv.lens, cmd, [vals, cb]() {
+                delete vals;
+                cb();
+              });
           } else {
             CHECK_NOTNULL(ps_worker_)->ZPull(
-                pskv.keys, vals, &pskv.lens, cmd, [vals, cb]() {
-                  delete vals;
-                  cb();
-                });
+              pskv.keys, vals, &pskv.lens, cmd, [vals, cb]() {
+                delete vals;
+                cb();
+              });
           }
         };
         CHECK_NOTNULL(Engine::Get())->PushAsync(
-            pull_from_servers,
-            pinned_ctx_,
-            {},
-            {recv_buf.var()},
-            FnProperty::kNormal,
-            priority,
-            "KVStoreDistDefaultStoragePull");
+          pull_from_servers,
+          pinned_ctx_,
+          {},
+          {recv_buf.var()},
+          FnProperty::kNormal,
+          priority,
+          "KVStoreDistDefaultStoragePull");
       }
       comm_->Broadcast(key, recv_buf, grouped_vals[i], priority);
     }
@@ -438,7 +437,7 @@ class KVStoreDist : public KVStoreLocal {
       auto& grouped_val_rowid = grouped_val_rowids[i];
       const auto storage_type = grouped_val_rowid[0].first->storage_type();
       CHECK_EQ(storage_type, kRowSparseStorage)
-               << "expected kRowSparseStorage, but got " << storage_type;
+         << "expected kRowSparseStorage, but got " << storage_type;
       if (recv_buf.is_none()) {
         // it may happen for the first time a no-rank-0 worker pull the weight.
         recv_buf = NDArray(storage_type, grouped_val_rowid[0].first->shape(),
@@ -500,8 +499,8 @@ class KVStoreDist : public KVStoreLocal {
       // push to servers
       if (storage_type == kDefaultStorage) {
           if (gradient_compression_->get_type() == CompressionType::kNone || gradient_compression_->get_type() == CompressionType::kBiSparseCompression) {
-          PSKV& pskv = ps_worker_->enable_p3?P3_EncodeDefaultKey(key, comm_buf.shape().Size(), num_bytes):
-                  EncodeDefaultKey(key, comm_buf.shape().Size(), num_bytes);
+          PSKV& pskv = ps_worker_->enable_p3 ? P3_EncodeDefaultKey(key, comm_buf.shape().Size(), num_bytes)
+            : EncodeDefaultKey(key, comm_buf.shape().Size(), num_bytes);
           PushDefault(key, comm_buf, pskv, priority);
         } else {
           CHECK_EQ(dtype, mshadow::kFloat32) << "Gradient compression is only supported for "
