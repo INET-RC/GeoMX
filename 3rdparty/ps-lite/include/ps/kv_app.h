@@ -306,15 +306,6 @@ class KVWorker: public SimpleApp {
     return ts;
   }
 
-  int P3_ZPull(const SArray<Key>& keys,
-               SArray<Val>* vals,
-               SArray<int>* lens = nullptr,
-               int cmd = 0,
-               const Callback& cb = nullptr,
-               int priority = 0) {
-    return P3_Pull_(keys, vals, lens, cmd, cb, priority);
-  }
-
   void Response(const KVMeta& req);
 
   void Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs,
@@ -375,10 +366,6 @@ class KVWorker: public SimpleApp {
   template <typename C, typename D>
   int Pull_(const SArray<Key>& keys, C* vals, D* lens,
             int cmd, const Callback& cb);
-
-  template <typename C, typename D>
-  int P3_Pull_(const SArray<Key>& keys, C* vals, D* lens,
-               int cmd, const Callback& cb, int priority);
 
   /**
    * \brief add a callback for a request. threadsafe.
@@ -1700,72 +1687,6 @@ int KVWorker<Val>::Pull_(const SArray<Key>& keys, C* vals, D* lens, int cmd, con
   KVPairs<Val> kvs;
   kvs.keys = keys;
   Send(ts, false, cmd, kvs);
-  return ts;
-}
-
-template <typename Val>
-template <typename C, typename D>
-int KVWorker<Val>::P3_Pull_(const SArray<Key>& keys, C* vals, D* lens, int cmd, const Callback& cb, int priority) {
-  int ts = obj_->NewRequest(kServerGroup);
-  AddCallback(ts, [this, ts, keys, vals, lens, cb]() mutable {
-    mu_.lock();
-    auto& kvs = recv_kvs_[ts];
-    mu_.unlock();
-
-    // do check
-    size_t total_key = 0, total_val = 0;
-    for (const auto& s : kvs) {
-      Range range = FindRange(keys, s.keys.front(), s.keys.back()+1);
-      CHECK_EQ(range.size(), s.keys.size())
-              << "unmatched keys size from one server";
-      if (lens) CHECK_EQ(s.lens.size(), s.keys.size());
-      total_key += s.keys.size();
-      total_val += s.vals.size();
-    }
-    CHECK_EQ(total_key, keys.size()) << "lost some servers?";
-
-    // fill vals and lens
-    std::sort(kvs.begin(), kvs.end(), [](
-            const KVPairs<Val>& a, const KVPairs<Val>& b) {
-      return a.keys.front() < b.keys.front();
-    });
-    CHECK_NOTNULL(vals);
-    if (vals->empty()) {
-      vals->resize(total_val);
-    } else {
-      CHECK_EQ(vals->size(), total_val);
-    }
-    Val* p_vals = vals->data();
-    int *p_lens = nullptr;
-    if (lens) {
-      if (lens->empty()) {
-        lens->resize(keys.size());
-      } else {
-        CHECK_EQ(lens->size(), keys.size());
-      }
-      p_lens = lens->data();
-    }
-    for (const auto& s : kvs) {
-      memcpy(p_vals, s.vals.data(), s.vals.size() * sizeof(Val));
-      p_vals += s.vals.size();
-      if (p_lens) {
-        memcpy(p_lens, s.lens.data(), s.lens.size() * sizeof(int));
-        p_lens += s.lens.size();
-      }
-    }
-
-    mu_.lock();
-    recv_kvs_.erase(ts);
-    mu_.unlock();
-    if (cb) cb();
-  });
-
-  KVPairs<Val> kvs; kvs.keys = keys;
-  kvs.priority = priority;
-  Send(ts, false, cmd, kvs,
-       Meta::kEmpty, Meta::kEmpty,
-       Meta::kEmpty, Meta::kEmpty, 1,
-       true);
   return ts;
 }
 
