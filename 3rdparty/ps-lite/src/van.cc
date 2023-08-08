@@ -942,7 +942,7 @@ void Van::ReceivingGlobal() {
       } else if (ctrl.cmd == Control::AUTOPULLREPLY) {
         ProcessAutoPullReplyGlobal();
       } else if (ctrl.cmd == Control::ASKPULL) {
-        ProcessAskGlobalCommand(&msg);
+        ProcessAskPullGlobalCommand(&msg);
       } else if (ctrl.cmd == Control::ASKPUSH) {
         ProcessAskPushGlobalCommand(&msg);
       } else if (ctrl.cmd == Control::REPLY) {
@@ -1385,7 +1385,7 @@ void Van::ProcessAskPullCommand(Message* msg) {
   Send(reply);
 }
 
-void Van::ProcessAskGlobalCommand(Message* msg) {
+void Van::ProcessAskPullGlobalCommand(Message* msg) {
   // update A and B
   std::unique_lock<std::mutex> lks(sched);
   int req_node_id = msg->meta.sender;

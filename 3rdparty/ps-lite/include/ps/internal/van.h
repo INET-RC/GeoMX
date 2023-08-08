@@ -207,7 +207,7 @@ class Van {
   void ProcessAutoPullReply();
   void ProcessAutoPullReplyGlobal();
   void ProcessAskPullCommand(Message* msg);
-  void ProcessAskGlobalCommand(Message* msg);
+  void ProcessAskPullGlobalCommand(Message* msg);
   void ProcessAskPushCommand(Message* msg);
   void ProcessAskPushGlobalCommand(Message* msg);
   void ProcessReplyCommand(Message* reply);
