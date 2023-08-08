@@ -355,6 +355,7 @@ class KVWorker: public SimpleApp {
   void set_slicer(const Slicer& slicer) {
     CHECK(slicer); slicer_ = slicer;
   }
+
   int enable_intra_ts = 0;
   int enable_p3 = 0;
 
@@ -1405,10 +1406,10 @@ void KVWorker<Val>::AutoPullUpdate(const int version, const int iters, const int
 
 template <typename Val>
 void KVWorker<Val>::AutoPullReply(const int sender){
-  Message rpy;
-  rpy.meta.recver = sender;
-  rpy.meta.control.cmd = Control::AUTOPULLREPLY;
-  Postoffice::Get()->van()->Send(rpy);
+  Message reply;
+  reply.meta.recver = sender;
+  reply.meta.control.cmd = Control::AUTOPULLREPLY;
+  Postoffice::Get()->van()->Send(reply);
 }
 
 template <typename Val>
@@ -1478,10 +1479,10 @@ void KVWorker<Val>::TS_Process(const Message& msg) {
       }
       if (msg.meta.request) {
         CHECK_EQ(kvs.keys.size(), (size_t)1);
-        if(enable_intra_ts)
+        if(enable_intra_ts) {
           AutoPullReply(msg.meta.sender);
-        if(enable_intra_ts)
           AutoPullUpdate(msg.meta.version, msg.meta.iters, msg.meta.key, kvs);
+        }
         ts_mu_.lock();
         auto_pull_kvs_[key][kvs.keys[0]] = kvs;
         ts_mu_.unlock();
