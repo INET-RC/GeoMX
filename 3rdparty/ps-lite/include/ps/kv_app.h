@@ -1652,7 +1652,7 @@ int KVWorker<Val>::Pull_(const SArray<Key>& keys, C* vals, D* lens, int cmd, con
     // do check
     size_t total_key = 0, total_val = 0;
     for (const auto& s : kvs) {
-      Range range = FindRange(keys, s.keys.front(), s.keys.back()+1);
+      Range range = FindRange(keys, s.keys.front(), s.keys.back() + 1);
       CHECK_EQ(range.size(), s.keys.size())
           << "unmatched keys size from one server";
       if (lens) CHECK_EQ(s.lens.size(), s.keys.size());
@@ -1673,7 +1673,7 @@ int KVWorker<Val>::Pull_(const SArray<Key>& keys, C* vals, D* lens, int cmd, con
       CHECK_EQ(vals->size(), total_val);
     }
     Val* p_vals = vals->data();
-    int *p_lens = nullptr;
+    int* p_lens = nullptr;
     if (lens) {
       if (lens->empty()) {
         lens->resize(keys.size());
@@ -1697,7 +1697,8 @@ int KVWorker<Val>::Pull_(const SArray<Key>& keys, C* vals, D* lens, int cmd, con
     if (cb) cb();
   });
 
-  KVPairs<Val> kvs; kvs.keys = keys;
+  KVPairs<Val> kvs;
+  kvs.keys = keys;
   Send(ts, false, cmd, kvs);
   return ts;
 }
