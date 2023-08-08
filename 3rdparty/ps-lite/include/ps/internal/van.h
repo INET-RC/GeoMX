@@ -56,7 +56,7 @@ class Van {
    */
   virtual void Start(int customer_id);
   virtual void StartGlobal(int customer_id);
-  void Push(const Message& msg);
+  void PushToSenderQueue(const Message& msg);
   /**
    * \brief send a message, It is thread-safe
    * \return the number of bytes sent. -1 if failed

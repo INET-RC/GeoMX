@@ -844,7 +844,7 @@ int Van::Send(const Message& msg, bool is_global) {
   return send_bytes;
 }
 
-void Van::Push(const Message& msg) {
+void Van::PushToSenderQueue(const Message& msg) {
   send_queue_.Push(msg);
 }
 

@@ -254,7 +254,7 @@ class KVWorker: public SimpleApp {
                const SArray<int>& lens = {},
                int cmd = 0,
                const Callback& cb = nullptr,
-               int priority=0) {
+               int priority = 0) {
     int ts = obj_->NewRequest(kServerGroup);
     AddCallback(ts, [this, ts, keys, vals, lens, cb]() mutable {
       if (recv_kvs_.find(ts) != recv_kvs_.end()) {
@@ -297,7 +297,10 @@ class KVWorker: public SimpleApp {
     kvs.vals = vals;
     kvs.lens = lens;
     kvs.priority = priority;
-    P3_Send(ts, true, cmd, kvs);
+    Send(ts, true, cmd, kvs,
+         Meta::kEmpty, Meta::kEmpty,
+         Meta::kEmpty, Meta::kEmpty, 1,
+         true);
     return ts;
   }
 
@@ -312,9 +315,14 @@ class KVWorker: public SimpleApp {
 
   void Response(const KVMeta& req);
 
+//  void Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs,
+//            int uniq_key = Meta::kEmpty, int key_version = 0,
+//            int app = Meta::kEmpty, int customer = Meta::kEmpty, int num_merge = 1);
+
   void Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs,
-            int uniq_key=Meta::kEmpty, int key_version=0,
-            int app=Meta::kEmpty, int customer=Meta::kEmpty, int num_merge=1);
+            int uniq_key = Meta::kEmpty, int key_version = Meta::kEmpty,
+            int app = Meta::kEmpty, int customer = Meta::kEmpty, int num_merge = 1,
+            bool enable_priority = false);
 
   /**
    * \brief zero-copy Pull
@@ -390,8 +398,6 @@ class KVWorker: public SimpleApp {
    * \param timestamp the timestamp of the callback
    */
   void RunCallback(int timestamp);
-
-  void P3_Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs);
 
   /** \brief internal receive handle */
   void Process(const Message& msg);
@@ -920,7 +926,8 @@ void KVServer<Val>::DefaultSlicer(
 
 template <typename Val>
 void KVWorker<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs,
-                         int uniq_key, int key_version, int app, int customer, int num_merge) {
+                         int uniq_key, int key_version, int app, int customer, int num_merge,
+                         bool enable_priority) {
   // slice the message
   SlicedKVs sliced;
   slicer_(kvs, Postoffice::Get()->GetServerKeyRanges(), &sliced);
@@ -950,6 +957,8 @@ void KVWorker<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& 
     msg.meta.key         = uniq_key;
     msg.meta.version     = key_version;
     msg.meta.iters       = (num_merge != 1) ? num_merge : 1;
+    msg.meta.priority    = (enable_priority) ? kvs.priority : 0;
+
     const auto &kvs = s.second;
     if (kvs.keys.size()) {
       msg.AddData(kvs.keys);
@@ -958,49 +967,13 @@ void KVWorker<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& 
         msg.AddData(kvs.lens);
       }
     }
-    CHECK_NE(Postoffice::Get()->van()->Send(msg), -1);
-    if (app != Meta::kEmpty) send_push = 0;
-  }
-}
 
-template <typename Val>
-void KVWorker<Val>::P3_Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs) {
-  // slice the message
-  SlicedKVs sliced;
-  slicer_(kvs, Postoffice::Get()->GetServerKeyRanges(), &sliced);
-
-  // need to add response first, since it will not always trigger the callback
-  int skipped = 0;
-  for (size_t i = 0; i < sliced.size(); ++i) {
-    if (!sliced[i].first) ++skipped;
-  }
-  obj_->AddResponse(timestamp, skipped);
-  if ((size_t)skipped == sliced.size()) {
-    RunCallback(timestamp);
-  }
-
-  for (size_t i = 0; i < sliced.size(); ++i) {
-    const auto& s = sliced[i];
-    if (!s.first) continue;
-    Message msg;
-    msg.meta.priority    = kvs.priority;
-    msg.meta.app_id = obj_->app_id();
-    msg.meta.customer_id = obj_->customer_id();
-    msg.meta.request     = true;
-    msg.meta.push        = push;
-    msg.meta.head        = cmd;
-    msg.meta.timestamp   = timestamp;
-    msg.meta.recver      = Postoffice::Get()->ServerRankToID(i, false);
-    msg.meta.iters       = 1;
-    const auto& kvs = s.second;
-    if (kvs.keys.size()) {
-      msg.AddData(kvs.keys);
-      msg.AddData(kvs.vals);
-      if (kvs.lens.size()) {
-        msg.AddData(kvs.lens);
-      }
+    if (enable_priority) {
+      Postoffice::Get()->van()->PushToSenderQueue(msg);
+    } else {
+      CHECK_NE(Postoffice::Get()->van()->Send(msg), -1);
+      if (app != Meta::kEmpty) send_push = 0;
     }
-    Postoffice::Get()->van()->Push(msg);
   }
 }
 
@@ -1788,7 +1761,10 @@ int KVWorker<Val>::P3_Pull_(const SArray<Key>& keys, C* vals, D* lens, int cmd, 
 
   KVPairs<Val> kvs; kvs.keys = keys;
   kvs.priority = priority;
-  P3_Send(ts, false, cmd, kvs);
+  Send(ts, false, cmd, kvs,
+       Meta::kEmpty, Meta::kEmpty,
+       Meta::kEmpty, Meta::kEmpty, 1,
+       true);
   return ts;
 }
 
