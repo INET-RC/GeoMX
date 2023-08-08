@@ -331,11 +331,11 @@ class KVWorker: public SimpleApp {
 
   /** \brief auto pull*/
   int AutoPull(int uniq_key,
-                 const SArray <Key> &keys,
-                 SArray <Val> *vals,
-                 SArray<int> *lens = nullptr,
-                 int cmd = 0,
-                 const Callback &cb = nullptr);
+               const SArray<Key>& keys,
+               SArray<Val>* vals,
+               SArray<int>* lens = nullptr,
+               int cmd = 0,
+               const Callback& cb = nullptr);
 
   using SlicedKVs = std::vector<std::pair<bool, KVPairs<Val>>>;
   /**
