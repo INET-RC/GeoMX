@@ -704,7 +704,7 @@ void Van::Stop(bool is_global) {
   if (is_global) ready_global_ = false;
 }
 
-void Van::Classifier(Message& msg, int channel, int tag) {
+void Van::AssignMsg(Message& msg, int channel, int tag) {
   if(channel == 0) important_queue_.Push(msg);
   else unimportant_queue_.Push(msg);
 }
