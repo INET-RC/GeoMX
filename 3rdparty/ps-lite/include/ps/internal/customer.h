@@ -12,6 +12,7 @@
 #include <functional>
 #include <thread>
 #include <memory>
+#include <algorithm>
 #include "ps/internal/message.h"
 #include "ps/internal/threadsafe_queue.h"
 namespace ps {
@@ -88,17 +89,13 @@ class Customer {
    * \param recved the received the message
    */
   inline void Accept(const Message& recved) {
-    //LOG(INFO) << "Customer Accept";
-    //LOG(INFO) << "recved.meta.head " << recved.meta.head;
-    //LOG(INFO) << "recved.meta.sender " << recved.meta.sender;
-    //LOG(INFO) << "recved.meta.request " << recved.meta.request;
-    //LOG(INFO) << "recved.meta.push " << recved.meta.push;
-    if ((recved.meta.head == 0 || recved.meta.head == 2 || recved.meta.head == 3 || recved.meta.head == 5 || recved.meta.head == 6) && recved.meta.sender % 2 == 1 && recved.meta.request == true && recved.meta.push == false && recved.meta.simple_app == false)
-    {
-      //LOG(INFO) << "recv_pull_queue_.Push(recved)";
+    static const std::vector<int> valid_heads = {0, 2, 3, 5, 6};
+    bool is_head_valid = std::find(
+      valid_heads.begin(), valid_heads.end(), recved.meta.head) != valid_heads.end();
+    if (is_head_valid && recved.meta.sender % 2 == 1 && recved.meta.request == true
+      && recved.meta.push == false && recved.meta.simple_app == false) {
       recv_pull_queue_.Push(recved);
     } else {
-      //LOG(INFO) << "recv_queue_.Push(recved)";
       recv_queue_.Push(recved);
     }
   }
