@@ -687,12 +687,12 @@ class KVServer: public SimpleApp {
   int GetChannel(int index, int max_index, int C, float k);
 
   enum class RequestType {
-      kDefaultPushPull, kRowSparsePushPull, kCompressedPushPull, kDGCompressedPushOnly
+    kDefaultPushPull, kRowSparsePushPull, kCompressedPushPull, kDGCompressedPushOnly
   };
 
   struct DataHandleType {
-      RequestType requestType;
-      int dtype;
+    RequestType requestType;
+    int dtype;
   };
 
   static DataHandleType DepairDataHandleType(int cmd) {
@@ -730,7 +730,7 @@ class KVServer: public SimpleApp {
 template <typename Val>
 struct KVServerDefaultHandle {
   void operator()(
-      const KVMeta& req_meta, const KVPairs<Val>& req_data, KVServer<Val>* server) {
+    const KVMeta& req_meta, const KVPairs<Val>& req_data, KVServer<Val>* server) {
     size_t n = req_data.keys.size();
     KVPairs<Val> res;
     if (req_meta.push) {
@@ -778,10 +778,9 @@ void KVWorker<Val>::DefaultSlicer(
     const KVPairs<Val>& send, const std::vector<Range>& ranges,
     typename KVWorker<Val>::SlicedKVs* sliced) {
   sliced->resize(ranges.size());
-
   // find the positions in msg.key
   size_t n = ranges.size();
-  std::vector<size_t> pos(n+1);
+  std::vector<size_t> pos(n + 1);
   const Key* begin = send.keys.begin();
   const Key* end = send.keys.end();
   for (size_t i = 0; i < n; ++i) {
@@ -793,8 +792,7 @@ void KVWorker<Val>::DefaultSlicer(
     }
     size_t len = std::lower_bound(begin, end, ranges[i].end()) - begin;
     begin += len;
-    pos[i+1] = pos[i] + len;
-
+    pos[i + 1] = pos[i] + len;
     // don't send it to servers for empty kv
     sliced->at(i).first = (len != 0);
   }
@@ -832,13 +830,12 @@ void KVWorker<Val>::DefaultSlicer(
 
 template <typename Val>
 void KVServer<Val>::DefaultSlicer(
-        const KVPairs<Val>& send, const std::vector<Range>& ranges,
-        typename KVServer<Val>::SlicedKVs* sliced) {
+    const KVPairs<Val>& send, const std::vector<Range>& ranges,
+    typename KVServer<Val>::SlicedKVs* sliced) {
   sliced->resize(ranges.size());
-
   // find the positions in msg.key
   size_t n = ranges.size();
-  std::vector<size_t> pos(n+1);
+  std::vector<size_t> pos(n + 1);
   const Key* begin = send.keys.begin();
   const Key* end = send.keys.end();
   for (size_t i = 0; i < n; ++i) {
@@ -850,8 +847,7 @@ void KVServer<Val>::DefaultSlicer(
     }
     size_t len = std::lower_bound(begin, end, ranges[i].end()) - begin;
     begin += len;
-    pos[i+1] = pos[i] + len;
-
+    pos[i + 1] = pos[i] + len;
     // don't send it to servers for empty kv
     sliced->at(i).first = (len != 0);
   }
@@ -869,7 +865,7 @@ void KVServer<Val>::DefaultSlicer(
 
   // slice
   for (size_t i = 0; i < n; ++i) {
-    if (pos[i+1] == pos[i]) {
+    if (pos[i + 1] == pos[i]) {
       sliced->at(i).first = false;
       continue;
     }
@@ -1127,7 +1123,7 @@ void KVServer<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& 
 template <typename Val>
 void KVWorker<Val>::Response(const KVMeta& req) {
   Message msg;
-  msg.meta.app_id = obj_->app_id();
+  msg.meta.app_id      = obj_->app_id();
   msg.meta.customer_id = req.customer_id;
   msg.meta.request     = false;
   msg.meta.push        = req.push;
@@ -1295,7 +1291,7 @@ void KVServer<Val>::Process(const Message& msg) {
   meta.customer_id = msg.meta.customer_id;
   meta.key         = msg.meta.key;
   meta.version     = msg.meta.version;
-  meta.num_merge   = (msg.meta.iters==Meta::kEmpty)?1:msg.meta.iters;
+  meta.num_merge   = (msg.meta.iters == Meta::kEmpty) ? 1 : msg.meta.iters;
   meta.app_id      = msg.meta.request;
   KVPairs<Val> data;
   int n = msg.data.size();
@@ -1311,25 +1307,27 @@ void KVServer<Val>::Process(const Message& msg) {
   }
 
   // notice here to normalize it later !!!warning!!! number of field should less than 50
-  if (enable_intra_ts && msg.meta.sender > 100 && msg.meta.push && msg.meta.request) {
-      Postoffice::Get()->van()->AskForReceiverPush(msg.meta.app_id, msg.meta.customer_id, msg.meta.timestamp);
+  if (enable_intra_ts && msg.meta.sender > 100
+      && msg.meta.push && msg.meta.request) {
+    Postoffice::Get()->van()->AskForReceiverPush(
+      msg.meta.app_id, msg.meta.customer_id, msg.meta.timestamp);
   }
 
-  if (enable_inter_ts && !Postoffice::Get()->is_global_server() && \
-      msg.meta.sender < 100 && !msg.meta.push && msg.data.size() && \
-      msg.meta.request) {
+  if (enable_inter_ts && !Postoffice::Get()->is_global_server()
+      && msg.meta.sender < 100 && !msg.meta.push && msg.data.size()
+      && msg.meta.request) {
     AutoPullReply(msg.meta.sender);
     AutoPullUpdate2(msg.meta.version, msg.meta.iters, msg.meta.key,msg.meta.head, data);
   }
 
-  if (enable_inter_ts && Postoffice::Get()->is_global_server() && msg.meta.sender < 100 && \
-      msg.meta.push && msg.meta.request) {
+  if (enable_inter_ts && Postoffice::Get()->is_global_server()
+      && msg.meta.sender < 100 && msg.meta.push && msg.meta.request) {
     Postoffice::Get()->van()->AskForReceiverPush(msg.meta.app_id, msg.meta.customer_id, msg.meta.timestamp, true);
   }
 
-  if (enable_inter_ts && !Postoffice::Get()->is_global_server() && msg.meta.sender < 100 &&  \
-      msg.meta.push && msg.meta.request) {
-    if(msg.data.size()){
+  if (enable_inter_ts && !Postoffice::Get()->is_global_server()
+      && msg.meta.sender < 100 && msg.meta.push && msg.meta.request) {
+    if (msg.data.size()) {
       KVMeta meta;
       meta.cmd         = msg.meta.head;
       meta.push        = msg.meta.push;
@@ -1356,18 +1354,18 @@ void KVServer<Val>::Process(const Message& msg) {
     }
   }
   CHECK(request_handle_);
-  if(!(enable_inter_ts && !Postoffice::Get()->is_global_server() && msg.meta.sender < 100 && \
-     msg.meta.push && msg.meta.request)) {
+  if(!(enable_inter_ts && !Postoffice::Get()->is_global_server()
+      && msg.meta.sender < 100 && msg.meta.push && msg.meta.request)) {
     request_handle_(meta, data, this);
   }
 }
 
 template <typename Val>
 void KVServer<Val>::AutoPullReply(const int sender){
-  Message rpy;
-  rpy.meta.recver = sender;
-  rpy.meta.control.cmd = Control::AUTOPULLREPLY;
-  Postoffice::Get()->van()->Send(rpy,true);
+  Message reply;
+  reply.meta.recver = sender;
+  reply.meta.control.cmd = Control::AUTOPULLREPLY;
+  Postoffice::Get()->van()->Send(reply, true);
 }
 
 template <typename Val>
@@ -1376,10 +1374,8 @@ void KVWorker<Val>::RunCallback(int timestamp) {
   auto it = callbacks_.find(timestamp);
   if (it != callbacks_.end()) {
     mu_.unlock();
-
     CHECK(it->second);
     it->second();
-
     mu_.lock();
     callbacks_.erase(it);
   }
@@ -1392,10 +1388,8 @@ void KVServer<Val>::RunCallback(int timestamp) {
   auto it = callbacks_.find(timestamp);
   if (it != callbacks_.end()) {
     mu_.unlock();
-
     CHECK(it->second);
     it->second();
-
     mu_.lock();
     callbacks_.erase(it);
   }
