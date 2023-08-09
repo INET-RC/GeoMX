@@ -443,10 +443,8 @@ class KVServer: public SimpleApp {
 
   /** \brief send merged data to global server to perform aggregation. */
   void Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs,
-            int uniq_key = Meta::kEmpty);
-
-  void TS_Send(int timestamp, bool push, int uniq_key, int cmd, const KVPairs<Val>& kvs,
-               int key_version, int app, int customer, int merge);
+            int uniq_key = Meta::kEmpty, int key_version = 0,
+            int app = Meta::kEmpty, int customer = Meta::kEmpty, int num_merge = 1);
 
   /**
    * \brief the handle to process a push/pull request from a worker
@@ -1012,7 +1010,7 @@ int KVServer<Val>::GetChannel(int index, int max_index, int C, float k) {
 
 template <typename Val>
 void KVServer<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs,
-                         int uniq_key) {
+                         int uniq_key, int key_version, int app, int customer, int num_merge) {
   // slice the message
   SlicedKVs sliced;
   slicer_(kvs, Postoffice::Get()->GetServerKeyRanges(true), &sliced);
@@ -1030,7 +1028,7 @@ void KVServer<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& 
   for (size_t i = 0; i < sliced.size(); ++i) {
     const auto& s = sliced[i];
     if (!s.first) continue;
-    if(DepairDataHandleType(cmd).requestType == RequestType::kDefaultPushPull
+    if (DepairDataHandleType(cmd).requestType == RequestType::kDefaultPushPull
         && push && enable_dgt) {
       int total_bytes = kvs.vals.size();
       int remain_bytes = total_bytes;
@@ -1038,13 +1036,16 @@ void KVServer<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& 
       int seq = 0;
       int seq_num = 0;
 
-      if(total_bytes % block_size == 0) {
+      if (total_bytes % block_size == 0) {
           seq_num = total_bytes / block_size;
       } else {
           seq_num = total_bytes / block_size + 1;
       }
+      std::cout << seq_num << std::endl;
+      seq_num = (total_bytes + block_size - 1) / block_size;
+      std::cout << seq_num << std::endl;
       dmlc_k = dmlc_k_init;
-      while(remain_bytes != 0) {
+      while (remain_bytes != 0) {
         Message msg;
         msg.meta.app_id      = obj_->app_id();
         msg.meta.customer_id = obj_->customer_id();
@@ -1103,130 +1104,17 @@ void KVServer<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& 
       msg_vector.clear();
     } else {
       Message msg;
-      msg.meta.app_id      = obj_->app_id();
-      msg.meta.customer_id = obj_->customer_id();
+      msg.meta.app_id      = (app != Meta::kEmpty) ? app : obj_->app_id();
+      msg.meta.customer_id = (customer != Meta::kEmpty) ? customer : obj_->customer_id();
       msg.meta.request     = true;
       msg.meta.push        = push;
       msg.meta.head        = cmd;
       msg.meta.timestamp   = timestamp;
-      msg.meta.recver      = Postoffice::Get()->ServerRankToID(i, true);
-      msg.meta.iters       = 1;
-      msg.meta.key         = uniq_key;
-      msg.meta.version     = 0;
-      const auto& kvs = s.second;
-      if (kvs.keys.size()) {
-        msg.AddData(kvs.keys);
-        msg.AddData(kvs.vals);
-        if (kvs.lens.size()) {
-          msg.AddData(kvs.lens);
-        }
-      }
-      CHECK_NE(Postoffice::Get()->van()->Send(msg, true), -1);
-    }
-  }
-}
-
-template <typename Val>
-void KVServer<Val>::TS_Send(int timestamp, bool push, int uniq_key, int cmd,
-                             const KVPairs<Val>& kvs, int key_version,int app, int customer, int merge) {
-  // slice the message
-  SlicedKVs sliced;
-  slicer_(kvs, Postoffice::Get()->GetServerKeyRanges(true), &sliced);
-
-  // need to add response first, since it will not always trigger the callback
-  int skipped = 0;
-  for (size_t i = 0; i < sliced.size(); ++i) {
-    if (!sliced[i].first) ++skipped;
-  }
-  obj_->AddResponse(timestamp, skipped);
-  if ((size_t)skipped == sliced.size()) {
-    RunCallback(timestamp);
-  }
-  for (size_t i = 0; i < sliced.size(); ++i) {
-    const auto& s = sliced[i];
-    if (!s.first) continue;
-    if(DepairDataHandleType(cmd).requestType == RequestType::kDefaultPushPull && push && enable_dgt){
-      int total_bytes = kvs.vals.size();
-      int remain_bytes = total_bytes;
-      int val_bytes = 0;   // offset
-      int seq = 0;
-      int seq_num = 0;
-
-      if(total_bytes % block_size == 0) {
-          seq_num = total_bytes / block_size;
-      } else {
-          seq_num = total_bytes / block_size + 1;
-      }
-      dmlc_k = dmlc_k_init;
-      while(remain_bytes != 0){
-        Message msg;
-        msg.meta.app_id = obj_->app_id();
-        msg.meta.customer_id = obj_->customer_id();
-        msg.meta.request     = true;
-        msg.meta.push        = push;
-        msg.meta.head        = cmd;
-        msg.meta.timestamp   = timestamp;
-        msg.meta.recver      = Postoffice::Get()->ServerRankToID(i, true);
-        msg.meta.msg_type    = 1;
-        if(DepairDataHandleType(cmd).dtype == 0) { //kFloat32
-            msg.meta.bits_num = 32;
-        } else if (DepairDataHandleType(cmd).dtype == 2) { //kFloat16
-            msg.meta.bits_num = 16;
-        }
-
-        msg.meta.total_bytes = total_bytes;
-        int l = std::min(remain_bytes,block_size);
-        SArray<Val> tmp_val = kvs.vals.segment(val_bytes, val_bytes+l);
-
-        msg.meta.val_bytes = val_bytes;
-        val_bytes += l;
-        msg.meta.first_key = kvs.keys[0];
-        msg.meta.seq = seq;
-        msg.meta.seq_begin = 0;
-        msg.meta.seq_end = seq_num - 1;
-        if (kvs.keys.size()) {
-          msg.AddData(kvs.keys);
-          msg.meta.keys_len = msg.data.back().size();
-          msg.AddData(tmp_val);
-          msg.meta.vals_len = msg.data.back().size();
-          if (kvs.lens.size()) {
-            msg.AddData(kvs.lens);
-            msg.meta.lens_len = msg.data.back().size();
-          }
-        }
-        msg.contribution = EvalMsgContribution((int)kvs.keys[0], msg);
-
-        if(msg.contribution != 0 || msg.meta.seq == msg.meta.seq_end)
-          msg_vector.push_back(msg);
-        remain_bytes -= l;
-        seq++;
-        msg.data.clear();
-      }
-      std::sort(msg_vector.begin(), msg_vector.end() - 1, [](const Message& msg1, const Message& msg2){
-        return msg1.contribution > msg2.contribution;
-      });
-      for(size_t j = 0; j < msg_vector.size(); ++j) {
-        msg_vector[j].meta.channel = GetChannel(j, msg_vector.size() - 1, udp_channel_num, dmlc_k);
-        if(msg_vector[j].meta.seq == msg_vector[j].meta.seq_end) {
-          msg_vector[j].meta.channel = 0;
-        }
-        msg_vector[j].meta.tos = (udp_channel_num - msg_vector[j].meta.channel) * 32;
-        Postoffice::Get()->van()->Classifier(msg_vector[j],msg_vector[j].meta.channel, 0);
-      }
-      msg_vector.clear();
-    } else {
-      Message msg;
-      msg.meta.app_id      = app;
-      msg.meta.customer_id = customer;
-      msg.meta.request     = true;
-      msg.meta.push        = push;
-      msg.meta.head        = cmd;
-      msg.meta.timestamp   = timestamp;
-      msg.meta.sender      = Postoffice::Get()->van()->my_node_global_.id;
-      msg.meta.iters       = merge;
-      msg.meta.recver      = send_push;
+      msg.meta.sender      = (app != Meta::kEmpty) ? Postoffice::Get()->van()->my_node_global_.id : Meta::kEmpty;
+      msg.meta.recver      = (app != Meta::kEmpty) ? send_push : Postoffice::Get()->ServerRankToID(i, true);
       msg.meta.key         = uniq_key;
       msg.meta.version     = key_version;
+      msg.meta.iters       = (num_merge != 1) ? num_merge : 1;
       const auto& kvs = s.second;
       if (kvs.keys.size()) {
         msg.AddData(kvs.keys);
@@ -1236,7 +1124,7 @@ void KVServer<Val>::TS_Send(int timestamp, bool push, int uniq_key, int cmd,
         }
       }
       CHECK_NE(Postoffice::Get()->van()->Send(msg, true), -1);
-      send_push = 0;
+      if (app != Meta::kEmpty) send_push = 0;
     }
   }
 }

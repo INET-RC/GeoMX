@@ -212,76 +212,87 @@ class KVStoreDistServer {
   }
 
  private:
-    struct UpdateBuf {
-        std::vector<ps::KVMeta> request;
-        NDArray merged;
-        // temp_array is used to cast received values as float32 for computation if required
-        NDArray temp_array;
-    };
-    std::unordered_map<int, ps::KVPairs<char>> req_data_buf;
-    std::unordered_map<int, ps::KVMeta> req_meta_buf;
-    std::queue<int> send_q;
-    std::unordered_map<int, UpdateBuf> update_buf_global;
-    std::mutex send_mu;
+  struct UpdateBuf {
+      std::vector<ps::KVMeta> request;
+      NDArray merged;
+      // temp_array is used to cast received values as float32 for computation if required
+      NDArray temp_array;
+  };
+  std::unordered_map<int, ps::KVPairs<char>> req_data_buf;
+  std::unordered_map<int, ps::KVMeta> req_meta_buf;
+  std::queue<int> send_q;
+  std::unordered_map<int, UpdateBuf> update_buf_global;
+  std::mutex send_mu;
 
- void WorkersMerge( const ps::KVMeta& req_meta,const ps::KVPairs<char> &req_data, ps::KVServer<char>* server) {
-    if(req_meta.num_merge==-1){
-        int key=send_q.front();
-        req_data_buf[key].vals.CopyFrom(static_cast<const char*>(update_buf_global[key].merged.data().dptr_), req_data_buf[key].lens[0]);
-        update_buf_global[key].merged.WaitToRead();
-        ps_server_->TS_Send(req_meta_buf[key].timestamp, req_meta_buf[key].push, req_meta_buf[key].key, req_meta_buf[key].cmd, req_data_buf[key],  req_meta_buf[key].version, req_meta_buf[key].app_id, req_meta_buf[key].customer_id,req_meta_buf[key].num_merge);
-        std::unique_lock<std::mutex> send_lk(send_mu);
-        send_q.pop();
-        send_lk.unlock();
+  void WorkersMerge(const ps::KVMeta& req_meta,const ps::KVPairs<char> &req_data, ps::KVServer<char>* server) {
+    std::cout << "kvstore_dist_server.h 228" << std::endl;
+    if (req_meta.num_merge == -1) {
+      int key = send_q.front();
+      req_data_buf[key].vals.CopyFrom(
+          static_cast<const char *>(update_buf_global[key].merged.data().dptr_), req_data_buf[key].lens[0]);
+      update_buf_global[key].merged.WaitToRead();
+      ps_server_->Send(
+          req_meta_buf[key].timestamp,
+          req_meta_buf[key].push,
+          req_meta_buf[key].cmd,
+          req_data_buf[key],
+          req_meta_buf[key].key,
+          req_meta_buf[key].version,
+          req_meta_buf[key].app_id,
+          req_meta_buf[key].customer_id,
+          req_meta_buf[key].num_merge);
+      std::unique_lock <std::mutex> send_lk(send_mu);
+      send_q.pop();
+      send_lk.unlock();
     } else {
-        CHECK_EQ(req_data.keys.size(), (size_t)1);
-        if (req_meta.push) {
-            CHECK_EQ(req_data.lens.size(), (size_t)1);
-            CHECK_EQ(req_data.vals.size(), (size_t)req_data.lens[0]);
-        }
-        int key = req_data.keys[0];
-        DataHandleType type = DepairDataHandleType(req_meta.cmd);
+      CHECK_EQ(req_data.keys.size(), (size_t) 1);
+      if (req_meta.push) {
+        CHECK_EQ(req_data.lens.size(), (size_t) 1);
+        CHECK_EQ(req_data.vals.size(), (size_t) req_data.lens[0]);
+      }
+      int key = req_data.keys[0];
+      DataHandleType type = DepairDataHandleType(req_meta.cmd);
 
-        std::unique_lock<std::mutex> send_lk(send_mu);
-        if(req_meta.sender!=ps::Postoffice::Get()->van()->my_node_global_.id)server->Response(req_meta,true);
-        else {
-            send_q.push(key);
-            req_meta_buf[key].cmd       = req_meta.cmd;
-            req_meta_buf[key].push      = req_meta.push;
-            req_meta_buf[key].sender    = req_meta.sender;
-            req_meta_buf[key].timestamp = req_meta.timestamp ;
-            req_meta_buf[key].customer_id = req_meta.customer_id ;
-            req_meta_buf[key].app_id = req_meta.app_id;
-            req_meta_buf[key].key = req_meta.key;
-            req_meta_buf[key].version = req_meta.version;
-            req_meta_buf[key].num_merge = req_meta.num_merge;
-            req_data_buf[key].keys = req_data.keys;
-            req_data_buf[key].lens = req_data.lens;
-        }
-        size_t ds[] = {(size_t) req_data.lens[0] / mshadow::mshadow_sizeof(type.dtype)};
-        TShape dshape(ds, ds + 1); //tensor.shape, tensor.shape + tensor.dim
-        TBlob recv_blob;
-        MSHADOW_REAL_TYPE_SWITCH(type.dtype, DType, {
-          recv_blob = TBlob(reinterpret_cast<DType*>(req_data.vals.data()), dshape, cpu::kDevMask);
-        })
-        NDArray recved = NDArray(recv_blob, 0);
+      std::unique_lock <std::mutex> send_lk(send_mu);
+      if (req_meta.sender != ps::Postoffice::Get()->van()->my_node_global_.id) {
+        server->Response(req_meta, true);
+      } else {
+        send_q.push(key);
+        req_meta_buf[key].cmd = req_meta.cmd;
+        req_meta_buf[key].push = req_meta.push;
+        req_meta_buf[key].sender = req_meta.sender;
+        req_meta_buf[key].timestamp = req_meta.timestamp;
+        req_meta_buf[key].customer_id = req_meta.customer_id;
+        req_meta_buf[key].app_id = req_meta.app_id;
+        req_meta_buf[key].key = req_meta.key;
+        req_meta_buf[key].version = req_meta.version;
+        req_meta_buf[key].num_merge = req_meta.num_merge;
+        req_data_buf[key].keys = req_data.keys;
+        req_data_buf[key].lens = req_data.lens;
+      }
+      size_t ds[] = {(size_t) req_data.lens[0] / mshadow::mshadow_sizeof(type.dtype)};
+      TShape dshape(ds, ds + 1);
+      TBlob recv_blob;
+      MSHADOW_REAL_TYPE_SWITCH(type.dtype, DType, {
+          recv_blob = TBlob(reinterpret_cast<DType *>(req_data.vals.data()), dshape, cpu::kDevMask);
+      })
+      NDArray recved = NDArray(recv_blob, 0);
 
-        auto &updates = update_buf_global[key];
-        if (updates.merged.is_none()) {
-            updates.merged = NDArray(dshape, Context(), false,type.dtype);
-        }
-        if(req_meta.sender==ps::Postoffice::Get()->van()->my_node_global_.id){
-            updates.merged = recved;
-            updates.merged.WaitToRead();
-        }
-        else {
-            updates.merged += recved;
-            updates.merged.WaitToRead();
-            req_meta_buf[key].num_merge+=req_meta.num_merge;
-        }
-        send_lk.unlock();
+      auto &updates = update_buf_global[key];
+      if (updates.merged.is_none()) {
+        updates.merged = NDArray(dshape, Context(), false, type.dtype);
+      }
+      if (req_meta.sender == ps::Postoffice::Get()->van()->my_node_global_.id) {
+        updates.merged = recved;
+        updates.merged.WaitToRead();
+      } else {
+        updates.merged += recved;
+        updates.merged.WaitToRead();
+        req_meta_buf[key].num_merge += req_meta.num_merge;
+      }
+      send_lk.unlock();
     }
-}
+  }
 
   void CommandHandle(const ps::SimpleData& recved, ps::SimpleApp* app) {
     CommandType recved_type = static_cast<CommandType>(recved.head);
