@@ -1139,7 +1139,7 @@ void Van::Heartbeat() {
   }
 }
 
-void Van::Wait_for_finished() {
+void Van::WaitForFinish() {
   std::unique_lock<std::mutex> ver_lk(ver_mu);
   while(!ver_flag) {
     ver_cond.wait(ver_lk);
@@ -1148,7 +1148,7 @@ void Van::Wait_for_finished() {
   ver_lk.unlock();
 }
 
-void Van::Wait_for_global_finished() {
+void Van::WaitForGlobalFinish() {
   std::unique_lock<std::mutex> ver_global_lk(ver_global_mu);
   while(!ver_global_flag) {
     ver_global_cond.wait(ver_global_lk);
@@ -1472,11 +1472,15 @@ void Van::ProcessReplyGlobalCommand(Message* reply) {
 }
 
 int Van::GetReceiver(int throughput, int last_recv_id, int version) {
+  // Request a receiver.
   AskForReceiverPull(throughput, last_recv_id, version, false);
+
+  // Lock the mutex and wait until a receiver is set.
   std::unique_lock<std::mutex> ask_lk(ask_mu);
   while(receiver_ == -2) {
     ask_cond.wait(ask_lk);
   }
+
   int temp = receiver_;
   receiver_ = -2 ;
   ask_lk.unlock();
@@ -1484,11 +1488,15 @@ int Van::GetReceiver(int throughput, int last_recv_id, int version) {
 }
 
 int Van::GetGlobalReceiver(int throughput, int last_recv_id, int version) {
+  // Request a receiver.
   AskForReceiverPull(throughput, last_recv_id, version, true);
+
+  // Lock the mutex and wait until a receiver is set.
   std::unique_lock<std::mutex> ask_global_lk(ask_global_mu);
   while(receiver_global == -2) {
     ask_global_cond.wait(ask_global_lk);
   }
+
   int temp = receiver_global;
   receiver_global = -2;
   ask_global_lk.unlock();
