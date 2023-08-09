@@ -779,14 +779,7 @@ class KVStoreDistServer {
     params.keys = pskv.keys;
     params.lens = pskv.lens;
     params.vals = vals;
-
-    int ts;
-    if(ps_server_->enable_inter_ts){
-        ts = server->TS_Push(params, key, cmd);
-    }else{
-        ts = server->TS_Push(params, key, cmd);
-    }
-    return ts;
+    return server->Push(params, cmd, nullptr, key);
   }
 
   int DataPushToGlobalServersCompressed(const DataHandleType type,
@@ -874,13 +867,7 @@ class KVStoreDistServer {
       compr_params.keys = pskv.keys;
       compr_params.lens = pskv.lens;
       compr_params.vals = vals;
-      int ts;
-      if(ps_server_->enable_inter_ts){
-        ts = server->TS_Push(compr_params, key, cmd);
-      } else {
-        ts = server->TS_Push(compr_params, key, cmd);
-      }
-      return ts;
+      return server->Push(compr_params, cmd, nullptr, key);
     } else {
       const int dtype = type.dtype;
       const int num_bytes = mshadow::mshadow_sizeof(dtype);
@@ -896,13 +883,7 @@ class KVStoreDistServer {
       params.keys = pskv.keys;
       params.lens = pskv.lens;
       params.vals = vals;
-      int ts;
-      if(ps_server_->enable_inter_ts){
-        ts = server->TS_Push(params, key, cmd);
-      } else {
-        ts = server->TS_Push(params, key, cmd);
-      }
-      return ts;
+      return server->Push(params, cmd, nullptr, key);
     }
   }
 
