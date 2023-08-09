@@ -89,7 +89,7 @@ class Van {
    */
   inline bool IsReady() { return ready_; }
 
-  void Classifier(Message& msg, int channel, int tag);
+  void AssignMsg(Message& msg, int channel, int tag);
   void WaitForFinish();
   void WaitForGlobalFinish();
   int GetReceiver(int throughput, int last_recv_id, int version);
