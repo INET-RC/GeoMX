@@ -903,24 +903,20 @@ class KVStoreDistServer {
     if (is_compressed) {
       cmd = GetCommandType(RequestType::kCompressedPushPull, dtype);
     } else if (is_bscompressed) {
-        cmd = GetCommandType(RequestType::kBSCompressedPushPull, dtype);
+      cmd = GetCommandType(RequestType::kBSCompressedPushPull, dtype);
     } else {
       cmd = GetCommandType(RequestType::kDefaultPushPull, dtype);
     }
     PSKV& pskv = is_compressed ? EncodeCompressedKey(key, num_arr_elems, false, num_bytes) :
       is_bscompressed ? EncodeBSCompressedKey(key, num_arr_elems, false, num_bytes) :
-                 EncodeDefaultKey(key, num_arr_elems, num_bytes);
+      EncodeDefaultKey(key, num_arr_elems, num_bytes);
     mu_.lock();
     for (auto& ps_key : pskv.keys)
       key_map_[ps_key] = key;
     mu_.unlock();
-    // pull latest params from global servers
-    if(ps_server_->enable_inter_ts){
-        if(initialized_[key] == false){
-            server->TS_Pull(pskv.keys, key, cmd);
-        }
-    }else{
-        server->TS_Pull(pskv.keys, key, cmd);
+    // pull latest params from global servers.
+    if (!ps_server_->enable_inter_ts || !initialized_[key]) {
+      server->Pull(pskv.keys, cmd, key);
     }
   }
 
