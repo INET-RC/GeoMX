@@ -726,18 +726,18 @@ class KVServer: public SimpleApp {
 
   int enable_dgt = 0;
   float dmlc_k = 1.0;
-  float contri_alpha = 0.0;
-  int  dgt_info = 0;
-  int  block_size = 0;
+  float contribution_alpha = 0.0;
+  int dgt_info = 0;
+  int block_size = 0;
   float dmlc_k_init = 0.0;
   float dmlc_k_min = 0.0;
   int adaptive_k_flag = 0;
   int udp_channel_num = 0;
   std::vector<Message> msg_vector;
-  std::unordered_map<int, std::unordered_map<int, float>> contri;
-  int iter=-1;
-  int global_iter=-1;
-  int send_push=0;
+  std::unordered_map<int, std::unordered_map<int, float>> contribution;
+  int iter = -1;
+  int global_iter = -1;
+  int send_push = 0;
 };
 
 /**
@@ -958,7 +958,7 @@ void KVWorker<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& 
 
 template <typename Val>
 void KVServer<Val>::InitDGT(){
-  contri_alpha = dmlc::GetEnv("DGT_CONTRI_ALPHA", 0.3);
+  contribution_alpha = dmlc::GetEnv("DGT_CONTRIBUTION_ALPHA", 0.3);
   dgt_info = dmlc::GetEnv("DGT_INFO", 0);
   block_size = dmlc::GetEnv("DGT_BLOCK_SIZE", 4096);
   dmlc_k_init = dmlc::GetEnv("DMLC_K", 0.5);
@@ -970,24 +970,28 @@ void KVServer<Val>::InitDGT(){
 
 template <typename Val>
 float KVServer<Val>::EvalMsgContribution(int key, Message& msg) {
-  /*calculate p_N of a msg*/
-  float *pd = (float*)msg.data[1].data();
+  // Extract float data and its length from the message.
+  float* pd = reinterpret_cast<float*>(msg.data[1].data());
   int nlen = msg.data[1].size() / sizeof(float);
-  float N = 0.0;
-  for(int i = 0; i < nlen; i++){
-      N += fabs(*(pd + i));
-  }
 
-  /*calculate contri of a msg*/
-  auto itt = contri.find(key);
-  if(itt == contri.end())
-    contri[key][msg.meta.seq] = 0.0;
-  auto it = contri[key].find(msg.meta.seq);
-  if(it == contri[key].end())
-    contri[key][msg.meta.seq] = 0.0;
+  // Calculate the sum of the absolute values of the float data.
+  float N = std::accumulate(
+    pd, pd + nlen, 0.0f, [](float acc, float val) { return acc + std::fabs(val); });
 
-  contri[key][msg.meta.seq] = contri_alpha * contri[key][msg.meta.seq] + (1 - contri_alpha)*(N / nlen);
-  return contri[key][msg.meta.seq];
+  // Initialize to 0 if not already set.
+  auto it = contribution.find(key);
+  if (it == contribution.end())
+    contribution[key][msg.meta.seq] = 0.0;
+
+  // Initialize to 0 if not already set.
+  auto itt = contribution[key].find(msg.meta.seq);
+  if (itt == contribution[key].end())
+    contribution[key][msg.meta.seq] = 0.0;
+
+  // Update the contribution value
+  contribution[key][msg.meta.seq] = contribution_alpha * contribution[key][msg.meta.seq]
+    + (1 - contribution_alpha) * (N / nlen);
+  return contribution[key][msg.meta.seq];
 }
 
 template <typename Val>
@@ -1028,23 +1032,19 @@ void KVServer<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& 
   for (size_t i = 0; i < sliced.size(); ++i) {
     const auto& s = sliced[i];
     if (!s.first) continue;
+
+    // Handling DGT Push.
     if (DepairDataHandleType(cmd).requestType == RequestType::kDefaultPushPull
         && push && enable_dgt) {
       int total_bytes = kvs.vals.size();
       int remain_bytes = total_bytes;
       int val_bytes = 0;
       int seq = 0;
-      int seq_num = 0;
-
-      if (total_bytes % block_size == 0) {
-          seq_num = total_bytes / block_size;
-      } else {
-          seq_num = total_bytes / block_size + 1;
-      }
-      std::cout << seq_num << std::endl;
-      seq_num = (total_bytes + block_size - 1) / block_size;
-      std::cout << seq_num << std::endl;
+      // Calculate the total number of sequences (or data chunks) that can be segmented.
+      int seq_num = (total_bytes + block_size - 1) / block_size;
       dmlc_k = dmlc_k_init;
+
+      // Segment data chunks, until all the bytes are segmented into a chunk.
       while (remain_bytes != 0) {
         Message msg;
         msg.meta.app_id      = obj_->app_id();
@@ -1055,22 +1055,25 @@ void KVServer<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& 
         msg.meta.timestamp   = timestamp;
         msg.meta.recver      = Postoffice::Get()->ServerRankToID(i, true);
         msg.meta.msg_type    = 1;
+        msg.meta.total_bytes = total_bytes;
+
         if (DepairDataHandleType(cmd).dtype == 0) { // kFloat32
             msg.meta.bits_num = 32;
         } else if (DepairDataHandleType(cmd).dtype == 2) { // kFloat16
             msg.meta.bits_num = 16;
         }
 
-        msg.meta.total_bytes = total_bytes;
-        int l = std::min(remain_bytes,block_size);
-        SArray<Val> tmp_val = kvs.vals.segment(val_bytes, val_bytes+l);
-
+        // Determine the chunk length and segment data chunks.
+        int l = std::min(remain_bytes, block_size);
+        SArray<Val> tmp_val = kvs.vals.segment(val_bytes, val_bytes + l);
         msg.meta.val_bytes = val_bytes;
-        val_bytes += l;
         msg.meta.first_key = kvs.keys[0];
         msg.meta.seq = seq;
         msg.meta.seq_begin = 0;
         msg.meta.seq_end = seq_num - 1;
+        val_bytes += l;
+
+        // Add one data chunk to the message.
         if (kvs.keys.size()) {
           msg.AddData(kvs.keys);
           msg.meta.keys_len = msg.data.back().size();
@@ -1081,8 +1084,11 @@ void KVServer<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& 
             msg.meta.lens_len = msg.data.back().size();
           }
         }
+
+        // Evaluate and assign a contribution value to the message.
         msg.contribution = EvalMsgContribution((int)kvs.keys[0], msg);
 
+        // Add the non-zero contribution message to the vector.
         if (msg.contribution != 0 || msg.meta.seq == msg.meta.seq_end) {
           msg_vector.push_back(msg);
         }
@@ -1090,19 +1096,24 @@ void KVServer<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& 
         seq++;
         msg.data.clear();
       }
+
+      // Sort messages based on their contribution value.
       std::sort(msg_vector.begin(), msg_vector.end() - 1, [](const Message& msg1, const Message& msg2) {
         return msg1.contribution > msg2.contribution;
       });
+
+      // Assign data chunks to channels with different reliability and priority.
       for (size_t j = 0; j < msg_vector.size(); ++j) {
         msg_vector[j].meta.channel = GetChannel(j, msg_vector.size() - 1, udp_channel_num, dmlc_k);
         if (msg_vector[j].meta.seq == msg_vector[j].meta.seq_end) {
           msg_vector[j].meta.channel = 0;
         }
         msg_vector[j].meta.tos = (udp_channel_num - msg_vector[j].meta.channel) * 32;
-        Postoffice::Get()->van()->Classifier(msg_vector[j], msg_vector[j].meta.channel, 0);
+        Postoffice::Get()->van()->AssignMsg(msg_vector[j], msg_vector[j].meta.channel, 0);
       }
       msg_vector.clear();
     } else {
+      // Handling normal push.
       Message msg;
       msg.meta.app_id      = (app != Meta::kEmpty) ? app : obj_->app_id();
       msg.meta.customer_id = (customer != Meta::kEmpty) ? customer : obj_->customer_id();
