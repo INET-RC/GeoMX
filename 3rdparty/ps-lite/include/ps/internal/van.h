@@ -90,8 +90,8 @@ class Van {
   inline bool IsReady() { return ready_; }
 
   void Classifier(Message& msg, int channel, int tag);
-  void Wait_for_finished();
-  void Wait_for_global_finished();
+  void WaitForFinish();
+  void WaitForGlobalFinish();
   int GetReceiver(int throughput, int last_recv_id, int version);
   int GetGlobalReceiver(int throughput, int last_recv_id, int version);
   void AskForReceiverPush(int app, int customer1, int timestamp, bool is_global = false);
