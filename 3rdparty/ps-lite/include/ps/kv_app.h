@@ -484,10 +484,27 @@ class KVServer: public SimpleApp {
    * */
   int Push(const KVPairs<Val>& kvs,
            const int cmd = 0,
-           const Callback& cb = nullptr) {
+           const Callback& cb = nullptr,
+           const int uniq_key = Meta::kEmpty) {
     int ts = obj_->NewRequest(kServerGroupGlobal, true);
+    auto* van = Postoffice::Get()->van();
     AddCallback(ts, cb);
-    Send(ts, true, cmd, kvs);
+    if (enable_inter_ts && kvs.keys.size()) {
+      KVMeta meta;
+      meta.cmd         = cmd;
+      meta.push        = true;
+      meta.sender      = van->my_node_global_.id;
+      meta.timestamp   = ts;
+      meta.app_id      = obj_->app_id();
+      meta.customer_id = obj_->customer_id();
+      meta.key         = uniq_key;
+      meta.version     = 0;
+      meta.num_merge   = 1;
+      request_handle_global(meta, kvs, this);
+      van->AskForReceiverPush(meta.app_id, meta.customer_id, ts, true);
+    } else {
+      Send(ts, true, cmd, kvs, uniq_key);
+    }
     return ts;
   }
 
@@ -496,31 +513,6 @@ class KVServer: public SimpleApp {
     KVPairs<Val> kvs;
     kvs.keys = keys;
     Send(ts, false, cmd, kvs);
-    return ts;
-  }
-
-  int TS_Push(const KVPairs<Val>& kvs,
-              int uniq_key = 0,
-              const int cmd = 0,
-              const Callback& cb = nullptr) {
-    int ts = obj_->NewRequest(kServerGroupGlobal, true);
-    AddCallback(ts, cb);
-    if(kvs.keys.size() && enable_inter_ts){
-      KVMeta meta;
-      meta.cmd       = cmd;
-      meta.push      = true;
-      meta.sender    = Postoffice::Get()->van()->my_node_global_.id;
-      meta.timestamp = ts;
-      meta.app_id = obj_->app_id();
-      meta.customer_id = obj_->customer_id();
-      meta.key = uniq_key;
-      meta.version = 0;
-      meta.num_merge = 1;
-      request_handle_global(meta,kvs,this);
-      Postoffice::Get()->van()->AskForReceiverPush(meta.app_id , meta.customer_id, ts, true);
-    } else {
-      Send(ts, true, cmd, kvs, uniq_key);
-    }
     return ts;
   }
 
