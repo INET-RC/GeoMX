@@ -225,7 +225,6 @@ class KVStoreDistServer {
   std::mutex send_mu;
 
   void WorkersMerge(const ps::KVMeta& req_meta,const ps::KVPairs<char> &req_data, ps::KVServer<char>* server) {
-    std::cout << "kvstore_dist_server.h 228" << std::endl;
     if (req_meta.num_merge == -1) {
       int key = send_q.front();
       req_data_buf[key].vals.CopyFrom(
