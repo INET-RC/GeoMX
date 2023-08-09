@@ -91,7 +91,6 @@ class KVStoreDist : public KVStoreLocal {
   void WorkersMerge(const ps::KVMeta& req_meta,
                     const ps::KVPairs<char> &req_data,
                     ps::KVWorker<char>* worker) {
-    std::cout << "kvstore_dist.h 94" << std::endl;
     // Check if there is data to be merged.
     if(req_meta.num_merge == -1) {
       // Get the key for the data to be sent.
