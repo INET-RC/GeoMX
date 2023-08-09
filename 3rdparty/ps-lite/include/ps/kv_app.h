@@ -441,11 +441,6 @@ class KVServer: public SimpleApp {
   /** \brief deconstructor */
   virtual ~KVServer() { delete obj_; obj_ = nullptr; }
 
-  /** \brief send merged data to global server to perform aggregation. */
-  void Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs,
-            int uniq_key = Meta::kEmpty, int key_version = 0,
-            int app = Meta::kEmpty, int customer = Meta::kEmpty, int num_merge = 1);
-
   /**
    * \brief the handle to process a push/pull request from a worker
    * \param req_meta meta-info of this request
@@ -508,21 +503,18 @@ class KVServer: public SimpleApp {
     return ts;
   }
 
-  int Pull(const SArray<Key>& keys, int cmd = 0) {
+  int Pull(const SArray<Key>& keys, int cmd = 0, int uniq_key = Meta::kEmpty) {
     int ts = obj_->NewRequest(kServerGroupGlobal);
     KVPairs<Val> kvs;
     kvs.keys = keys;
-    Send(ts, false, cmd, kvs);
+    Send(ts, false, cmd, kvs, uniq_key);
     return ts;
   }
 
-  int TS_Pull(const SArray<Key>& keys, int uniq_key = 0, int cmd = 0) {
-      int ts = obj_->NewRequest(kServerGroupGlobal);
-      KVPairs<Val> kvs;
-      kvs.keys = keys;
-      Send(ts, false, cmd, kvs, uniq_key);
-      return ts;
-  }
+  /** \brief send merged data to global server to perform aggregation. */
+  void Send(int timestamp, bool push, int cmd, const KVPairs<Val>& kvs,
+            int uniq_key = Meta::kEmpty, int key_version = 0,
+            int app = Meta::kEmpty, int customer = Meta::kEmpty, int num_merge = 1);
 
   /**
    * \brief response to the push/pull request
