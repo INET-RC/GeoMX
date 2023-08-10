@@ -524,65 +524,32 @@ class KVServer: public SimpleApp {
   void Response(const KVMeta& req, const KVPairs<Val>& res, bool is_global = false);
   void Response(const KVMeta& req, bool is_global = false) { Response(req, KVPairs<Val>(), is_global); }
 
-  void AutoPullUpdate2(const int version, const int iters, const int key, const int cmd, const KVPairs<Val>& kvs) {
-    int throughput = -1;
-    int last_recv_id = -1;
-    while (true) {
-      int receiver = Postoffice::Get()->van()->GetGlobalReceiver(throughput, last_recv_id, iters);
-      if (receiver == -1) break; // whether transmition is over
-      if (kvs.keys.size()) {
-        Message msg;
-        msg.meta.head = cmd;
-        msg.meta.app_id = obj_->app_id();
-        msg.meta.customer_id = obj_->customer_id();
-        msg.meta.request = true;
-        msg.meta.push = false;
-        msg.meta.sender = Postoffice::Get()->van()->my_node_global_.id;
-        msg.meta.recver = receiver;
-        msg.meta.key = key;
-        msg.meta.version = version;
-        msg.meta.iters=iters;
-        msg.meta.timestamp = -1;
-        msg.AddData(kvs.keys);
-        msg.AddData(kvs.vals);
-        if (kvs.lens.size()) {
-          msg.AddData(kvs.lens);
-        }
-        clock_t starts ,ends;
-        starts = clock();
-        Postoffice::Get()->van()->Send(msg,true);
-        Postoffice::Get()->van()->WaitForGlobalFinish();
-        ends = clock();
-        throughput= (int) (1/((double)(ends - starts) / CLOCKS_PER_SEC));
-        last_recv_id = receiver;
-      }
-    }
-  }
-
-  void AutoPullUpdate(const int version, const KVMeta& req,
-                      const KVPairs<Val>& kvs = KVPairs<Val>(), const bool is_global = false) {
+  void AutoPullUpdate(const int version, const KVMeta& req, const KVPairs<Val>& kvs = KVPairs<Val>(),
+                      const bool is_global = false, const int custom_iter = -1, const int custom_key = -1,
+                      const int custom_cmd = -1) {
     int throughput = -1;
     int last_recv_id = -1;
     auto* van = Postoffice::Get()->van();
-    (is_global) ? global_iter++ : iter++;
+    int current_iter = (custom_iter != -1) ? custom_iter :
+      ((is_global) ? ++global_iter : ++iter);
 
     while (true) {
-      int recver = (is_global) ? van->GetGlobalReceiver(throughput, last_recv_id, global_iter)
-        : van->GetReceiver(throughput, last_recv_id, iter);
+      int recver = (is_global) ? van->GetGlobalReceiver(throughput, last_recv_id, current_iter)
+        : van->GetReceiver(throughput, last_recv_id, current_iter);
       if (recver == -1) break; // Check if transmission is over.
 
       if (kvs.keys.size()) {
         Message msg;
-        msg.meta.head        = req.cmd;
+        msg.meta.head        = (custom_cmd != -1) ? custom_cmd : req.cmd;
         msg.meta.app_id      = obj_->app_id();
         msg.meta.customer_id = obj_->customer_id();
         msg.meta.request     = true;
         msg.meta.push        = false;
         msg.meta.sender      = (is_global) ? van->my_node_global_.id : van->my_node_.id;
         msg.meta.recver      = recver;
-        msg.meta.key         = req.key;
+        msg.meta.key         = (custom_key != -1) ? custom_key : req.key;
         msg.meta.version     = version;
-        msg.meta.iters       = (is_global) ? global_iter : iter;
+        msg.meta.iters       = current_iter;
         msg.meta.timestamp   = -1;
 
         msg.AddData(kvs.keys);
@@ -599,6 +566,11 @@ class KVServer: public SimpleApp {
         last_recv_id = recver;
       }
     }
+  }
+
+  void AutoPullUpdate(const int version, const int custom_iter, const int custom_key,
+                      const int custom_cmd, const KVPairs<Val>& kvs) {
+    AutoPullUpdate(version, KVMeta(), kvs, true, custom_iter, custom_key, custom_cmd);
   }
 
   /**
@@ -1287,7 +1259,7 @@ void KVServer<Val>::Process(const Message& msg) {
       && msg.meta.sender < 100 && !msg.meta.push && msg.data.size()
       && msg.meta.request) {
     AutoPullReply(msg.meta.sender);
-    AutoPullUpdate2(msg.meta.version, msg.meta.iters, msg.meta.key,msg.meta.head, data);
+    AutoPullUpdate(msg.meta.version, msg.meta.iters, msg.meta.key,msg.meta.head, data);
   }
 
   if (enable_inter_ts && Postoffice::Get()->is_global_server()
