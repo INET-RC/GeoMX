@@ -526,47 +526,7 @@ class KVServer: public SimpleApp {
 
   void AutoPullUpdate(const int version, const KVMeta& req, const KVPairs<Val>& kvs = KVPairs<Val>(),
                       const bool is_global = false, const int custom_iter = -1, const int custom_key = -1,
-                      const int custom_cmd = -1) {
-    int throughput = -1;
-    int last_recv_id = -1;
-    auto* van = Postoffice::Get()->van();
-    int current_iter = (custom_iter != -1) ? custom_iter :
-      ((is_global) ? ++global_iter : ++iter);
-
-    while (true) {
-      int recver = (is_global) ? van->GetGlobalReceiver(throughput, last_recv_id, current_iter)
-        : van->GetReceiver(throughput, last_recv_id, current_iter);
-      if (recver == -1) break; // Check if transmission is over.
-
-      if (kvs.keys.size()) {
-        Message msg;
-        msg.meta.head        = (custom_cmd != -1) ? custom_cmd : req.cmd;
-        msg.meta.app_id      = obj_->app_id();
-        msg.meta.customer_id = obj_->customer_id();
-        msg.meta.request     = true;
-        msg.meta.push        = false;
-        msg.meta.sender      = (is_global) ? van->my_node_global_.id : van->my_node_.id;
-        msg.meta.recver      = recver;
-        msg.meta.key         = (custom_key != -1) ? custom_key : req.key;
-        msg.meta.version     = version;
-        msg.meta.iters       = current_iter;
-        msg.meta.timestamp   = -1;
-
-        msg.AddData(kvs.keys);
-        msg.AddData(kvs.vals);
-        if (kvs.lens.size()) {
-          msg.AddData(kvs.lens);
-        }
-
-        auto start_time = clock();
-        van->Send(msg, is_global);
-        (is_global) ? van->WaitForGlobalFinish() : van->WaitForFinish();
-        auto duration = (double)(clock() - start_time);
-        throughput = (int)(CLOCKS_PER_SEC / duration);
-        last_recv_id = recver;
-      }
-    }
-  }
+                      const int custom_cmd = -1);
 
   void AutoPullUpdate(const int version, const int custom_iter, const int custom_key,
                       const int custom_cmd, const KVPairs<Val>& kvs) {
@@ -887,7 +847,6 @@ void KVServer<Val>::InitDGT() {
   dmlc_k_min = dmlc::GetEnv("DMLC_K_MIN", 0.2);
   adaptive_k_flag = dmlc::GetEnv("ADAPTIVE_K_FLAG", 0);
   udp_channel_num = dmlc::GetEnv("DMLC_UDP_CHANNEL_NUM", 1);
-  return;
 }
 
 template <typename Val>
@@ -1220,6 +1179,51 @@ void KVWorker<Val>::TS_Process(const Message& msg) {
 }
 
 template <typename Val>
+void KVServer<Val>::AutoPullUpdate(const int version, const KVMeta& req, const KVPairs<Val>& kvs,
+                                   const bool is_global, const int custom_iter, const int custom_key,
+                                   const int custom_cmd) {
+  int throughput = -1;
+  int last_recv_id = -1;
+  auto* van = Postoffice::Get()->van();
+  int current_iter = (custom_iter != -1) ? custom_iter :
+                     ((is_global) ? ++global_iter : ++iter);
+
+  while (true) {
+    int recver = (is_global) ? van->GetGlobalReceiver(throughput, last_recv_id, current_iter)
+                             : van->GetReceiver(throughput, last_recv_id, current_iter);
+    if (recver == -1) break; // Check if transmission is over.
+
+    if (kvs.keys.size()) {
+      Message msg;
+      msg.meta.head        = (custom_cmd != -1) ? custom_cmd : req.cmd;
+      msg.meta.app_id      = obj_->app_id();
+      msg.meta.customer_id = obj_->customer_id();
+      msg.meta.request     = true;
+      msg.meta.push        = false;
+      msg.meta.sender      = (is_global) ? van->my_node_global_.id : van->my_node_.id;
+      msg.meta.recver      = recver;
+      msg.meta.key         = (custom_key != -1) ? custom_key : req.key;
+      msg.meta.version     = version;
+      msg.meta.iters       = current_iter;
+      msg.meta.timestamp   = -1;
+
+      msg.AddData(kvs.keys);
+      msg.AddData(kvs.vals);
+      if (kvs.lens.size()) {
+        msg.AddData(kvs.lens);
+      }
+
+      auto start_time = clock();
+      van->Send(msg, is_global);
+      (is_global) ? van->WaitForGlobalFinish() : van->WaitForFinish();
+      auto duration = (double)(clock() - start_time);
+      throughput = (int)(CLOCKS_PER_SEC / duration);
+      last_recv_id = recver;
+    }
+  }
+}
+
+template <typename Val>
 void KVServer<Val>::Process(const Message& msg) {
   if (msg.meta.simple_app) {
     SimpleApp::Process(msg);
@@ -1410,7 +1414,6 @@ int KVWorker<Val>::AutoPull(int uniq_key, const SArray <Key> &keys, SArray <Val>
     cond_.wait(lk);
   }
 
-
   auto& autokvs = auto_pull_kvs_[uniq_key];
   Val* p_vals = vals->data();
   int* p_lens = nullptr;
@@ -1450,6 +1453,5 @@ int KVWorker<Val>::AutoPull(int uniq_key, const SArray <Key> &keys, SArray <Val>
   // return data_version_[uniq_key];
   return 0;
 }
-
 }  // namespace ps
 #endif  // PS_KV_APP_H_

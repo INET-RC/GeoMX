@@ -892,7 +892,7 @@ class KVStoreDistServer {
                                         const ps::KVMeta& req_meta,
                                         const ps::KVPairs<char> &req_data,
                                         ps::KVServer<char>* server) {
-    CHECK(!ps::IsGlobalServer()) << "invalid pull operation on global servers";
+    CHECK(!ps::IsGlobalServer()) << "Invalid pull operation on global servers";
     const bool is_compressed = gradient_compression_->get_type() == CompressionType::kTwoBit;
     const bool is_bscompressed = (type.requestType == RequestType::kBSCompressedPushPull);
     auto &stored = (is_compressed || !has_multi_precision_copy(type) || !is_bscompressed) ? store_[key] : store_realt_[key];
