@@ -784,7 +784,7 @@ class KVStoreDist : public KVStoreLocal {
       pskv.size = 0;
       size_t s = num_arr_elems;
       int i = 0;
-      while(true) {
+      while (true) {
         ps::Key ps_key = krs[i % num_servers].begin() + (ps::Key)(key_temp);
         key_temp++;
         CHECK_LT(ps_key, krs[i % num_servers].end());

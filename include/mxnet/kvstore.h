@@ -457,7 +457,7 @@ class KVStore {
    *
    * The behavior of a server:
    * \code
-   * while(receive(x)) {
+   * while (receive(x)) {
    *   if (IsCommand(x)) controller(x)
    *   else if (IsKeyValue(x)) updater(x)
    * }

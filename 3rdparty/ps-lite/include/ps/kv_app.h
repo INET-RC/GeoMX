@@ -527,7 +527,7 @@ class KVServer: public SimpleApp {
   void AutoPullUpdate2(const int version, const int iters, const int key, const int cmd, const KVPairs<Val>& kvs) {
     int throughput = -1;
     int last_recv_id = -1;
-    while(true) {
+    while (true) {
       int receiver = Postoffice::Get()->van()->GetGlobalReceiver(throughput, last_recv_id, iters);
       if (receiver == -1) break; // whether transmition is over
       if (kvs.keys.size()) {
@@ -563,7 +563,7 @@ class KVServer: public SimpleApp {
     global_iter++;
     int throughput = -1;
     int last_recv_id = -1;
-    while(true) {
+    while (true) {
       int receiver=Postoffice::Get()->van()->GetGlobalReceiver(throughput, last_recv_id, global_iter);
       if (receiver == -1) break; // whether transmition is over
       if (kvs.keys.size()) {
@@ -600,9 +600,9 @@ class KVServer: public SimpleApp {
     iter++;
     int throughput = -1;
     int last_recv_id = -1;
-    auto* van = Postoffice::Get()->van()
+    auto* van = Postoffice::Get()->van();
 
-    while(true) {
+    while (true) {
       int receiver = van->GetReceiver(throughput, last_recv_id, iter);
       if (receiver == -1) break; // whether transmition is over
       if (kvs.keys.size()) {
@@ -1143,7 +1143,7 @@ void KVWorker<Val>::AutoPullUpdate(const int version, const int iters, const int
   int last_recv_id = -1;
   auto* van = Postoffice::Get()->van();
 
-  while(true) {
+  while (true) {
     int receiver = van->GetReceiver(throughput, last_recv_id, iters);
     if (receiver == -1) break;
 
@@ -1466,7 +1466,7 @@ int KVWorker<Val>::AutoPull(int uniq_key, const SArray <Key> &keys, SArray <Val>
                             int cmd, const std::function<void()> &cb) {
   // Wait until we have enough key-value pairs for the unique key.
   std::unique_lock<std::mutex> lk(ts_cond);
-  while(auto_pull_kvs_[uniq_key].size() != keys.size()) {
+  while (auto_pull_kvs_[uniq_key].size() != keys.size()) {
     cond_.wait(lk);
   }
 
