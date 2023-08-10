@@ -1295,13 +1295,13 @@ class KVStoreDistServer {
         if (updates.request.size() == (size_t)central_workers + (size_t)ps::NumGlobalWorkers()) {
           // aggregate gradients and update model
           if (ps_server_->enable_inter_ts) {
-              TS_ApplyUpdates(type, key, true, &updates, store_v_[key], req_meta, req_data, server);
+            TS_ApplyUpdates(type, key, true, &updates, store_v_[key], req_meta, req_data, server);
           }else{
-              ApplyUpdates(type, key, &updates, server);
+            ApplyUpdates(type, key, &updates, server);
           }
           // notify all workers to call pull
           for (const auto& req : updates.request) {
-              server->Response(req, req.sender < ps::kOffset);
+            server->Response(req, req.sender < ps::kOffset);
           }
           updates.request.clear();
         } else {
@@ -1313,41 +1313,41 @@ class KVStoreDistServer {
           ApplyUpdates(type, key, &updates, server);
           if (key == 0) local_iters += 1;
           if ((local_iters % period_k2 != 0) && use_hfa) {
-              for (const auto &req : updates.request) {
-                  server->Response(req, false);
-              }
-              updates.request.clear();
+            for (const auto &req : updates.request) {
+              server->Response(req, false);
+            }
+            updates.request.clear();
           } else {
-              if (use_hfa) {
-                  CHECK(!stored_milestone.is_none()) << "init stored_milestone first!";
-                  stored = (stored - stored_milestone) / ps::NumGlobalWorkers();
-                  stored.WaitToRead();
+            if (use_hfa) {
+              CHECK(!stored_milestone.is_none()) << "init stored_milestone first!";
+              stored = (stored - stored_milestone) / ps::NumGlobalWorkers();
+              stored.WaitToRead();
+            }
+            auto &updates_tmp = update_buf_tmp_[key];
+            updates_tmp.request = updates.request;
+            updates.request.clear();
+            if (ps_server_->enable_intra_ts) {
+              for (const auto &req : updates_tmp.request) {
+                server->Response(req, false);
               }
-              auto &updates_tmp = update_buf_tmp_[key];
-              updates_tmp.request = updates.request;
-              updates.request.clear();
-              if (ps_server_->enable_intra_ts) {
-                  for (const auto &req : updates_tmp.request) {
-                      server->Response(req, false);
-                  }
-              }
+            }
 
-              // push to global servers
-              int ts;
-              switch (gradient_compression_->get_type()) {
-                  case CompressionType::kNone:
-                      ts = DataPushToGlobalServersDefault(type, key, server);
-                      break;
-                  case CompressionType::kTwoBit:
-                      ts = DataPushToGlobalServersCompressed(type, key, server);
-                      break;
-                  case CompressionType::kBiSparseCompression:
-                      ts = DataPushToGlobalServersBSCompressed(type, key, server);
-                      break;
-              }
-              mu_.lock();
-              ts_key_map_[ts] = key;
-              mu_.unlock();
+            // push to global servers
+            int ts;
+            switch (gradient_compression_->get_type()) {
+              case CompressionType::kNone:
+                ts = DataPushToGlobalServersDefault(type, key, server);
+                break;
+              case CompressionType::kTwoBit:
+                ts = DataPushToGlobalServersCompressed(type, key, server);
+                break;
+              case CompressionType::kBiSparseCompression:
+                ts = DataPushToGlobalServersBSCompressed(type, key, server);
+                break;
+            }
+            mu_.lock();
+            ts_key_map_[ts] = key;
+            mu_.unlock();
           }
       } else {
         updates.merged.WaitToRead();
