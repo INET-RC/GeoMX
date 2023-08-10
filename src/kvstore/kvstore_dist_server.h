@@ -1374,11 +1374,7 @@ void DefaultAutoPull(const DataHandleType type,
     response.keys = req_data.keys;
     response.lens = {len};
     response.vals.CopyFrom(static_cast<const char*>(stored.data().dptr_), len);
-    if (inter_domain) {
-        server->AutoPullUpdate1(version, req_meta, response);
-    }else{
-        server->AutoPullUpdate(version, req_meta, response);
-    }
+    server->AutoPullUpdate(version, req_meta, response, inter_domain);
 }
 
 void DataHandleSyncCompressed(const DataHandleType type, const ps::KVMeta& req_meta,

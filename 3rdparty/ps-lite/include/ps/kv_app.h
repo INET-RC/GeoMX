@@ -559,76 +559,44 @@ class KVServer: public SimpleApp {
     }
   }
 
-  void AutoPullUpdate1(const int version, const KVMeta& req, const KVPairs<Val>& kvs = KVPairs<Val>()) {
-    global_iter++;
-    int throughput = -1;
-    int last_recv_id = -1;
-    while (true) {
-      int receiver=Postoffice::Get()->van()->GetGlobalReceiver(throughput, last_recv_id, global_iter);
-      if (receiver == -1) break; // whether transmition is over
-      if (kvs.keys.size()) {
-        Message msg;
-        msg.meta.head = req.cmd;
-        msg.meta.app_id = obj_->app_id();
-        msg.meta.customer_id = obj_->customer_id();
-        msg.meta.request = true;
-        msg.meta.push = false;
-        msg.meta.sender = Postoffice::Get()->van()->my_node_global_.id;
-        msg.meta.recver = receiver;
-        msg.meta.key = req.key;
-        msg.meta.version = version;
-        msg.meta.iters = global_iter;
-        msg.meta.timestamp = -1;
-        msg.AddData(kvs.keys);
-        msg.AddData(kvs.vals);
-        if (kvs.lens.size()) {
-          msg.AddData(kvs.lens);
-        }
-        clock_t starts, ends;
-        starts = clock();
-        Postoffice::Get()->van()->Send(msg, true);
-        Postoffice::Get()->van()->WaitForGlobalFinish();
-        ends = clock();
-        throughput = (int) (1/((double)(ends - starts) / CLOCKS_PER_SEC));
-        last_recv_id = receiver;
-      }
-    }
-  }
-
-  /** \brief server auto load data to worker**/
-  void AutoPullUpdate(const int version, const KVMeta& req, const KVPairs<Val>& kvs = KVPairs<Val>()) {
-    iter++;
+  void AutoPullUpdate(const int version, const KVMeta& req,
+                      const KVPairs<Val>& kvs = KVPairs<Val>(), const bool is_global = false) {
     int throughput = -1;
     int last_recv_id = -1;
     auto* van = Postoffice::Get()->van();
+    (is_global) ? global_iter++ : iter++;
 
     while (true) {
-      int receiver = van->GetReceiver(throughput, last_recv_id, iter);
-      if (receiver == -1) break; // whether transmition is over
+      int recver = (is_global) ? van->GetGlobalReceiver(throughput, last_recv_id, global_iter)
+        : van->GetReceiver(throughput, last_recv_id, iter);
+      if (recver == -1) break; // Check if transmission is over.
+
       if (kvs.keys.size()) {
         Message msg;
-        msg.meta.app_id = obj_->app_id();
+        msg.meta.head        = req.cmd;
+        msg.meta.app_id      = obj_->app_id();
         msg.meta.customer_id = obj_->customer_id();
-        msg.meta.request = true;
-        msg.meta.push = false;
-        msg.meta.sender = Postoffice::Get()->van()->my_node_.id;
-        msg.meta.recver = receiver;
-        msg.meta.key = req.key;
-        msg.meta.version = version;
-        msg.meta.iters = iter;
-        msg.meta.timestamp = -1;
+        msg.meta.request     = true;
+        msg.meta.push        = false;
+        msg.meta.sender      = (is_global) ? van->my_node_global_.id : van->my_node_.id;
+        msg.meta.recver      = recver;
+        msg.meta.key         = req.key;
+        msg.meta.version     = version;
+        msg.meta.iters       = (is_global) ? global_iter : iter;
+        msg.meta.timestamp   = -1;
+
         msg.AddData(kvs.keys);
         msg.AddData(kvs.vals);
         if (kvs.lens.size()) {
           msg.AddData(kvs.lens);
         }
-        clock_t starts, ends;
-        starts = clock();
-        Postoffice::Get()->van()->Send(msg);
-        Postoffice::Get()->van()->WaitForFinish();
-        ends = clock();
-        throughput = (int) (1/((double)(ends - starts) / CLOCKS_PER_SEC));
-        last_recv_id = receiver;
+
+        auto start_time = clock();
+        van->Send(msg, is_global);
+        (is_global) ? van->WaitForGlobalFinish() : van->WaitForFinish();
+        auto duration = (double)(clock() - start_time);
+        throughput = (int)(CLOCKS_PER_SEC / duration);
+        last_recv_id = recver;
       }
     }
   }
@@ -1144,8 +1112,8 @@ void KVWorker<Val>::AutoPullUpdate(const int version, const int iters, const int
   auto* van = Postoffice::Get()->van();
 
   while (true) {
-    int receiver = van->GetReceiver(throughput, last_recv_id, iters);
-    if (receiver == -1) break;
+    int recver = van->GetReceiver(throughput, last_recv_id, iters);
+    if (recver == -1) break; // Check if transmission is over.
 
     if (kvs.keys.size()) {
       Message msg;
@@ -1154,7 +1122,7 @@ void KVWorker<Val>::AutoPullUpdate(const int version, const int iters, const int
       msg.meta.request     = true;
       msg.meta.push        = false;
       msg.meta.sender      = van->my_node_.id;
-      msg.meta.recver      = receiver;
+      msg.meta.recver      = recver;
       msg.meta.key         = req;
       msg.meta.version     = version;
       msg.meta.iters       = iters;
@@ -1171,7 +1139,7 @@ void KVWorker<Val>::AutoPullUpdate(const int version, const int iters, const int
       van->WaitForFinish();
       auto duration = (double)(clock() - start_time);
       throughput = (int)(CLOCKS_PER_SEC / duration);
-      last_recv_id = receiver;
+      last_recv_id = recver;
     }
   }
 }
