@@ -79,8 +79,8 @@ namespace ps {
                  (role == GLOBAL_SERVER ? "global server" : "global scheduler"))))
          << (id != kEmpty ? ", id=" + std::to_string(id) : "")
          << ", ip=" << hostname << ", port=" << port << ", is_recovery=" << is_recovery;
-      for(size_t i = 0; i < udp_port.size(); ++i){
-        ss << "udp[channel "<< i+1 << "] port = " << udp_port[i];
+      for (size_t i = 0; i < udp_port.size(); ++i) {
+        ss << "udp[channel "<< i + 1 << "] port = " << udp_port[i];
       }
       return ss.str();
     }
@@ -177,7 +177,7 @@ namespace ps {
              key(kEmpty), \
              version(kEmpty), \
              iters(kEmpty), \
-             simple_app(false){}
+             simple_app(false) {}
     std::string DebugString() const {
       std::stringstream ss;
       if (sender == Node::kEmpty) {
@@ -204,9 +204,9 @@ namespace ps {
       ss << ", key=" << key;
       ss << ", version=" << version;
       ss << ", iters=" <<iters;
-      if(compr.size()){
+      if (compr.size()) {
         ss << ", compr = [";
-        for(auto v : compr) ss << " " << v;
+        for (auto v : compr) ss << " " << v;
         ss << " ]";
       }
       ss << ", bits_num = " << bits_num;

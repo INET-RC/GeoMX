@@ -61,7 +61,7 @@ CompressionType GradientCompression::get_type() {
   return type_;
 }
 
-float GradientCompression::get_threshold(){
+float GradientCompression::get_threshold() {
   return threshold_;
 }
 
@@ -307,7 +307,7 @@ void GradientCompression::BSCPullCompress(const mxnet::NDArray &from, mxnet::NDA
   }
 }
 
-void GradientCompression::BSCDecompress(const mxnet::NDArray &from, mxnet::NDArray &to, const int priority){
+void GradientCompression::BSCDecompress(const mxnet::NDArray &from, mxnet::NDArray &to, const int priority) {
   if (type_ == CompressionType::kBiSparseCompression) {
     auto bsc_decompress = [this, from, to](mxnet::RunContext ctx) {
       int zipped_size = from.data().Size() / 2;

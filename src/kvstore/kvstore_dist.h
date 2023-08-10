@@ -92,7 +92,7 @@ class KVStoreDist : public KVStoreLocal {
                     const ps::KVPairs<char> &req_data,
                     ps::KVWorker<char>* worker) {
     // Check if there is data to be merged.
-    if(req_meta.num_merge == -1) {
+    if (req_meta.num_merge == -1) {
       // Get the key for the data to be sent.
       int key = send_q.front();
 
@@ -129,7 +129,9 @@ class KVStoreDist : public KVStoreLocal {
       DataHandleType type = DepairDataHandleType(req_meta.cmd);
 
       std::unique_lock<std::mutex> send_lk(send_mu);
-      if(req_meta.sender!=((ps::MyRank()+1)*2-1+100))worker->Response(req_meta);
+      if (req_meta.sender != ((ps::MyRank() + 1) * 2 - 1 + 100)) {
+        worker->Response(req_meta);
+      }
       else {
         send_q.push(key);
         req_meta_buf[key].cmd       = req_meta.cmd;
@@ -155,7 +157,7 @@ class KVStoreDist : public KVStoreLocal {
       if (updates.merged.is_none()) {
         updates.merged = NDArray(dshape, Context(), false,type.dtype);
       }
-      if(req_meta.sender==((ps::MyRank()+1)*2-1+100)){
+      if (req_meta.sender==((ps::MyRank()+1)*2-1+100)) {
         updates.merged = recved;
         updates.merged.WaitToRead();
       }
@@ -564,7 +566,7 @@ class KVStoreDist : public KVStoreLocal {
   }
 
   void PushDefault(int key, const NDArray &send_buf, const PSKV& pskv, int priority) {
-    if(ps_worker_->enable_p3) {
+    if (ps_worker_->enable_p3) {
       auto push_to_servers =
         [this, key, pskv, send_buf, priority](RunContext rctx, Engine::CallbackOnComplete cb) {
           const int dtype = send_buf.dtype();
@@ -778,7 +780,7 @@ class KVStoreDist : public KVStoreLocal {
       const int num_servers = krs.size();
       CHECK_GT(num_servers, 0);
       // parition to all servers
-      if(key == 0) key_temp = 0;
+      if (key == 0) key_temp = 0;
       pskv.size = 0;
       size_t s = num_arr_elems;
       int i = 0;

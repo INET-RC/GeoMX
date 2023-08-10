@@ -466,7 +466,7 @@ class KVStoreDistServer {
       case RequestType::kDefaultPushPull:
         if (req_meta.push) {
             bool request;
-            if(ps_server_->enable_inter_ts){
+            if (ps_server_->enable_inter_ts) {
                  request = req_meta.app_id;
             }else{
                  request = req_meta.sender % 2 == 1;
@@ -521,7 +521,7 @@ class KVStoreDistServer {
     auto& update = sync_mode ? update_buf->merged : update_buf->temp_array;
     if (updater_ && ps::IsGlobalServer()) {
       CHECK(updater_);
-      exec_.Exec([this, key, &update, &stored](){
+      exec_.Exec([this, key, &update, &stored]() {
         updater_(key, update, &stored);
       });
     } else {
@@ -540,7 +540,7 @@ class KVStoreDistServer {
       auto& update = sync_mode ? update_buf->merged : update_buf->temp_array;
       if (updater_ && ps::IsGlobalServer()) {
           CHECK(updater_);
-          exec_.Exec([this, key, &update, &stored](){
+          exec_.Exec([this, key, &update, &stored]() {
               updater_(key, update, &stored);
           });
       } else {
@@ -1119,12 +1119,12 @@ class KVStoreDistServer {
       mu_.lock();
       initialized_[key] = true;
       mu_.unlock();
-        if(ps_server_->enable_intra_ts){
+        if (ps_server_->enable_intra_ts) {
             DefaultAutoPull(type, key, store_v_[key], req_meta, req_data, server, false);
         }
     } else {
       // notify workers to pull
-      if(ps_server_->enable_intra_ts){
+      if (ps_server_->enable_intra_ts) {
           mu_.lock();
           auto& updates_tmp = update_buf_tmp_[key];
           mu_.unlock();
@@ -1134,7 +1134,7 @@ class KVStoreDistServer {
           mu_.lock();
           auto& updates_tmp = update_buf_tmp_[key];
           mu_.unlock();
-          if(!ps_server_->enable_p3){
+          if (!ps_server_->enable_p3) {
             for (const auto& req : updates_tmp.request) {
               server->Response(req, false);
             }
@@ -1243,7 +1243,7 @@ class KVStoreDistServer {
         initialized_[key] = true;
         mu_.unlock();
       } else {
-        if(!ps_server_->enable_p3){
+        if (!ps_server_->enable_p3) {
           server->Response(req_meta);
         }else{
           ps::KVPairs<char> res;
@@ -1285,7 +1285,7 @@ class KVStoreDistServer {
       }
       updates.merged.WaitToRead();
       
-      for(int i=0;i<req_meta.num_merge;i++) {
+      for (int i = 0; i < req_meta.num_merge; i++) {
         updates.request.push_back(req_meta);
       }
 
@@ -1294,7 +1294,7 @@ class KVStoreDistServer {
         if (ps::EnableCentralWorkers()) central_workers = ps::NumWorkers();
         if (updates.request.size() == (size_t)central_workers + (size_t)ps::NumGlobalWorkers()) {
           // aggregate gradients and update model
-          if(ps_server_->enable_inter_ts){
+          if (ps_server_->enable_inter_ts) {
               TS_ApplyUpdates(type, key, true, &updates, store_v_[key], req_meta, req_data, server);
           }else{
               ApplyUpdates(type, key, &updates, server);
@@ -1374,7 +1374,7 @@ void DefaultAutoPull(const DataHandleType type,
     response.keys = req_data.keys;
     response.lens = {len};
     response.vals.CopyFrom(static_cast<const char*>(stored.data().dptr_), len);
-    if(inter_domain){
+    if (inter_domain) {
         server->AutoPullUpdate1(version, req_meta, response);
     }else{
         server->AutoPullUpdate(version, req_meta, response);
@@ -1503,7 +1503,7 @@ void DataHandleSyncBSCompressed(const DataHandleType type, const ps::KVMeta& req
 
   int central_workers = 0;
   if (ps::EnableCentralWorkers())  central_workers = ps::NumWorkers();
-  if (updates.request.size() == (size_t)central_workers + (size_t)ps::NumGlobalWorkers()){
+  if (updates.request.size() == (size_t)central_workers + (size_t)ps::NumGlobalWorkers()) {
     // aggregate gradients and update model
     ApplyUpdates(type, key, &updates, server);
     // notify all workers to call pull
@@ -1711,7 +1711,7 @@ void DataHandlePullDefault(const DataHandleType type, const ps::KVMeta& req_meta
   CHECK_EQ(req_data.keys.size(), (size_t)1);
 
   bool request = req_meta.sender % 2 == 1;
-  if(req_meta.sender > 100){
+  if (req_meta.sender > 100) {
       if (request) {
           // response pull requests
           int key = ps_server_->enable_p3?(int)req_data.keys[0]:
@@ -1820,7 +1820,7 @@ PSKV& EncodeDefaultKey(const int key, const size_t num_arr_elems, const int num_
 
     // represents size of data to be sent
     size_t compr_num_elem;
-    if(gradient_compression_->get_type() == CompressionType::kTwoBit) {
+    if (gradient_compression_->get_type() == CompressionType::kTwoBit) {
       compr_num_elem = gradient_compression_->GetCompressedSize(original_num_elem);
     }
     else if (gradient_compression_->get_type() == CompressionType::kBiSparseCompression) {

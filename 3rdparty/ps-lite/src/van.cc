@@ -298,7 +298,7 @@ void Van::MergeMsg(Message* msg1, Message* msg2) {
   float* n = (float*)malloc(nlen1 * sizeof(float));
   memcpy(merged, p1, nlen1 * sizeof(float));
   memcpy(n, p2, nlen1 * sizeof(float));
-  for(int i = 0; i < nlen1; i++) {
+  for (int i = 0; i < nlen1; i++) {
     merged[i] += n[i];
   }
   msg1->data[1].reset((char*)merged, nlen1 * sizeof(float), [merged](char* buf) {
@@ -318,7 +318,7 @@ void Van::MergeMsg_HALF(Message* msg1, Message* msg2) {
   half* n = (half*)malloc(nlen1 * sizeof(half));
   memcpy(merged, p1, nlen1 * sizeof(half));
   memcpy(n, p2, nlen1 * sizeof(half));
-  for(int i = 0; i < nlen1; i++) {
+  for (int i = 0; i < nlen1; i++) {
     merged[i] += n[i];
   }
   msg1->data[1].reset((char *)merged, nlen1 * sizeof(half), [merged](char* buf) {
@@ -338,24 +338,24 @@ void Van::ProcessDataMsg(Message* msg) {
   CHECK(obj) << "timeout (5 sec) to wait App " << app_id << " customer " << customer_id \
     << " ready at " << my_node_.role;
 
-  if(enable_dgt && DepairDataHandleType(msg->meta.head).requestType == RequestType::kDefaultPushPull && \
+  if (enable_dgt && DepairDataHandleType(msg->meta.head).requestType == RequestType::kDefaultPushPull && \
     my_node_global_.role == 3 && msg->meta.msg_type == 1) { // If I am global_server, and recv push msg
-    if(enable_dgt == 3) decode(*msg);
-    if(msg_map[msg->meta.sender][msg->meta.first_key].find(msg->meta.seq) \
+    if (enable_dgt == 3) decode(*msg);
+    if (msg_map[msg->meta.sender][msg->meta.first_key].find(msg->meta.seq) \
       == msg_map[msg->meta.sender][msg->meta.first_key].end()) {
       msg_map[msg->meta.sender][msg->meta.first_key][msg->meta.seq] = *msg;
     } else {
-      if(DepairDataHandleType(msg->meta.head).dtype == 0) { // kFloat32
+      if (DepairDataHandleType(msg->meta.head).dtype == 0) { // kFloat32
         MergeMsg(&msg_map[msg->meta.sender][msg->meta.first_key][msg->meta.seq], msg);
       } else if (DepairDataHandleType(msg->meta.head).dtype == 2) { // kFloat16
         MergeMsg_HALF(&msg_map[msg->meta.sender][msg->meta.first_key][msg->meta.seq], msg);
       }
     }
 
-    if(msg->meta.seq == msg->meta.seq_end) {
+    if (msg->meta.seq == msg->meta.seq_end) {
       char* buf = (char *)malloc(msg->meta.total_bytes);
       memset(buf, 0, msg->meta.total_bytes);
-      for(auto &m : msg_map[msg->meta.sender][msg->meta.first_key]) {
+      for (auto &m : msg_map[msg->meta.sender][msg->meta.first_key]) {
         memcpy(buf + m.second.meta.val_bytes, m.second.data[1].data(), m.second.data[1].size());
       }
       msg_map[msg->meta.sender][msg->meta.first_key].clear();
@@ -404,7 +404,7 @@ void Van::ProcessAddGlobalNodeCommand(Message* msg, Meta* nodes) {
       if (connected_nodes_.find(addr_str) == connected_nodes_.end()) {
         Connect(node, true);
         PS_VLOG(1) << "Connected to" << node.DebugString();
-        if(node.role != Node::Role::GLOBAL_SCHEDULER) {
+        if (node.role != Node::Role::GLOBAL_SCHEDULER) {
           PS_VLOG(1) << my_node_global_.DebugString()<< "ready to connect " << node.DebugString();
           Connect_UDP(node);
         }
@@ -446,11 +446,11 @@ void Van::Start(int customer_id) {
         int num_max = num_servers > num_workers ? num_servers : num_workers;
         int num_node_id = 2 * num_max;
         std::vector<int> temp(num_node_id, -1);
-        for(int i = 0; i < num_node_id; i++) {
+        for (int i = 0; i < num_node_id; i++) {
           A.push_back(temp);
           lifetime.push_back(temp);
         }
-        for(int i = 0; i < num_node_id; i++) {
+        for (int i = 0; i < num_node_id; i++) {
           B.push_back(0);
           B1.push_back(0);
         }
@@ -518,7 +518,7 @@ void Van::Start(int customer_id) {
 
     // wait until ready
     while (!ready_.load()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      std::this_thread::sleep_for (std::chrono::milliseconds(100));
     }
 
     start_mu_.lock();
@@ -544,7 +544,7 @@ void Van::Start(int customer_id) {
           #endif
         }
         enable_p3 = atoi(Environment::Get()->find("ENABLE_P3"));
-        if(enable_p3) {
+        if (enable_p3) {
           sender_thread_ = std::unique_ptr<std::thread>(new std::thread(&Van::Sending, this));
         }
       }
@@ -579,11 +579,11 @@ void Van::StartGlobal(int customer_id) {
       int num_max = num_servers > num_workers ? num_servers : num_workers;
       int num_node_id = 2 * num_max + 8;
       std::vector<int> temp(num_node_id, -1);
-      for(int i = 0; i < num_node_id; i++) {
+      for (int i = 0; i < num_node_id; i++) {
         A.push_back(temp);
         lifetime.push_back(temp);
       }
-      for(int i = 0; i < num_node_id; i++) {
+      for (int i = 0; i < num_node_id; i++) {
         B.push_back(0);
         B1.push_back(0);
       }
@@ -609,7 +609,7 @@ void Van::StartGlobal(int customer_id) {
     // start receiver
     receiver_global_thread_ = std::unique_ptr<std::thread>(new std::thread(&Van::ReceivingGlobal, this));
 
-    if(!is_global_scheduler_) {
+    if (!is_global_scheduler_) {
       if (getenv("ENABLE_DGT") == nullptr) {
         #ifdef _MSC_VER
           _putenv_s("ENABLE_DGT", "0");
@@ -618,7 +618,7 @@ void Van::StartGlobal(int customer_id) {
         #endif
       }
       enable_dgt = atoi(Environment::Get()->find("ENABLE_DGT"));
-      if(enable_dgt) {
+      if (enable_dgt) {
         if (getenv("DMLC_UDP_CHANNEL_NUM") == nullptr) {
           #ifdef _MSC_VER
             _putenv_s("DMLC_UDP_CHANNEL_NUM", "3");
@@ -627,14 +627,14 @@ void Van::StartGlobal(int customer_id) {
           #endif
         }
         int udp_ch_num = atoi(Environment::Get()->find("DMLC_UDP_CHANNEL_NUM"));
-        for(int i = 0; i < udp_ch_num; ++i) {
+        for (int i = 0; i < udp_ch_num; ++i) {
           int p = GetAvailablePort();
           my_node_global_.udp_port.push_back(p);
         }
         my_node_global_.udp_port = Bind_UDP(my_node_global_, is_global_scheduler_ ? 0 : 40);
         PS_VLOG(1) << "(UDP) Bind to " << my_node_global_.DebugString();
         // start udp receiver
-        for(size_t i = 0; i < my_node_global_.udp_port.size(); ++i) {
+        for (size_t i = 0; i < my_node_global_.udp_port.size(); ++i) {
           udp_receiver_thread_[i] = std::unique_ptr<std::thread>(
             new std::thread(&Van::Receiving_UDP, this, i));
         }
@@ -665,7 +665,7 @@ void Van::StartGlobal(int customer_id) {
 
     // wait until ready
     while (!ready_global_.load()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      std::this_thread::sleep_for (std::chrono::milliseconds(100));
     }
   }
 }
@@ -686,10 +686,10 @@ void Van::Stop(bool is_global) {
       receiver_thread_->join();
     }
     receiver_global_thread_->join();
-    for(size_t i = 0; i < udp_receiver_thread_vec.size(); ++i) {
+    for (size_t i = 0; i < udp_receiver_thread_vec.size(); ++i) {
         udp_receiver_thread_[i]->join();
     }
-    if(!is_scheduler_) {
+    if (!is_scheduler_) {
         important_scheduler_thread_->join();
         unimportant_scheduler_thread_->join();
     }
@@ -705,7 +705,7 @@ void Van::Stop(bool is_global) {
 }
 
 void Van::AssignMsg(Message& msg, int channel, int tag) {
-  if(channel == 0) important_queue_.Push(msg);
+  if (channel == 0) important_queue_.Push(msg);
   else unimportant_queue_.Push(msg);
 }
 
@@ -719,7 +719,7 @@ void Van::Important_scheduler() {
 
 void Van::Unimportant_scheduler() {
   while (true) {
-    if(important_queue_.empty()) {
+    if (important_queue_.empty()) {
       Message msg;
       unimportant_queue_.WaitAndPop(&msg);
       Unimportant_send(msg);
@@ -735,7 +735,7 @@ int Van::Important_send(Message& msg) {
 
 int Van::Unimportant_send(Message& msg) {
   int send_bytes = 0;
-  if(enable_dgt == 1) {
+  if (enable_dgt == 1) {
     send_bytes = SendMsg_UDP(msg.meta.channel - 1, msg, 0);
   } else if (enable_dgt == 2) {
     send_bytes = SendMsg(msg, true); // for tcp-dgt
@@ -753,7 +753,7 @@ void Van::encode(Message& msg, int bits_num) {
   float *ps = (float*)s_val.data();
   int d_val_size = 0;
 
-  if(s_val.size() % (msg.meta.bits_num / bits_num) == 0) {
+  if (s_val.size() % (msg.meta.bits_num / bits_num) == 0) {
       d_val_size = s_val.size() / (msg.meta.bits_num / bits_num);
   } else {
       d_val_size = s_val.size() / (msg.meta.bits_num / bits_num) + 1;
@@ -761,30 +761,30 @@ void Van::encode(Message& msg, int bits_num) {
   SArray<char> d_val(d_val_size);
   char *pd = d_val.data();
   auto it = residual[msg.meta.first_key].find(msg.meta.seq);
-  if(it == residual[msg.meta.first_key].end()) {
+  if (it == residual[msg.meta.first_key].end()) {
     residual[msg.meta.first_key][msg.meta.seq] = SArray<char>(s_val.size());
   }
   float *pr = (float*)residual[msg.meta.first_key][msg.meta.seq].data();
 
   int param_n = s_val.size() / sizeof(float);
   float max_v = 0.0, min_v = 0.0;
-  for(int i = 0; i < param_n; ++i) {
+  for (int i = 0; i < param_n; ++i) {
     *(pr+i) += *(ps+i);
   }
-  for(int i = 0; i < param_n; ++i) {
+  for (int i = 0; i < param_n; ++i) {
     max_v = std::max(max_v, *(pr + i));
     min_v = std::min(min_v, *(pr + i));
   }
-  for(int i = 0; i < pow(2, bits_num); ++i) {
+  for (int i = 0; i < pow(2, bits_num); ++i) {
     float zv = ((min_v + i * (max_v - min_v) / pow(2, bits_num)) \
       + (min_v + (i + 1) * (max_v - min_v) / pow(2, bits_num))) / 2;
     msg.meta.compr.push_back(zv);
   }
   char qj = 0;
-  for(int i = 0; i < param_n; ++i) {
+  for (int i = 0; i < param_n; ++i) {
     qj = (*(pr + i) - min_v) / ((max_v - min_v) / pow(2, bits_num));
     *pd |= (qj << (((8 / bits_num) - 1 - i % (8 / bits_num)) * bits_num));
-    if(i % (8 / bits_num) == 0) pd += 1;
+    if (i % (8 / bits_num) == 0) pd += 1;
     *(pr+i) -= msg.meta.compr[qj];
   }
   msg.meta.bits_num = bits_num;
@@ -792,7 +792,7 @@ void Van::encode(Message& msg, int bits_num) {
 }
 
 void Van::decode(Message& msg) {
-  if(DepairDataHandleType(msg.meta.head).dtype == 0
+  if (DepairDataHandleType(msg.meta.head).dtype == 0
     && msg.meta.bits_num == 32) { // kFloat32
     return;
   } else if (DepairDataHandleType(msg.meta.head).dtype == 2
@@ -811,13 +811,13 @@ void Van::decode(Message& msg) {
   int bits_num  = msg.meta.bits_num;
   assert(pow(2, bits_num) == msg.meta.compr.size());
   char mask = pow(2, bits_num) - 1;
-  for(int i = 0; i < nlen; ++i) {
-    for(int j = 0; j < 8 / bits_num; ++j) {
+  for (int i = 0; i < nlen; ++i) {
+    for (int j = 0; j < 8 / bits_num; ++j) {
       qj = (*(ps + i) >> (8 - bits_num - bits_num * j)) & mask;
       *pd = msg.meta.compr[qj];
       pd += 1;
       param_n -= 1;
-      if(param_n == 0) break;
+      if (param_n == 0) break;
     }
   }
   msg.data[1] = d_val;
@@ -1046,7 +1046,7 @@ void Van::PackMeta(const Meta& meta, char** meta_buf, int* buf_size, bool is_glo
       p->set_id(n.id);
       p->set_role(n.role);
       p->set_port(n.port);
-      for(auto up : n.udp_port) p->add_udp_port(up);
+      for (auto up : n.udp_port) p->add_udp_port(up);
       p->set_hostname(n.hostname);
       p->set_is_recovery(n.is_recovery);
       p->set_customer_id(n.customer_id);
@@ -1089,7 +1089,7 @@ void Van::UnpackMeta(const char* meta_buf, int buf_size, Meta* meta) {
   meta->vals_len = pb.vals_len();
   meta->lens_len = pb.lens_len();
   meta->priority = pb.priority();
-  for(int i = 0; i < pb.compr_size(); ++i) {
+  for (int i = 0; i < pb.compr_size(); ++i) {
       meta->compr.push_back(pb.compr(i));
   }
   meta->request = pb.request();
@@ -1098,7 +1098,7 @@ void Van::UnpackMeta(const char* meta_buf, int buf_size, Meta* meta) {
   meta->body = pb.body();
   meta->customer_id = pb.customer_id();
   meta->data_type.resize(pb.data_type_size());
-  for(int i = 0; i < pb.data_type_size(); ++i) {
+  for (int i = 0; i < pb.data_type_size(); ++i) {
     meta->data_type[i] = static_cast<DataType>(pb.data_type(i));
   }
   if (pb.has_control()) {
@@ -1111,7 +1111,7 @@ void Van::UnpackMeta(const char* meta_buf, int buf_size, Meta* meta) {
       Node n;
       n.role = static_cast<Node::Role>(p.role());
       n.port = p.port();
-      for(int i = 0; i < p.udp_port_size(); ++i) {
+      for (int i = 0; i < p.udp_port_size(); ++i) {
         n.udp_port.push_back(p.udp_port(i));
       }
       n.hostname = p.hostname();
@@ -1129,7 +1129,7 @@ void Van::Heartbeat() {
   const char* val = Environment::Get()->find("PS_HEARTBEAT_INTERVAL");
   const int interval = val ? atoi(val) : kDefaultHeartbeatInterval;
   while (interval > 0 && ready_.load()) {
-    std::this_thread::sleep_for(std::chrono::seconds(interval));
+    std::this_thread::sleep_for (std::chrono::seconds(interval));
     Message msg;
     msg.meta.recver = kScheduler;
     msg.meta.control.cmd = Control::HEARTBEAT;
@@ -1195,7 +1195,7 @@ void Van::AskForReceiverPush(int app, int customer, int timestamp, bool is_globa
 }
 
 void Van::ProcessAskPushCommand(Message* msg) {
-  if(ask_q.size() == 1 && ask_q.front() == (msg->meta.sender - 100)) return;
+  if (ask_q.size() == 1 && ask_q.front() == (msg->meta.sender - 100)) return;
 
   Message rpl;
   rpl.meta.sender = my_node_.id;
@@ -1207,13 +1207,13 @@ void Van::ProcessAskPushCommand(Message* msg) {
   std::unique_lock<std::mutex> lk_sch1(sched1);
   ask_q.push(msg->meta.sender - 100);
 
-  if(ask_q.size() > 1) {
+  if (ask_q.size() > 1) {
     int node_a = ask_q.front();
     ask_q.pop();
     int node_b = ask_q.front();
     ask_q.pop();
-    if(node_a == 0 || node_b == 0) {
-      if(node_a == 0) {
+    if (node_a == 0 || node_b == 0) {
+      if (node_a == 0) {
         rpl.meta.iters = node_a + 100;
         rpl.meta.recver = node_b + 100;
         B1[node_b] = 1;
@@ -1227,7 +1227,7 @@ void Van::ProcessAskPushCommand(Message* msg) {
         PS_VLOG(2) << "In local push, " << node_a << " send to server 100";
       }
     } else {
-      if(A[node_a][node_b] > A[node_b][node_a]) {
+      if (A[node_a][node_b] > A[node_b][node_a]) {
         rpl.meta.iters = node_b + 100;
         rpl.meta.recver = node_a + 100;
         Send(rpl);
@@ -1243,16 +1243,16 @@ void Van::ProcessAskPushCommand(Message* msg) {
     }
   }
   int count = 0;
-  for(auto it: B1) count += it;
-  if(count == Postoffice::Get()->num_workers()) {
-    for(std::size_t i = 0; i < B1.size(); i++) B1[i] = 0;
+  for (auto it: B1) count += it;
+  if (count == Postoffice::Get()->num_workers()) {
+    for (std::size_t i = 0; i < B1.size(); i++) B1[i] = 0;
     PS_VLOG(2) << "Local push over.";
   }
   lk_sch1.unlock();
 }
 
 void Van::ProcessAskPushGlobalCommand(Message* msg) {
-  if(ask_q.size() == 1 && ask_q.front() == msg->meta.sender) return;
+  if (ask_q.size() == 1 && ask_q.front() == msg->meta.sender) return;
 
   Message rpl;
   rpl.meta.sender = my_node_global_.id;
@@ -1264,13 +1264,13 @@ void Van::ProcessAskPushGlobalCommand(Message* msg) {
   std::unique_lock<std::mutex> lk_sch1(sched1);
   ask_q.push(msg->meta.sender);
 
-  if(ask_q.size() > 1) {
+  if (ask_q.size() > 1) {
     int node_a = ask_q.front();
     ask_q.pop();
     int node_b = ask_q.front();
     ask_q.pop();
-    if(node_a == 8 || node_b == 8) {
-      if(node_a == 8) {
+    if (node_a == 8 || node_b == 8) {
+      if (node_a == 8) {
         rpl.meta.iters = node_a;
         rpl.meta.recver = node_b;
         B1[node_b] = 1;
@@ -1284,7 +1284,7 @@ void Van::ProcessAskPushGlobalCommand(Message* msg) {
         PS_VLOG(2) << "In global push," << node_a << " send to server 8";
       }
     } else {
-      if(A[node_a][node_b] > A[node_b][node_a]) {
+      if (A[node_a][node_b] > A[node_b][node_a]) {
         rpl.meta.iters = node_b;
         rpl.meta.recver = node_a;
         Send(rpl, true);
@@ -1301,9 +1301,9 @@ void Van::ProcessAskPushGlobalCommand(Message* msg) {
   }
 
   int count = 0;
-  for(auto it: B1) count += it;
-  if(count == Postoffice::Get()->num_global_workers()) {
-      for(std::size_t i = 0; i < B1.size(); i++) B1[i] = 0;
+  for (auto it: B1) count += it;
+  if (count == Postoffice::Get()->num_global_workers()) {
+      for (std::size_t i = 0; i < B1.size(); i++) B1[i] = 0;
       PS_VLOG(2) << "Global push is over.";
   }
   lk_sch1.unlock();
@@ -1325,21 +1325,21 @@ void Van::ProcessAskPullCommand(Message* msg) {
   reply.meta.timestamp = timestamp_++;
 
   int temp = 0;
-  for(std::size_t i = 0; i < B.size(); i++) temp += B[i];
+  for (std::size_t i = 0; i < B.size(); i++) temp += B[i];
 
-  if(temp == Postoffice::Get()->num_workers()) {
-    for(std::size_t i = 0; i < B.size(); i++) B[i] = 0;
+  if (temp == Postoffice::Get()->num_workers()) {
+    for (std::size_t i = 0; i < B.size(); i++) B[i] = 0;
     iters++;
   }
 
-  if(msg->meta.version <= iters) {
+  if (msg->meta.version <= iters) {
     reply.meta.customer_id = -1;
   } else {
     int receiver_id = -1;
     int num_know_node = 0, num_unknow_node = 0;
-    for(std::size_t i = 0; i < A[req_node_id].size(); i++) {
-      if((i % 2) && B[i] == 0) {
-        if(A[req_node_id][i] != -1) num_know_node++;
+    for (std::size_t i = 0; i < A[req_node_id].size(); i++) {
+      if ((i % 2) && B[i] == 0) {
+        if (A[req_node_id][i] != -1) num_know_node++;
         else num_unknow_node++;
       }
     }
@@ -1349,7 +1349,7 @@ void Van::ProcessAskPullCommand(Message* msg) {
     int rand_number = rand() % 10;
     double greed_rate = double(num_know_node / (num_know_node + num_unknow_node)) < max_greed_rate ?
       double(num_know_node / (num_know_node + num_unknow_node)) : max_greed_rate;
-    if((num_know_node != 0) && (rand_number <= (greed_rate * 10))) { // greedy mode
+    if ((num_know_node != 0) && (rand_number <= (greed_rate * 10))) { // greedy mode
       int throughput = -1;
       for (std::size_t i = 0; i < A[req_node_id].size(); i++) {
         if (B[i] == 0 && (A[req_node_id][i] > throughput)) {
@@ -1375,7 +1375,7 @@ void Van::ProcessAskPullCommand(Message* msg) {
     reply.meta.customer_id = receiver_id;
   }
 
-  if(reply.meta.customer_id != -1) {
+  if (reply.meta.customer_id != -1) {
     B[reply.meta.customer_id] = 1;
     reply.meta.customer_id += 100;
   }
@@ -1401,20 +1401,20 @@ void Van::ProcessAskPullGlobalCommand(Message* msg) {
   reply.meta.timestamp = timestamp_++;
 
   int temp = 0;
-  for(std::size_t i = 0; i < B.size(); i++) temp += B[i];
+  for (std::size_t i = 0; i < B.size(); i++) temp += B[i];
 
-  if(temp== Postoffice::Get()->num_global_workers()) {
-    for(std::size_t i = 0;i < B.size(); i++) B[i] = 0;
+  if (temp== Postoffice::Get()->num_global_workers()) {
+    for (std::size_t i = 0;i < B.size(); i++) B[i] = 0;
     iters++;
   }
-  if(msg->meta.version <= iters) {
+  if (msg->meta.version <= iters) {
     reply.meta.customer_id = -1;
   } else {
     int receiver_id = -1;
     int num_know_node = 0, num_unknow_node = 0;
-    for(std::size_t i = 0; i < A[req_node_id].size(); i++) {
-      if((i % 2) && B[i] == 0) {
-        if(A[req_node_id][i] != -1) num_know_node++;
+    for (std::size_t i = 0; i < A[req_node_id].size(); i++) {
+      if ((i % 2) && B[i] == 0) {
+        if (A[req_node_id][i] != -1) num_know_node++;
         else num_unknow_node++;
       }
     }
@@ -1425,7 +1425,7 @@ void Van::ProcessAskPullGlobalCommand(Message* msg) {
     int rand_number=rand() % 10;
     double greed_rate = double(num_know_node / (num_know_node + num_unknow_node)) < max_greed_rate ?
       double(num_know_node / (num_know_node + num_unknow_node)) : max_greed_rate;
-    if((num_know_node != 0) && (rand_number <= (greed_rate * 10))) { // greedy mode
+    if ((num_know_node != 0) && (rand_number <= (greed_rate * 10))) { // greedy mode
       int throughput = -1;
       for (std::size_t i = 0; i < A[req_node_id].size(); i++) {
         if (B[i] == 0 && (A[req_node_id][i] > throughput)) {
@@ -1449,7 +1449,7 @@ void Van::ProcessAskPullGlobalCommand(Message* msg) {
     // send reply message
     reply.meta.customer_id = receiver_id;
   }
-  if(reply.meta.customer_id != -1) {
+  if (reply.meta.customer_id != -1) {
     B[reply.meta.customer_id] = 1;
   }
   PS_VLOG(2) << "In global pull, node " << reply.meta.sender << " send to node " << reply.meta.customer_id;

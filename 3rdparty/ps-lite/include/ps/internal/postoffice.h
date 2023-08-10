@@ -193,7 +193,6 @@ class Postoffice {
   void InitEnvironment();
   Van* van_;
   mutable std::mutex mu_;
-  // app_id -> (customer_id -> customer pointer)
   std::unordered_map<int, std::unordered_map<int, Customer*>> customers_;
   std::unordered_map<int, std::vector<int>> node_ids_;
   std::unordered_map<int, std::vector<int>> node_global_ids_;

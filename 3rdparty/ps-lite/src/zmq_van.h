@@ -94,7 +94,7 @@ class ZMQVan : public Van {
 
   std::vector<int> Bind_UDP(const Node& node, int max_retry) override {
     std::vector<int> tmp_udp_port;
-    for(size_t i = 0; i < node.udp_port.size(); ++i) {
+    for (size_t i = 0; i < node.udp_port.size(); ++i) {
       udp_receiver_ = zmq_socket(context_, ZMQ_ROUTER);
       CHECK(udp_receiver_ != NULL) << "create udp_receiver ["
         << i << "] socket failed: " << zmq_strerror(errno);
@@ -144,7 +144,7 @@ class ZMQVan : public Van {
     if ((node.role == my_node_global_.role) &&
         (node.id != my_node_global_.id)) return;
 
-    for(size_t i = 0; i < node.udp_port.size(); ++i){
+    for (size_t i = 0; i < node.udp_port.size(); ++i) {
       PS_VLOG(1) << node.udp_port[i];
       void *udp_sender = zmq_socket(context_, ZMQ_DEALER);
       CHECK(udp_sender != NULL)
@@ -155,7 +155,7 @@ class ZMQVan : public Van {
         std::string my_id = "ps" + std::to_string(my_node_global_.id);
         zmq_setsockopt(udp_sender, ZMQ_IDENTITY, my_id.data(), my_id.size());
         int tos = (node.udp_port.size() - i - 1) * 32;
-        if(zmq_setsockopt(udp_sender, ZMQ_TOS, &tos, sizeof(tos)) == 0) {
+        if (zmq_setsockopt(udp_sender, ZMQ_TOS, &tos, sizeof(tos)) == 0) {
           int dscp = (node.udp_port.size() - i - 1) * 8;
           std::string command = "iptables -t mangle -A OUTPUT -p udp --dst "
             + node.hostname + " --dport "+ std::to_string(node.udp_port[i])
@@ -217,7 +217,7 @@ class ZMQVan : public Van {
     int send_bytes = 0;
     tot_bytes += sizeof(meta_size);
     tot_bytes += meta_size;
-    for(int i = 0; i < n; ++i){
+    for (int i = 0; i < n; ++i) {
       tot_bytes += msg.data[i].size();
     }
     char *send_buf = (char*) malloc(tot_bytes);
@@ -226,7 +226,7 @@ class ZMQVan : public Van {
     addr_offset += sizeof(meta_size);
     memcpy(send_buf + addr_offset, meta_buf, meta_size);
     addr_offset += meta_size;
-    for(int i = 0; i < n; ++i){
+    for (int i = 0; i < n; ++i) {
       memcpy(send_buf + addr_offset, msg.data[i].data(), msg.data[i].size());
       addr_offset += msg.data[i].size();
     }
@@ -275,12 +275,12 @@ class ZMQVan : public Van {
       UnpackMeta(buf + addr_offset, meta_size, &(msg->meta));
       addr_offset += meta_size;
 
-      if(msg->meta.keys_len > 0) {
+      if (msg->meta.keys_len > 0) {
         SArray<char> data;
         data.reset(buf + addr_offset, msg->meta.keys_len, [zmsg, size](char* buf) {});
         msg->data.push_back(data);
         addr_offset += msg->meta.keys_len;
-        if(msg->meta.lens_len > 0) {
+        if (msg->meta.lens_len > 0) {
           data.reset(buf + addr_offset, msg->meta.vals_len, [zmsg, size](char* buf) {});
           msg->data.push_back(data);
           addr_offset += msg->meta.vals_len;
@@ -352,7 +352,7 @@ class ZMQVan : public Van {
       zmq_setsockopt(sender, ZMQ_IDENTITY, my_id.data(), my_id.size());
       int hwm = 1;
       zmq_setsockopt(sender, ZMQ_SNDHWM, &hwm, sizeof(hwm));
-      if(is_global && node.udp_port.size() != 0) {
+      if (is_global && node.udp_port.size() != 0) {
         int tos = node.udp_port.size() * 32;
         if (zmq_setsockopt(sender, ZMQ_TOS, &tos, sizeof(tos)) == 0) {
           std::cout << "Success to set " << "tcp[" << 0 << "]:"

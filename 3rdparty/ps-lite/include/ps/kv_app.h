@@ -110,7 +110,7 @@ class KVWorker: public SimpleApp {
 
     enable_intra_ts = dmlc::GetEnv("ENABLE_INTRA_TS", 0);
     enable_p3 = dmlc::GetEnv("ENABLE_P3", 0);
-    if(enable_intra_ts) {
+    if (enable_intra_ts) {
         obj_ = new Customer(app_id, customer_id, std::bind(&KVWorker<Val>::TS_Process, this, _1), false);
     } else {
         obj_ = new Customer(app_id, customer_id, std::bind(&KVWorker<Val>::Process, this, _1), false);
@@ -182,7 +182,7 @@ class KVWorker: public SimpleApp {
     kvs.vals = vals;
     kvs.lens = lens;
 
-    if(enable_intra_ts && kvs.keys.size()) {
+    if (enable_intra_ts && kvs.keys.size()) {
       KVMeta meta;
       meta.cmd         = cmd;
       meta.push        = true;
@@ -435,7 +435,7 @@ class KVServer: public SimpleApp {
     enable_intra_ts = dmlc::GetEnv("ENABLE_INTRA_TS", 0);
     enable_dgt = dmlc::GetEnv("ENABLE_DGT", 0);
     enable_p3 = dmlc::GetEnv("ENABLE_P3", 0);
-    if(enable_dgt) InitDGT();
+    if (enable_dgt) InitDGT();
   }
 
   /** \brief deconstructor */
@@ -529,8 +529,8 @@ class KVServer: public SimpleApp {
     int last_recv_id = -1;
     while(true) {
       int receiver = Postoffice::Get()->van()->GetGlobalReceiver(throughput, last_recv_id, iters);
-      if(receiver == -1) break; // whether transmition is over
-      if(kvs.keys.size()){
+      if (receiver == -1) break; // whether transmition is over
+      if (kvs.keys.size()) {
         Message msg;
         msg.meta.head = cmd;
         msg.meta.app_id = obj_->app_id();
@@ -565,8 +565,8 @@ class KVServer: public SimpleApp {
     int last_recv_id = -1;
     while(true) {
       int receiver=Postoffice::Get()->van()->GetGlobalReceiver(throughput, last_recv_id, global_iter);
-      if(receiver == -1) break; // whether transmition is over
-      if(kvs.keys.size()) {
+      if (receiver == -1) break; // whether transmition is over
+      if (kvs.keys.size()) {
         Message msg;
         msg.meta.head = req.cmd;
         msg.meta.app_id = obj_->app_id();
@@ -600,10 +600,12 @@ class KVServer: public SimpleApp {
     iter++;
     int throughput = -1;
     int last_recv_id = -1;
+    auto* van = Postoffice::Get()->van()
+
     while(true) {
-      int receiver = Postoffice::Get()->van()->GetReceiver(throughput, last_recv_id, iter);
-      if(receiver == -1) break; // whether transmition is over
-      if(kvs.keys.size()) {
+      int receiver = van->GetReceiver(throughput, last_recv_id, iter);
+      if (receiver == -1) break; // whether transmition is over
+      if (kvs.keys.size()) {
         Message msg;
         msg.meta.app_id = obj_->app_id();
         msg.meta.customer_id = obj_->customer_id();
@@ -874,7 +876,7 @@ void KVServer<Val>::DefaultSlicer(
     kv.keys = send.keys.segment(pos[i], pos[i + 1]);
     if (send.lens.size()) {
       kv.lens = send.lens.segment(pos[i], pos[i + 1]);
-      for(int l : kv.lens) val_end += l;
+      for (int l : kv.lens) val_end += l;
       kv.vals = send.vals.segment(val_begin, val_end);
       val_begin = val_end;
     } else {
@@ -937,7 +939,7 @@ void KVWorker<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& 
 }
 
 template <typename Val>
-void KVServer<Val>::InitDGT(){
+void KVServer<Val>::InitDGT() {
   contribution_alpha = dmlc::GetEnv("DGT_CONTRIBUTION_ALPHA", 0.3);
   dgt_info = dmlc::GetEnv("DGT_INFO", 0);
   block_size = dmlc::GetEnv("DGT_BLOCK_SIZE", 4096);
@@ -977,10 +979,10 @@ float KVServer<Val>::EvalMsgContribution(int key, Message& msg) {
 template <typename Val>
 int KVServer<Val>::GetChannel(int index, int max_index, int C, float k) {
   int min_index = std::round(k * (max_index + 1));
-  if(index < min_index)  return 0;
-  for(int i = 0; i < C; ++i){
-    if(max_index - min_index > 0) {
-      if(index >= min_index + (float)i * (max_index - min_index) / C && \
+  if (index < min_index)  return 0;
+  for (int i = 0; i < C; ++i) {
+    if (max_index - min_index > 0) {
+      if (index >= min_index + (float)i * (max_index - min_index) / C && \
          index < min_index + (float)(i + 1) * (max_index - min_index) / C) {
         return i + 1;
       }
@@ -1143,9 +1145,9 @@ void KVWorker<Val>::AutoPullUpdate(const int version, const int iters, const int
 
   while(true) {
     int receiver = van->GetReceiver(throughput, last_recv_id, iters);
-    if(receiver == -1) break;
+    if (receiver == -1) break;
 
-    if(kvs.keys.size()) {
+    if (kvs.keys.size()) {
       Message msg;
       msg.meta.app_id      = obj_->app_id();
       msg.meta.customer_id = obj_->customer_id();
@@ -1175,7 +1177,7 @@ void KVWorker<Val>::AutoPullUpdate(const int version, const int iters, const int
 }
 
 template <typename Val>
-void KVWorker<Val>::AutoPullReply(const int sender){
+void KVWorker<Val>::AutoPullReply(const int sender) {
   Message reply;
   reply.meta.recver = sender;
   reply.meta.control.cmd = Control::AUTOPULLREPLY;
@@ -1220,7 +1222,7 @@ void KVWorker<Val>::TS_Process(const Message& msg) {
   int key = msg.meta.key;
 
   if (msg.data.size()) {
-    if(msg.meta.push && msg.meta.request){
+    if (msg.meta.push && msg.meta.request) {
       KVMeta meta;
       meta.cmd         = msg.meta.head;
       meta.push        = msg.meta.push;
@@ -1249,7 +1251,7 @@ void KVWorker<Val>::TS_Process(const Message& msg) {
       }
       if (msg.meta.request) {
         CHECK_EQ(kvs.keys.size(), (size_t)1);
-        if(enable_intra_ts) {
+        if (enable_intra_ts) {
           AutoPullReply(msg.meta.sender);
           AutoPullUpdate(msg.meta.version, msg.meta.iters, msg.meta.key, kvs);
         }
@@ -1354,14 +1356,14 @@ void KVServer<Val>::Process(const Message& msg) {
     }
   }
   CHECK(request_handle_);
-  if(!(enable_inter_ts && !Postoffice::Get()->is_global_server()
+  if (!(enable_inter_ts && !Postoffice::Get()->is_global_server()
       && msg.meta.sender < 100 && msg.meta.push && msg.meta.request)) {
     request_handle_(meta, data, this);
   }
 }
 
 template <typename Val>
-void KVServer<Val>::AutoPullReply(const int sender){
+void KVServer<Val>::AutoPullReply(const int sender) {
   Message reply;
   reply.meta.recver = sender;
   reply.meta.control.cmd = Control::AUTOPULLREPLY;
@@ -1464,7 +1466,7 @@ int KVWorker<Val>::AutoPull(int uniq_key, const SArray <Key> &keys, SArray <Val>
                             int cmd, const std::function<void()> &cb) {
   // Wait until we have enough key-value pairs for the unique key.
   std::unique_lock<std::mutex> lk(ts_cond);
-  while(auto_pull_kvs_[uniq_key].size() != keys.size()){
+  while(auto_pull_kvs_[uniq_key].size() != keys.size()) {
     cond_.wait(lk);
   }
 
@@ -1475,7 +1477,7 @@ int KVWorker<Val>::AutoPull(int uniq_key, const SArray <Key> &keys, SArray <Val>
   size_t total_vals = 0;
 
   // do checks
-  for(auto& kvs : autokvs){
+  for (auto& kvs : autokvs) {
     total_vals += kvs.second.vals.size();
   }
   CHECK_NOTNULL(vals);
@@ -1486,14 +1488,14 @@ int KVWorker<Val>::AutoPull(int uniq_key, const SArray <Key> &keys, SArray <Val>
   }
   if (lens) {
     if (lens->empty()) {
-        lens->resize(keys.size());
+      lens->resize(keys.size());
     } else {
-        CHECK_EQ(lens->size(), keys.size());
+      CHECK_EQ(lens->size(), keys.size());
     }
     p_lens = lens->data();
   }
   // fill vals and lens
-  for (size_t i = 0; i < keys.size(); i++){
+  for (size_t i = 0; i < keys.size(); i++) {
     memcpy(p_vals, autokvs[keys[i]].vals.data(), autokvs[keys[i]].vals.size() * sizeof(Val));
     p_vals += autokvs[keys[i]].vals.size();
     if (p_lens) {
@@ -1504,7 +1506,7 @@ int KVWorker<Val>::AutoPull(int uniq_key, const SArray <Key> &keys, SArray <Val>
   // erase used kvs
   auto_pull_kvs_.erase(uniq_key);
   // run callback
-  if(cb) cb();
+  if (cb) cb();
   // return data_version_[uniq_key];
   return 0;
 }
