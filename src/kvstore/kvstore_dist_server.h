@@ -61,14 +61,14 @@ struct DataHandleType {
 };
 
 struct PSKV {
-    ps::SArray<ps::Key> keys;  // n keys
-    ps::SArray<int> lens;  // the length of the i-th value
-    int size;
+  ps::SArray<ps::Key> keys;  // n keys
+  ps::SArray<int> lens;  // the length of the i-th value
+  int size;
 };
 
 struct ComprPSKV {
-    PSKV push;
-    PSKV pull;
+  PSKV push;
+  PSKV pull;
 };
 
 /*!
@@ -123,7 +123,8 @@ class Executor {
         blk.f();
         blk.p->set_value();
       } else {
-        blk.p->set_value(); break;
+        blk.p->set_value();
+        break;
       }
       lk.lock();
     }
@@ -172,20 +173,20 @@ class KVStoreDistServer {
     using namespace std::placeholders;
     ps_server_ = new ps::KVServer<char>(0);
     static_cast<ps::SimpleApp*>(ps_server_)->set_request_handle(
-        std::bind(&KVStoreDistServer::CommandHandle, this, _1, _2));
+      std::bind(&KVStoreDistServer::CommandHandle, this, _1, _2));
     ps_server_->set_request_handle(
-        std::bind(&KVStoreDistServer::DataHandleEx, this, _1, _2, _3));
+      std::bind(&KVStoreDistServer::DataHandleEx, this, _1, _2, _3));
     ps_server_->set_request_global_handle(
-              std::bind(&KVStoreDistServer::WorkersMerge, this, _1, _2, _3));
+      std::bind(&KVStoreDistServer::WorkersMerge, this, _1, _2, _3));
     gradient_compression_ = std::make_shared<GradientCompression>();
     bigarray_bound_ = dmlc::GetEnv("MXNET_KVSTORE_BIGARRAY_BOUND", 1000 * 1000);
-    log_verbose_ = dmlc::GetEnv("MXNET_KVSTORE_DIST_ROW_SPARSE_VERBOSE", false);
     size_lower_bound = dmlc::GetEnv("MXNET_KVSTORE_SIZE_LOWER_BOUND", 200 * 1000);
+    log_verbose_ = dmlc::GetEnv("MXNET_KVSTORE_DIST_ROW_SPARSE_VERBOSE", false);
     use_hfa = dmlc::GetEnv("MXNET_KVSTORE_USE_HFA", false);
-    local_iters = 0;
     period_k1 = dmlc::GetEnv("MXNET_KVSTORE_HFA_K1", 1);
     period_k2 = dmlc::GetEnv("MXNET_KVSTORE_HFA_K2", 1);
-    // explicitly set to false to avoid wrong dtype of store_ when net is float16
+    local_iters = 0;
+    // explicitly set to false, avoid wrong dtype of store_ when net is float16
     multi_precision_ = false;
   }
 
@@ -213,10 +214,10 @@ class KVStoreDistServer {
 
  private:
   struct UpdateBuf {
-      std::vector<ps::KVMeta> request;
-      NDArray merged;
-      // temp_array is used to cast received values as float32 for computation if required
-      NDArray temp_array;
+    std::vector<ps::KVMeta> request;
+    NDArray merged;
+    // temp_array is used to cast received values as float32 for computation if required
+    NDArray temp_array;
   };
   std::unordered_map<int, ps::KVPairs<char>> req_data_buf;
   std::unordered_map<int, ps::KVMeta> req_meta_buf;
@@ -224,38 +225,49 @@ class KVStoreDistServer {
   std::unordered_map<int, UpdateBuf> update_buf_global;
   std::mutex send_mu;
 
-  void WorkersMerge(const ps::KVMeta& req_meta,const ps::KVPairs<char> &req_data, ps::KVServer<char>* server) {
+  void WorkersMerge(const ps::KVMeta& req_meta,
+                    const ps::KVPairs<char> &req_data,
+                    ps::KVServer<char>* server) {
+    // Send my data to other servers.
     if (req_meta.num_merge == -1) {
       int key = send_q.front();
+
+      // Copy my data to the sender buffer.
       req_data_buf[key].vals.CopyFrom(
-          static_cast<const char *>(update_buf_global[key].merged.data().dptr_), req_data_buf[key].lens[0]);
+        static_cast<const char*>(update_buf_global[key].merged.data().dptr_),
+        req_data_buf[key].lens[0]
+      );
       update_buf_global[key].merged.WaitToRead();
+
+      // Send the data.
       ps_server_->Send(
-          req_meta_buf[key].timestamp,
-          req_meta_buf[key].push,
-          req_meta_buf[key].cmd,
-          req_data_buf[key],
-          req_meta_buf[key].key,
-          req_meta_buf[key].version,
-          req_meta_buf[key].app_id,
-          req_meta_buf[key].customer_id,
-          req_meta_buf[key].num_merge);
+        req_meta_buf[key].timestamp,
+        req_meta_buf[key].push,
+        req_meta_buf[key].cmd,
+        req_data_buf[key],
+        req_meta_buf[key].key,
+        req_meta_buf[key].version,
+        req_meta_buf[key].app_id,
+        req_meta_buf[key].customer_id,
+        req_meta_buf[key].num_merge);
+
       std::unique_lock <std::mutex> send_lk(send_mu);
       send_q.pop();
       send_lk.unlock();
     } else {
+      // Receive data from other servers and merge them.
       CHECK_EQ(req_data.keys.size(), (size_t) 1);
       if (req_meta.push) {
         CHECK_EQ(req_data.lens.size(), (size_t) 1);
         CHECK_EQ(req_data.vals.size(), (size_t) req_data.lens[0]);
       }
+
       int key = req_data.keys[0];
+      int my_id = ps::Postoffice::Get()->van()->my_node_global_.id;
       DataHandleType type = DepairDataHandleType(req_meta.cmd);
 
       std::unique_lock <std::mutex> send_lk(send_mu);
-      if (req_meta.sender != ps::Postoffice::Get()->van()->my_node_global_.id) {
-        server->Response(req_meta, true);
-      } else {
+      if (req_meta.sender == my_id) {
         send_q.push(key);
         req_meta_buf[key].cmd = req_meta.cmd;
         req_meta_buf[key].push = req_meta.push;
@@ -268,7 +280,10 @@ class KVStoreDistServer {
         req_meta_buf[key].num_merge = req_meta.num_merge;
         req_data_buf[key].keys = req_data.keys;
         req_data_buf[key].lens = req_data.lens;
+      } else {
+        server->Response(req_meta, true);
       }
+
       size_t ds[] = {(size_t) req_data.lens[0] / mshadow::mshadow_sizeof(type.dtype)};
       TShape dshape(ds, ds + 1);
       TBlob recv_blob;
@@ -281,7 +296,8 @@ class KVStoreDistServer {
       if (updates.merged.is_none()) {
         updates.merged = NDArray(dshape, Context(), false, type.dtype);
       }
-      if (req_meta.sender == ps::Postoffice::Get()->van()->my_node_global_.id) {
+
+      if (req_meta.sender == my_id) {
         updates.merged = recved;
         updates.merged.WaitToRead();
       } else {
@@ -315,7 +331,7 @@ class KVStoreDistServer {
         break;
       case CommandType::kSyncGlobalMode:
         CHECK(ps::IsGlobalServer())
-                << "only global server could perform global synchronous mode";
+          << "only global server could perform global synchronous mode";
         sync_global_mode_ = true;
         break;
       case CommandType::kSetGradientCompression:
@@ -342,9 +358,9 @@ class KVStoreDistServer {
         // this uses value 0 for message id from frontend
         // let the main thread to execute ctrl, which is necessary for python
         exec_.Exec([this, recved]() {
-            CHECK(controller_);
-            controller_(recved.head, recved.body);
-          });
+          CHECK(controller_);
+          controller_(recved.head, recved.body);
+        });
         break;
     }
     app->Response(recved);
@@ -362,26 +378,26 @@ class KVStoreDistServer {
       if (stored.dtype() != mshadow::kFloat32) {
         auto &stored_realt = store_realt_[key];
         if (stored.storage_type() == kRowSparseStorage) {
-          stored_realt = NDArray(kRowSparseStorage, stored.shape(), stored.ctx(),
-                                 true, mshadow::kFloat32);
+          stored_realt = NDArray(
+            kRowSparseStorage, stored.shape(), stored.ctx(), true, mshadow::kFloat32);
         } else {
-          stored_realt = NDArray(stored.shape(), stored.ctx(), false, mshadow::kFloat32);
+          stored_realt = NDArray(
+            stored.shape(), stored.ctx(), false, mshadow::kFloat32);
         }
 
         auto &update = update_buf_[key];
         if (!update.merged.is_none()) {
           if (update.merged.storage_type() == kRowSparseStorage) {
-            update.merged = NDArray(kRowSparseStorage, update.merged.shape(), update.merged.ctx(),
-                                    true, mshadow::kFloat32);
+            update.merged = NDArray(
+              kRowSparseStorage, update.merged.shape(), update.merged.ctx(), true, mshadow::kFloat32);
           } else {
-            update.merged = NDArray(update.merged.shape(), update.merged.ctx(), false,
-                                    mshadow::kFloat32);
+            update.merged = NDArray(
+              update.merged.shape(), update.merged.ctx(), false, mshadow::kFloat32);
           }
         }
         CHECK(update.request.size() == 0)
           << ps::MyRank() << "Multiprecision mode can not be set while pushes are underway."
           << "Please set optimizer before pushing keys." << key << " " << update.request.size();
-
         CopyFromTo(stored, stored_realt);
       }
     }
@@ -443,10 +459,13 @@ class KVStoreDistServer {
                     const ps::KVPairs<char>& req_data,
                     ps::KVServer<char>* server) {
     DataHandleType type = DepairDataHandleType(req_meta.cmd);
+
     switch (type.requestType) {
+
       case RequestType::kRowSparsePushPull:
         DataHandleRowSparse(type, req_meta, req_data, server);
         break;
+
       case RequestType::kCompressedPushPull:
         if (req_meta.push) {
           const bool request = req_meta.sender % 2 == 1;
@@ -457,20 +476,17 @@ class KVStoreDistServer {
               DataHandleSyncCompressed(type, req_meta, req_data, server);
             }
           } else {
-              DataHandlePushResponseDefault(type, req_meta, req_data, server);
+            DataHandlePushResponseDefault(type, req_meta, req_data, server);
           }
         } else {
           DataHandlePullDefault(type, req_meta, req_data, server);
         }
         break;
+
       case RequestType::kDefaultPushPull:
         if (req_meta.push) {
-            bool request;
-            if (ps_server_->enable_inter_ts) {
-                 request = req_meta.app_id;
-            }else{
-                 request = req_meta.sender % 2 == 1;
-            }
+          const bool request = (ps_server_->enable_inter_ts) ?
+            req_meta.app_id : req_meta.sender % 2 == 1;
           if (request) {
             if (ps::IsGlobalServer() && !sync_global_mode_) {
               DataHandleAsyncDefault(type, req_meta, req_data, server);
@@ -484,6 +500,7 @@ class KVStoreDistServer {
           DataHandlePullDefault(type, req_meta, req_data, server);
         }
         break;
+
       case RequestType::kBSCompressedPushPull:
         if (req_meta.push) {
           const bool request = req_meta.sender % 2 == 1;
@@ -499,7 +516,8 @@ class KVStoreDistServer {
         } else {
           DataHandlePullDefault(type, req_meta, req_data, server);
         }
-        break; 
+        break;
+
       default :
         LOG(FATAL) << "Unsupported RequestType";
     }
@@ -515,7 +533,9 @@ class KVStoreDistServer {
   }
 
   inline void ApplyUpdates(const DataHandleType type, const int key, const bool sync_mode,
-                           UpdateBuf *update_buf, ps::KVServer<char>* server) {
+                           UpdateBuf *update_buf, ps::KVServer<char>* server,
+                           const bool enable_ts = false, const ps::KVMeta& req_meta = ps::KVMeta(),
+                           const ps::KVPairs<char>& req_data = ps::KVPairs<char>()) {
     // let the main thread to execute updater_, which is necessary for python
     auto& stored = has_multi_precision_copy(type) ? store_realt_[key] : store_[key];
     auto& update = sync_mode ? update_buf->merged : update_buf->temp_array;
@@ -528,28 +548,13 @@ class KVStoreDistServer {
       CHECK(sync_mode);
       CopyFromTo(update_buf->merged, &stored);
     }
-    if (has_multi_precision_copy(type)) CopyFromTo(stored, store_[key]);
+    if (has_multi_precision_copy(type)) {
+      CopyFromTo(stored, store_[key]);
+    }
     stored.WaitToRead();
-  }
-
-  inline void TS_ApplyUpdates(const DataHandleType type, const int key, const bool sync_mode,
-                              UpdateBuf *update_buf, int& storev, const ps::KVMeta& req_meta, 
-                              const ps::KVPairs<char> &req_data, ps::KVServer<char>* server) {
-      // let the main thread to execute updater_, which is necessary for python
-      auto& stored = has_multi_precision_copy(type) ? store_realt_[key] : store_[key];
-      auto& update = sync_mode ? update_buf->merged : update_buf->temp_array;
-      if (updater_ && ps::IsGlobalServer()) {
-          CHECK(updater_);
-          exec_.Exec([this, key, &update, &stored]() {
-              updater_(key, update, &stored);
-          });
-      } else {
-          CHECK(sync_mode);
-          CopyFromTo(update_buf->merged, &stored);
-      }
-      if (has_multi_precision_copy(type)) CopyFromTo(stored, store_[key]);
-      stored.WaitToRead();
+    if (enable_ts) {
       DefaultAutoPull(type, key, store_v_[key], req_meta, req_data, server, true);
+    }
   }
 
   void DecodeRowIds(const ps::SArray<ps::Key> &keys, int64_t *indices,
@@ -925,7 +930,7 @@ class KVStoreDistServer {
                                      const ps::KVPairs<char>& req_data,
                                      ps::KVServer<char>* server) {
     CHECK(req_meta.push);
-    CHECK(!ps::IsGlobalServer()) << "invalid push response on global servers";
+    CHECK(!ps::IsGlobalServer()) << "Invalid push response on global servers";
     const int ts = req_meta.timestamp;
     if (server->NumResponse(ts) != ps::NumGlobalServers() - 1) return;
 
@@ -1295,8 +1300,8 @@ class KVStoreDistServer {
         if (updates.request.size() == (size_t)central_workers + (size_t)ps::NumGlobalWorkers()) {
           // aggregate gradients and update model
           if (ps_server_->enable_inter_ts) {
-            TS_ApplyUpdates(type, key, true, &updates, store_v_[key], req_meta, req_data, server);
-          }else{
+            ApplyUpdates(type, key, true, &updates, server, true, req_meta, req_data);
+          } else {
             ApplyUpdates(type, key, &updates, server);
           }
           // notify all workers to call pull
