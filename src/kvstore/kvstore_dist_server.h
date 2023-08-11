@@ -226,7 +226,7 @@ class KVStoreDistServer {
   std::mutex send_mu;
 
   void WorkersMerge(const ps::KVMeta& req_meta,
-                    const ps::KVPairs<char> &req_data,
+                    const ps::KVPairs<char>& req_data,
                     ps::KVServer<char>* server) {
     // Send my data to other servers.
     if (req_meta.num_merge == -1) {
@@ -476,7 +476,7 @@ class KVStoreDistServer {
               DataHandleSyncCompressed(type, req_meta, req_data, server);
             }
           } else {
-            DataHandlePushResponseDefault(type, req_meta, req_data, server);
+            DataHandlePushResponseDefault(type, req_meta, server);
           }
         } else {
           DataHandlePullDefault(type, req_meta, req_data, server);
@@ -494,7 +494,7 @@ class KVStoreDistServer {
               DataHandleSyncDefault(type, req_meta, req_data, server);
             }
           } else {
-            DataHandlePushResponseDefault(type, req_meta, req_data, server);
+            DataHandlePushResponseDefault(type, req_meta, server);
           }
         } else {
           DataHandlePullDefault(type, req_meta, req_data, server);
@@ -511,7 +511,7 @@ class KVStoreDistServer {
               DataHandleSyncBSCompressed(type, req_meta, req_data, server);
             }
           } else {
-            DataHandlePushResponseDefault(type, req_meta, req_data, server);
+            DataHandlePushResponseDefault(type, req_meta, server);
           }
         } else {
           DataHandlePullDefault(type, req_meta, req_data, server);
@@ -553,6 +553,7 @@ class KVStoreDistServer {
     }
     stored.WaitToRead();
     if (enable_ts) {
+      // Send the aggregated data to other servers.
       DefaultAutoPull(type, key, store_v_[key], req_meta, req_data, server, true);
     }
   }
@@ -567,8 +568,7 @@ class KVStoreDistServer {
     }
   }
 
-  void AccumulateRowSparseGrads(const DataHandleType type,
-                                const NDArray& recved,
+  void AccumulateRowSparseGrads(const DataHandleType type, const NDArray& recved,
                                 UpdateBuf* updateBuf) {
     NDArray out(kRowSparseStorage, updateBuf->merged.shape(), Context(), true,
                 has_multi_precision_copy(type) ? mshadow::kFloat32 : type.dtype);
@@ -577,21 +577,19 @@ class KVStoreDistServer {
     // accumulate row_sparse gradients
     using namespace mshadow;
     Engine::Get()->PushAsync(
-    [to_merge, updateBuf, out](RunContext ctx, Engine::CallbackOnComplete on_complete) {
-      op::ElemwiseBinaryOp::ComputeEx<cpu, op::mshadow_op::plus>(
-      {}, {}, {to_merge, updateBuf->merged}, {kWriteTo}, {out});
-      on_complete();
-    }, to_merge.ctx(), {to_merge.var(), updateBuf->merged.var()}, {out.var()},
-    FnProperty::kNormal, 0, PROFILER_MESSAGE_FUNCNAME);
+      [to_merge, updateBuf, out](RunContext ctx, Engine::CallbackOnComplete on_complete) {
+        op::ElemwiseBinaryOp::ComputeEx<cpu, op::mshadow_op::plus>(
+        {}, {}, {to_merge, updateBuf->merged}, {kWriteTo}, {out});
+        on_complete();
+      }, to_merge.ctx(), {to_merge.var(), updateBuf->merged.var()}, {out.var()},
+      FnProperty::kNormal, 0, PROFILER_MESSAGE_FUNCNAME
+    );
     CopyFromTo(out, &(updateBuf->merged), 0);
     updateBuf->merged.WaitToRead();
   }
 
-  void RowSparsePullResponse(const DataHandleType type,
-                             const int master_key,
-                             const size_t num_rows,
-                             const ps::KVMeta& req_meta,
-                             const ps::KVPairs<char>& req_data,
+  void RowSparsePullResponse(const DataHandleType type, const int master_key, const size_t num_rows,
+                             const ps::KVMeta& req_meta, const ps::KVPairs<char>& req_data,
                              ps::KVServer<char>* server) {
     ps::KVPairs<char> response;
     if (num_rows == 0) {
@@ -603,7 +601,7 @@ class KVStoreDistServer {
     }
     const NDArray& stored = store_[master_key];
     if (has_multi_precision_copy(type)) stored.WaitToRead();
-    CHECK(!stored.is_none()) << "init " << master_key << " first";
+    CHECK(!stored.is_none()) << "Init " << master_key << " first";
     auto shape = stored.shape();
     auto unit_len = shape.ProdShape(1, shape.ndim());
     const int num_bytes = mshadow::mshadow_sizeof(type.dtype);
@@ -629,11 +627,8 @@ class KVStoreDistServer {
     server->Response(req_meta, response);
   }
 
-  void InitRowSparseStored(const DataHandleType type,
-                           const int master_key,
-                           const size_t num_rows,
-                           const ps::KVMeta& req_meta,
-                           const ps::KVPairs<char>& req_data,
+  void InitRowSparseStored(const DataHandleType type, const int master_key, const size_t num_rows,
+                           const ps::KVMeta& req_meta, const ps::KVPairs<char>& req_data,
                            ps::KVServer<char>* server) {
     auto& stored = has_multi_precision_copy(type) ? store_realt_[master_key] : store_[master_key];
     int dtype = type.dtype;
@@ -648,28 +643,31 @@ class KVStoreDistServer {
       recv_blob = TBlob(reinterpret_cast<DType*>(req_data.vals.data()), dshape, cpu::kDevMask);
     })
     NDArray recved = NDArray(recv_blob, 0);
-    stored = NDArray(kRowSparseStorage, dshape, Context(), true,
-                     has_multi_precision_copy(type) ? mshadow::kFloat32 : type.dtype);
+    stored = NDArray(
+      kRowSparseStorage, dshape, Context(), true,
+      has_multi_precision_copy(type) ? mshadow::kFloat32 : type.dtype);
     if (has_multi_precision_copy(type)) {
-      store_[master_key] = NDArray(kRowSparseStorage, dshape, Context(), true, type.dtype);
+      store_[master_key] = NDArray(
+        kRowSparseStorage, dshape, Context(), true, type.dtype);
     }
     Engine::Get()->PushAsync(
-    [this, recved, stored, type](RunContext ctx, Engine::CallbackOnComplete on_complete) {
-      NDArray rsp = stored;
-      stored.CheckAndAlloc({mshadow::Shape1(recved.shape()[0])});
-      mshadow::Stream<cpu> *s = ctx.get_stream<cpu>();
-      using namespace mxnet::op;
-      nnvm::dim_t nnr = rsp.shape()[0];
-      MSHADOW_IDX_TYPE_SWITCH(rsp.aux_type(rowsparse::kIdx), IType, {
-        IType* idx = rsp.aux_data(rowsparse::kIdx).dptr<IType>();
-        mxnet_op::Kernel<PopulateFullIdxRspKernel, cpu>::Launch(s, nnr, idx);
-      });
-      TBlob rsp_data = rsp.data();
-      // copies or casts as appropriate
-      ndarray::Copy<cpu, cpu>(recved.data(), &rsp_data, Context(), Context(), RunContext());
-      on_complete();
-    }, recved.ctx(), {recved.var()}, {stored.var()},
-    FnProperty::kNormal, 0, PROFILER_MESSAGE_FUNCNAME);
+      [this, recved, stored, type](RunContext ctx, Engine::CallbackOnComplete on_complete) {
+        NDArray rsp = stored;
+        stored.CheckAndAlloc({mshadow::Shape1(recved.shape()[0])});
+        mshadow::Stream<cpu> *s = ctx.get_stream<cpu>();
+        using namespace mxnet::op;
+        nnvm::dim_t nnr = rsp.shape()[0];
+        MSHADOW_IDX_TYPE_SWITCH(rsp.aux_type(rowsparse::kIdx), IType, {
+          IType* idx = rsp.aux_data(rowsparse::kIdx).dptr<IType>();
+          mxnet_op::Kernel<PopulateFullIdxRspKernel, cpu>::Launch(s, nnr, idx);
+        });
+        TBlob rsp_data = rsp.data();
+        // copies or casts as appropriate
+        ndarray::Copy<cpu, cpu>(recved.data(), &rsp_data, Context(), Context(), RunContext());
+        on_complete();
+      }, recved.ctx(), {recved.var()}, {stored.var()},
+      FnProperty::kNormal, 0, PROFILER_MESSAGE_FUNCNAME
+    );
     if (has_multi_precision_copy(type)) {
       CopyFromTo(stored, store_[master_key]);
       store_[master_key].WaitToRead();
@@ -679,8 +677,7 @@ class KVStoreDistServer {
   }
 
   void DataHandleRowSparse(const DataHandleType type, const ps::KVMeta& req_meta,
-                           const ps::KVPairs<char>& req_data,
-                           ps::KVServer<char>* server) {
+                           const ps::KVPairs<char>& req_data, ps::KVServer<char>* server) {
     int master_key = DecodeKey(req_data.keys[0]);
     auto num_rows = req_data.keys.size() - 1;
     auto& stored = store_[master_key];
@@ -689,19 +686,20 @@ class KVStoreDistServer {
       CHECK_EQ(req_data.lens[0], 0);
       if (stored.is_none()) {
         // initialization
-        CHECK_GT(num_rows, 0) << "init with empty data is not supported";
+        CHECK_GT(num_rows, 0) << "Init with empty data is not supported";
         InitRowSparseStored(type, master_key, num_rows, req_meta, req_data, server);
         return;
       } else {
         auto& updates = update_buf_[master_key];
         if (sync_mode_ && updates.merged.is_none()) {
-          updates.merged = NDArray(kRowSparseStorage, stored.shape(), Context(), true,
-                                   has_multi_precision_copy(type) ? mshadow::kFloat32 : type.dtype);
+          updates.merged = NDArray(
+            kRowSparseStorage, stored.shape(), Context(), true,
+            has_multi_precision_copy(type) ? mshadow::kFloat32 : type.dtype);
         }
         if (has_multi_precision_copy(type) && updates.temp_array.is_none()) {
-          updates.temp_array = NDArray(kRowSparseStorage, stored.shape(), Context(), false, mshadow::kFloat32);
+          updates.temp_array = NDArray(
+            kRowSparseStorage, stored.shape(), Context(), false, mshadow::kFloat32);
         }
-
         if (num_rows == 0) {
           if (sync_mode_) {
             if (updates.request.empty()) {
@@ -727,8 +725,8 @@ class KVStoreDistServer {
           TShape dshape(ds, ds + 2);
           TBlob recv_blob;
           MSHADOW_REAL_TYPE_SWITCH(type.dtype, DType, {
-            recv_blob = TBlob(reinterpret_cast<DType*>(req_data.vals.data()),
-                              dshape, cpu::kDevMask);
+            recv_blob = TBlob(
+              reinterpret_cast<DType*>(req_data.vals.data()), dshape, cpu::kDevMask);
           });
           // row_sparse NDArray
           NDArray recved(kRowSparseStorage, stored.shape(), recv_blob, {idx_blob}, 0);
@@ -757,19 +755,17 @@ class KVStoreDistServer {
     }
   }
 
-  int DataPushToGlobalServersDefault(const DataHandleType type,
-                                     const int key,
+  int DataPushToGlobalServersDefault(const DataHandleType type, const int key,
                                      ps::KVServer<char>* server) {
-    CHECK(!ps::IsGlobalServer()) << "invalid pull operation on global servers";
+    CHECK(!ps::IsGlobalServer()) << "Invalid push operation on global servers";
     CHECK(gradient_compression_->get_type() == CompressionType::kNone);
 
     const auto& stored = has_multi_precision_copy(type) ? store_realt_[key] : store_[key];
-    CHECK(!stored.is_none()) << "init " << key << " first";
+    CHECK(!stored.is_none()) << "Init " << key << " first";
 
     // as server returns when store_realt is ready in this case
     if (has_multi_precision_copy(type)) stored.WaitToRead();
 
-    // const int dtype = stored.dtype();
     const int dtype = type.dtype;
     const int num_bytes = mshadow::mshadow_sizeof(dtype);
     const int num_arr_elems = stored.shape().Size();
@@ -777,7 +773,6 @@ class KVStoreDistServer {
     const int cmd = GetCommandType(RequestType::kDefaultPushPull, dtype);
 
     PSKV& pskv =  EncodeDefaultKey(key, stored.shape().Size(), num_bytes);
-
     ps::KVPairs<char> params;
     char *data = static_cast<char *>(stored.data().dptr_);
     ps::SArray<char> vals(data, size, false);
@@ -787,16 +782,15 @@ class KVStoreDistServer {
     return server->Push(params, cmd, nullptr, key);
   }
 
-  int DataPushToGlobalServersCompressed(const DataHandleType type,
-                                        const int key,
+  int DataPushToGlobalServersCompressed(const DataHandleType type, const int key,
                                         ps::KVServer<char>* server) {
-    CHECK(!ps::IsGlobalServer()) << "invalid pull operation on global servers";
+    CHECK(!ps::IsGlobalServer()) << "Invalid push operation on global servers";
     CHECK(gradient_compression_->get_type() == CompressionType::kTwoBit);
     CHECK_EQ(type.dtype, mshadow::kFloat32) << "Gradient compression is only supported for "
                                             << "float32 type of parameters";
 
     const auto& stored = store_[key];
-    CHECK(!stored.is_none()) << "init " << key << " first";
+    CHECK(!stored.is_none()) << "Init " << key << " first";
 
     const int dtype = stored.dtype();
     const int num_bytes = mshadow::mshadow_sizeof(dtype);
@@ -809,9 +803,10 @@ class KVStoreDistServer {
     auto& res_buf = residual_[key];
 
     if (small_buf.is_none()) {
-      small_buf = NDArray(mxnet::TShape{pskv.size}, stored.ctx(), false, dtype);
-      res_buf = NDArray(mxnet::TShape{static_cast<int64_t>(original_size)},
-                        stored.ctx(), false, dtype);
+      small_buf = NDArray(
+        mxnet::TShape{pskv.size}, stored.ctx(), false, dtype);
+      res_buf = NDArray(
+        mxnet::TShape{static_cast<int64_t>(original_size)}, stored.ctx(), false, dtype);
       res_buf = 0;
     }
 
@@ -828,26 +823,27 @@ class KVStoreDistServer {
     return ts;
   }
 
-  int DataPushToGlobalServersBSCompressed(const DataHandleType type,
-                                        const int key,
-                                        ps::KVServer<char>* server) {
-    CHECK(!ps::IsGlobalServer()) << "invalid pull operation on global servers";
+  int DataPushToGlobalServersBSCompressed(const DataHandleType type, const int key,
+                                          ps::KVServer<char>* server) {
+    CHECK(!ps::IsGlobalServer()) << "Invalid push operation on global servers";
     CHECK(gradient_compression_->get_type() == CompressionType::kBiSparseCompression);
 
     const auto &stored = has_multi_precision_copy(type) ? store_realt_[key] : store_[key];
-    CHECK(!stored.is_none()) << "init " << key << " first";
+    CHECK(!stored.is_none()) << "Init " << key << " first";
 
-    // as server returns when store_realt is ready in this case
+    // as server returns when store_realt is ready in this case.
     if (has_multi_precision_copy(type)) stored.WaitToRead();
 
     const unsigned int original_size = stored.shape().Size();
 
+    // compress the data if the size is above the threshold.
     if (original_size >= size_lower_bound) {
       const int dtype = mshadow::kFloat32;
       const int num_bytes = mshadow::mshadow_sizeof(dtype);
       const int cmd = GetCommandType(RequestType::kBSCompressedPushPull, dtype);
       PSKV &pskv = EncodeBSCompressedKey(key, original_size, true, num_bytes);
 
+      // Calculate the expected size of the compressed data.
       float threshold = gradient_compression_->get_threshold();
       const int zipped_size = float(original_size) * threshold * 2;
       
@@ -856,24 +852,30 @@ class KVStoreDistServer {
       auto &accumulated_velocity = accumulated_velocity_[key];
 
       if (small_buf.is_none()) {
-        small_buf = NDArray(mxnet::TShape{static_cast<int64_t>(zipped_size)}, stored.ctx(), false, dtype);
-        velocity = NDArray(mxnet::TShape{static_cast<int64_t>(original_size)}, stored.ctx(), false, mshadow::kFloat32);
-        accumulated_velocity = NDArray(mxnet::TShape{static_cast<int64_t>(original_size)}, stored.ctx(), false, mshadow::kFloat32);
-        velocity = 0;
-        accumulated_velocity = 0;
+        small_buf = NDArray(
+          mxnet::TShape{static_cast<int64_t>(zipped_size)}, stored.ctx(), false, dtype);
+        velocity = NDArray(
+          mxnet::TShape{static_cast<int64_t>(original_size)}, stored.ctx(), false, mshadow::kFloat32);
+        accumulated_velocity = NDArray(
+          mxnet::TShape{static_cast<int64_t>(original_size)}, stored.ctx(), false, mshadow::kFloat32);
+        velocity = 0;  // Initialize with zeros.
+        accumulated_velocity = 0;  // Initialize with zeros.
       }
-      
+
+      // Compress the data.
       gradient_compression_->BSCompress(stored, small_buf, velocity, accumulated_velocity, 0);
 
+      // Prepare compressed data for sending.
       ps::KVPairs<char> compr_params;
       size_t size = small_buf.shape().Size() * mshadow::mshadow_sizeof(dtype);
-      char *data = static_cast<char *>(small_buf.data().dptr_);
+      char* data = static_cast<char *>(small_buf.data().dptr_);
       ps::SArray<char> vals(data, size, false);
       compr_params.keys = pskv.keys;
       compr_params.lens = pskv.lens;
       compr_params.vals = vals;
       return server->Push(compr_params, cmd, nullptr, key);
     } else {
+      // Data with size smaller than the threshold does not need to be compressed, send it as is
       const int dtype = type.dtype;
       const int num_bytes = mshadow::mshadow_sizeof(dtype);
       const int num_arr_elems = stored.shape().Size();
@@ -883,7 +885,7 @@ class KVStoreDistServer {
       PSKV &pskv = EncodeDefaultKey(key, stored.shape().Size(), num_bytes);
 
       ps::KVPairs<char> params;
-      char *data = static_cast<char *>(stored.data().dptr_);
+      char* data = static_cast<char*>(stored.data().dptr_);
       ps::SArray<char> vals(data, size, false);
       params.keys = pskv.keys;
       params.lens = pskv.lens;
@@ -892,65 +894,90 @@ class KVStoreDistServer {
     }
   }
 
-  void DataPullFromGlobalServersDefault(const DataHandleType type,
-                                        const int key,
-                                        const ps::KVMeta& req_meta,
-                                        const ps::KVPairs<char> &req_data,
+  void DataPullFromGlobalServersDefault(const DataHandleType type, const int key,
                                         ps::KVServer<char>* server) {
     CHECK(!ps::IsGlobalServer()) << "Invalid pull operation on global servers";
+
+    // Determine the type of compression used.
     const bool is_compressed = gradient_compression_->get_type() == CompressionType::kTwoBit;
-    const bool is_bscompressed = (type.requestType == RequestType::kBSCompressedPushPull);
-    auto &stored = (is_compressed || !has_multi_precision_copy(type) || !is_bscompressed) ? store_[key] : store_realt_[key];
+    const bool is_bscompressed = type.requestType == RequestType::kBSCompressedPushPull;
+
+    auto &stored = (is_compressed || !has_multi_precision_copy(type)
+      || !is_bscompressed) ? store_[key] : store_realt_[key];
+
     const size_t num_arr_elems = stored.shape().Size();
     const int dtype = type.dtype;
     const int num_bytes = mshadow::mshadow_sizeof(dtype);
-    int cmd;
+
+    // Determine the command type.
+    int cmd; PSKV pskv = PSKV();
     if (is_compressed) {
       cmd = GetCommandType(RequestType::kCompressedPushPull, dtype);
+      pskv = EncodeCompressedKey(key, num_arr_elems, false, num_bytes);
     } else if (is_bscompressed) {
       cmd = GetCommandType(RequestType::kBSCompressedPushPull, dtype);
+      pskv = EncodeBSCompressedKey(key, num_arr_elems, false, num_bytes);
     } else {
       cmd = GetCommandType(RequestType::kDefaultPushPull, dtype);
+      pskv = EncodeDefaultKey(key, num_arr_elems, num_bytes);
     }
-    PSKV& pskv = is_compressed ? EncodeCompressedKey(key, num_arr_elems, false, num_bytes) :
-      is_bscompressed ? EncodeBSCompressedKey(key, num_arr_elems, false, num_bytes) :
-      EncodeDefaultKey(key, num_arr_elems, num_bytes);
+
     mu_.lock();
     for (auto& ps_key : pskv.keys)
       key_map_[ps_key] = key;
     mu_.unlock();
+
     // pull latest params from global servers.
     if (!ps_server_->enable_inter_ts || !initialized_[key]) {
       server->Pull(pskv.keys, cmd, key);
     }
   }
 
-  void DataHandlePushResponseDefault(const DataHandleType type,
-                                     const ps::KVMeta& req_meta,
-                                     const ps::KVPairs<char>& req_data,
+  /**
+   * Handles the response after a push operation to global servers.
+   */
+  void DataHandlePushResponseDefault(const DataHandleType type, const ps::KVMeta& req_meta,
                                      ps::KVServer<char>* server) {
     CHECK(req_meta.push);
     CHECK(!ps::IsGlobalServer()) << "Invalid push response on global servers";
     const int ts = req_meta.timestamp;
+
+    // Exit if responses haven't been received from all global servers.
     if (server->NumResponse(ts) != ps::NumGlobalServers() - 1) return;
 
     mu_.lock();
     int key = ts_key_map_[ts];
     ts_key_map_.erase(ts);
     mu_.unlock();
-    DataPullFromGlobalServersDefault(type, key, req_meta, req_data, server);
+
+    // Pull latest data from the global servers.
+    DataPullFromGlobalServersDefault(type, key, server);
   }
 
-  void DataHandlePullResponseDefault(const DataHandleType type,
-                                     const ps::KVMeta& req_meta,
-                                     const ps::KVPairs<char>& req_data,
-                                     ps::KVServer<char>* server) {
-    CHECK(!ps::IsGlobalServer()) << "invalid pull operation on global servers";
+  void HandleHFAAccumulate(const DataHandleType& type, NDArray& stored,
+                           NDArray& stored_milestone, const NDArray& recved) {
+    CHECK(use_hfa) << "Invalid operation, hfa is not enabled";
+    if (stored_milestone.is_none()) {
+      stored_milestone = NDArray(stored.shape(), Context(), false, type.dtype);
+      stored.WaitToRead();
+      CopyFromTo(stored, stored_milestone, 0);
+    } else {
+      stored = stored_milestone + recved;
+      stored.WaitToRead();
+      stored_milestone = stored;
+      stored_milestone.WaitToRead();
+    }
+  }
+
+  void DataHandlePullResponseDefault(const DataHandleType type, const ps::KVMeta& req_meta,
+                                     const ps::KVPairs<char>& req_data, ps::KVServer<char>* server) {
+    CHECK(!ps::IsGlobalServer()) << "Invalid pull operation on global servers";
     const bool is_default = type.requestType == RequestType::kDefaultPushPull;
     const bool is_compressed = type.requestType == RequestType::kCompressedPushPull;
     const bool is_bscompressed = type.requestType == RequestType::kBSCompressedPushPull;
-    if (is_compressed) CHECK_EQ(type.dtype, mshadow::kFloat32)
-              << "Gradient compression is currently supported for fp32 only";
+    if (is_compressed)
+      CHECK_EQ(type.dtype, mshadow::kFloat32)
+        << "Gradient compression is currently supported for fp32 only";
 
     mu_.lock();
     int key = key_map_[req_data.keys[0]];
@@ -959,52 +986,43 @@ class KVStoreDistServer {
     mu_.lock();
     auto& kvs = recv_kvs_[key];
     mu_.unlock();
-
     kvs.push_back(req_data);
+
     const int num_parts = kvs.size();
     auto& stored = (is_compressed || !has_multi_precision_copy(type)) ? store_[key] : store_realt_[key];
     auto& stored_milestone = store_milestone_[key];
     const size_t num_arr_elems = stored.shape().Size();
     const int num_bytes = mshadow::mshadow_sizeof(type.dtype);
-    if (num_arr_elems >= bigarray_bound_ && num_parts != ps::NumGlobalServers()) return;
+
+    if (num_arr_elems >= bigarray_bound_
+      && num_parts != ps::NumGlobalServers()) return;
+
+    // Handle small data tensor.
     if (num_arr_elems < bigarray_bound_) {
-      // sent to a random picked global server
       size_t ds[] = {(size_t) req_data.lens[0] / num_bytes};
       TShape dshape(ds, ds + 1);
       TBlob recv_blob;
       MSHADOW_REAL_TYPE_SWITCH(type.dtype, DType, {
-              recv_blob = TBlob(reinterpret_cast<DType*>(req_data.vals.data()), dshape, cpu::kDevMask);
+        recv_blob = TBlob(reinterpret_cast<DType*>(req_data.vals.data()), dshape, cpu::kDevMask);
       });
       NDArray recved = NDArray(recv_blob, 0);
-    if (is_default || is_compressed) {
+      if (is_default || is_compressed) {
         if (use_hfa) {
-            if (stored_milestone.is_none()) {
-                stored_milestone = NDArray(dshape, Context(), false, type.dtype);
-                stored.WaitToRead();
-                CopyFromTo(stored, stored_milestone, 0);
-            } else {
-                stored = stored_milestone + recved;
-                stored.WaitToRead();
-                stored_milestone = stored;
-                stored_milestone.WaitToRead();
-            }
+          HandleHFAAccumulate(type, stored, stored_milestone, recved);
         } else {
-            CopyFromTo(recved, &stored, 0);
+          CopyFromTo(recved, &stored, 0);
         }
-    } else if (is_bscompressed) {
+      } else if (is_bscompressed) {
         const int original_size = stored.shape().Size();
-        NDArray temp_array = NDArray(mxnet::TShape{static_cast<int64_t>(original_size)}, stored.ctx(), false, type.dtype);
-        temp_array = 0;
+        NDArray temp_array = NDArray(
+          mxnet::TShape{static_cast<int64_t>(original_size)}, stored.ctx(), false, type.dtype);
+        temp_array = 0;  // Initialize with all zeros.
         gradient_compression_->BSCDecompress(recved, temp_array, 0);
         temp_array.WaitToRead();
         if (use_hfa) {
-            CHECK(!stored_milestone.is_none()) << "init stored_milestone first!";
-            stored = stored_milestone + temp_array;
-            stored.WaitToRead();
-            stored_milestone = stored;
-            stored_milestone.WaitToRead();
+          HandleHFAAccumulate(type, stored, stored_milestone, temp_array);
         } else {
-            CopyFromTo(temp_array, &stored);
+          CopyFromTo(temp_array, &stored);
         }
       }
       stored.WaitToRead();
@@ -1015,16 +1033,18 @@ class KVStoreDistServer {
         stored_dtype.WaitToRead();
       }
     } else {
-        PSKV& pskv = is_compressed ? EncodeCompressedKey(key, num_arr_elems, false, num_bytes) :
-                     is_bscompressed ? EncodeBSCompressedKey(key, num_arr_elems, false, num_bytes) :
-                     EncodeDefaultKey(key, num_arr_elems, num_bytes);
+      // Handle large data tensor.
+      PSKV& pskv =
+        is_compressed ? EncodeCompressedKey(key, num_arr_elems, false, num_bytes) :
+        is_bscompressed ? EncodeBSCompressedKey(key, num_arr_elems, false, num_bytes) :
+        EncodeDefaultKey(key, num_arr_elems, num_bytes);
       auto& keys = pskv.keys;
       auto* lens = &pskv.lens;
       auto& recv_buf = comm_buf_[key];
       if (recv_buf.is_none()) {
         recv_buf = NDArray(stored.shape(), stored.ctx(), false, type.dtype);
       }
-      char* data = static_cast<char*> (recv_buf.data().dptr_);
+      char* data = static_cast<char*>(recv_buf.data().dptr_);
       // false means not to delete data when SArray is deleted
       auto vals = new ps::SArray<char>(data, num_arr_elems * num_bytes, false);
 
@@ -1032,27 +1052,26 @@ class KVStoreDistServer {
       CHECK_NOTNULL(vals);
       size_t total_key = 0, total_val = 0;
       for (const auto& s : kvs) {
-        ps::Range range = FindRange(keys, s.keys.front(), s.keys.back()+1);
-        CHECK_EQ(range.size(), s.keys.size())
-                << "unmatched keys size from one server";
+        ps::Range range = FindRange(keys, s.keys.front(), s.keys.back() + 1);
+        CHECK_EQ(range.size(), s.keys.size()) << "Unmatched keys size from one server";
         if (lens) CHECK_EQ(s.lens.size(), s.keys.size());
         total_key += s.keys.size();
         total_val += s.vals.size();
       }
-      CHECK_EQ(total_key, keys.size()) << "lost some servers?";
+      CHECK_EQ(total_key, keys.size()) << "Lost some servers?";
 
-      // uniform partitioned to all global servers
+      // uniformly partitioned to all global servers
       // fill vals and lens
       std::sort(kvs.begin(), kvs.end(), [](
-              const ps::KVPairs<char>& a, const ps::KVPairs<char>& b) {
-          return a.keys.front() < b.keys.front();
+        const ps::KVPairs<char>& a, const ps::KVPairs<char>& b) {
+        return a.keys.front() < b.keys.front();
       });
       if (vals->empty()) {
         vals->resize(total_val);
       } else {
-          if (!is_bscompressed) {
-              CHECK_EQ(vals->size(), total_val);
-          }
+        if (!is_bscompressed) {
+          CHECK_EQ(vals->size(), total_val);
+        }
       }
       char* p_vals = vals->data();
       int* p_lens = nullptr;
@@ -1072,38 +1091,25 @@ class KVStoreDistServer {
           p_lens += s.lens.size();
         }
       }
-
-    if (is_default || is_compressed) {
+      if (is_default || is_compressed) {
         if (use_hfa) {
-            if (stored_milestone.is_none()) {
-                stored_milestone = NDArray(stored.shape(), stored.ctx(), false, type.dtype);
-                stored.WaitToRead();
-                CopyFromTo(stored, stored_milestone, 0);
-            } else {
-                stored = stored_milestone + recv_buf;
-                stored.WaitToRead();
-                stored_milestone = stored;
-                stored_milestone.WaitToRead();
-            }
+          HandleHFAAccumulate(type, stored, stored_milestone, recv_buf);
         } else {
-            CopyFromTo(recv_buf, &stored, 0);
+          CopyFromTo(recv_buf, &stored, 0);
         }
-    } else if (is_bscompressed) {
+      } else if (is_bscompressed) {
         const int original_size = stored.shape().Size();
-        NDArray temp_array = NDArray(mxnet::TShape{static_cast<int64_t>(original_size)}, stored.ctx(), false, type.dtype);
+        NDArray temp_array = NDArray(
+          mxnet::TShape{static_cast<int64_t>(original_size)}, stored.ctx(), false, type.dtype);
         temp_array = 0;
         gradient_compression_->BSCDecompress(recv_buf, temp_array, 0);
         temp_array.WaitToRead();
         if (use_hfa) {
-            CHECK(!stored_milestone.is_none()) << "init stored_milestone first!";
-            stored = stored_milestone + temp_array;
-            stored.WaitToRead();
-            stored_milestone = stored;
-            stored_milestone.WaitToRead();
+          HandleHFAAccumulate(type, stored, stored_milestone, temp_array);
         } else {
-            CopyFromTo(temp_array, &stored);
+          CopyFromTo(temp_array, &stored);
         }
-    }
+      }
       stored.WaitToRead();
       if (!is_compressed && has_multi_precision_copy(type)) {
         auto &stored_dtype = store_[key];
@@ -1124,47 +1130,45 @@ class KVStoreDistServer {
       mu_.lock();
       initialized_[key] = true;
       mu_.unlock();
-        if (ps_server_->enable_intra_ts) {
-            DefaultAutoPull(type, key, store_v_[key], req_meta, req_data, server, false);
-        }
+      if (ps_server_->enable_intra_ts) {
+        DefaultAutoPull(type, key, store_v_[key], req_meta, req_data, server, false);
+      }
     } else {
       // notify workers to pull
       if (ps_server_->enable_intra_ts) {
-          mu_.lock();
-          auto& updates_tmp = update_buf_tmp_[key];
-          mu_.unlock();
-          DefaultAutoPull(type, key, store_v_[key], updates_tmp.request[0], req_data, server, false);
-          updates_tmp.request.clear();
+        mu_.lock();
+        auto& updates_tmp = update_buf_tmp_[key];
+        mu_.unlock();
+        DefaultAutoPull(type, key, store_v_[key], updates_tmp.request[0], req_data, server, false);
+        updates_tmp.request.clear();
       } else {
-          mu_.lock();
-          auto& updates_tmp = update_buf_tmp_[key];
-          mu_.unlock();
-          if (!ps_server_->enable_p3) {
-            for (const auto& req : updates_tmp.request) {
-              server->Response(req, false);
-            }
-          }else{
-            for (const auto& req : updates_tmp.request) {
-              ps::KVPairs<char> res;
-              const int dtype = stored.dtype();
-              size_t size = stored.shape().Size() * mshadow::mshadow_sizeof(dtype);
-              char *data = static_cast<char *>(stored.data().dptr_);
-              ps::SArray<char> vals(data, size, false);
-              res.keys.push_back(key);
-              res.vals = vals;
-              res.lens.push_back(size);
-              server->Response(req, res,0);
-            }
+        mu_.lock();
+        auto& updates_tmp = update_buf_tmp_[key];
+        mu_.unlock();
+        if (!ps_server_->enable_p3) {
+          for (const auto& req : updates_tmp.request) {
+            server->Response(req, false);
           }
-          updates_tmp.request.clear();
+        } else {
+          for (const auto& req : updates_tmp.request) {
+            ps::KVPairs<char> res;
+            const int dtype = stored.dtype();
+            size_t size = stored.shape().Size() * mshadow::mshadow_sizeof(dtype);
+            char *data = static_cast<char *>(stored.data().dptr_);
+            ps::SArray<char> vals(data, size, false);
+            res.keys.push_back(key);
+            res.vals = vals;
+            res.lens.push_back(size);
+            server->Response(req, res,0);
+          }
+        }
+        updates_tmp.request.clear();
       }
     }
   }
 
-  void DefaultStorageResponse(const DataHandleType type,
-                              const int key,
-                              const ps::KVMeta& req_meta,
-                              const ps::KVPairs<char> &req_data,
+  void DefaultStorageResponse(const DataHandleType type, const int key,
+                              const ps::KVMeta& req_meta, const ps::KVPairs<char>& req_data,
                               ps::KVServer<char>* server) {
     store_mu_.lock();
     const NDArray& stored = store_[key];
@@ -1206,8 +1210,7 @@ class KVStoreDistServer {
   }
 
   void DataHandleSyncDefault(const DataHandleType type, const ps::KVMeta& req_meta,
-                             const ps::KVPairs<char> &req_data,
-                             ps::KVServer<char>* server) {
+                             const ps::KVPairs<char>& req_data, ps::KVServer<char>* server) {
     CHECK(req_meta.push);
     CHECK_EQ(req_data.keys.size(), (size_t)1);
     if (req_meta.push) {
@@ -1250,7 +1253,7 @@ class KVStoreDistServer {
       } else {
         if (!ps_server_->enable_p3) {
           server->Response(req_meta);
-        }else{
+        } else {
           ps::KVPairs<char> res;
           const int dtype = stored.dtype();
           size_t size = stored.shape().Size() * mshadow::mshadow_sizeof(dtype);
@@ -1261,7 +1264,7 @@ class KVStoreDistServer {
           res.lens.push_back(size);
           server->Response(req_meta, res, 0);
         }
-        DataPullFromGlobalServersDefault(type, key, req_meta, req_data, server);
+        DataPullFromGlobalServersDefault(type, key, server);
       }
     } else {
       // aggregate gradients from workers or servers
@@ -1359,310 +1362,75 @@ class KVStoreDistServer {
       }
     }
   }
-}
-
-void DefaultAutoPull(const DataHandleType type,
-                     const int key,
-                     const int version,
-                     const ps::KVMeta& req_meta,
-                     const ps::KVPairs<char> &req_data,
-                     ps::KVServer<char>* server, bool inter_domain) {
-    CHECK(type.requestType == RequestType::kDefaultPushPull);
-    ps::KVPairs<char> response;
-    const NDArray& stored = store_[key];
-    CHECK(!stored.is_none()) << "init " << key << " first";
-
-    // as server returns when store_realt is ready in this case
-    if (has_multi_precision_copy(type)) stored.WaitToRead();
-
-    auto len = stored.shape().Size() * mshadow::mshadow_sizeof(stored.dtype());
-    response.keys = req_data.keys;
-    response.lens = {len};
-    response.vals.CopyFrom(static_cast<const char*>(stored.data().dptr_), len);
-    server->AutoPullUpdate(version, req_meta, response, inter_domain);
-}
-
-void DataHandleSyncCompressed(const DataHandleType type, const ps::KVMeta& req_meta,
-                              const ps::KVPairs<char> &req_data,
-                              ps::KVServer<char>* server) {
-  // do some check
-  CHECK(ps::IsGlobalServer());
-  CHECK(req_meta.push);
-  CHECK(sync_global_mode_);
-  CHECK_EQ(req_data.keys.size(), (size_t)2);
-  CHECK_EQ(req_data.lens.size(), (size_t)2);
-  CHECK_EQ(req_data.vals.size(), (size_t)req_data.lens[1]);
-  CHECK_EQ(type.dtype, mshadow::kFloat32)
-          << "Gradient compression is currently supported for fp32 only";
-  
-  int original_size = DecodeKey(req_data.keys[0], true);
-  int key = DecodeKey(req_data.keys[1], true);
-  auto& stored = store_[key];
-  // there used several WaitToRead, this is because \a recved's memory
-  // could be deallocated when this function returns. so we need to make sure
-  // the operators with \a NDArray are actually finished
-  size_t ds[] = {(size_t)req_data.lens[1] / mshadow::mshadow_sizeof(type.dtype)};
-  TShape dshape(ds, ds + 1);
-  TBlob recv_blob(reinterpret_cast<real_t*>(req_data.vals.data()), dshape, cpu::kDevMask);
-  NDArray recved = NDArray(recv_blob, 0);
-  
-  NDArray decomp_buf = decomp_buf_[key];
-  dshape = TShape{(int64_t) original_size};
-  if (decomp_buf.is_none()) {
-    decomp_buf = NDArray(dshape, Context());
   }
-  
-  if (stored.is_none()) {
-    // initialization
-    stored = NDArray(dshape, Context());
-    gradient_compression_->Dequantize(recved, &stored, 0);
-    server->Response(req_meta);
-    stored.WaitToRead();
-    if (ps::IsGlobalServer()) {
-      mu_.lock();
-      initialized_[key] = true;
-      mu_.unlock();
-    }
-  } else {
-    // aggregate gradients from central workers or servers
-    // ignore central workers if DMLC_ENABLE_CENTRAL_WORKER is not set
-    if (req_meta.sender > ps::kOffset && !ps::EnableCentralWorkers()) return;
-  
-    auto& updates = update_buf_[key];
-    if (updates.merged.is_none()) {
-      updates.merged = NDArray(dshape, Context());
-    }
-    if (updates.request.empty()) {
-      gradient_compression_->Dequantize(recved, &updates.merged, 0);
-    } else {
-      gradient_compression_->Dequantize(recved, &decomp_buf, 0);
-      updates.merged += decomp_buf;
-    }
-    updates.merged.WaitToRead();
-    updates.request.push_back(req_meta);
-  
-    int central_workers = 0;
-    if (ps::EnableCentralWorkers()) central_workers = ps::NumWorkers();
-    if (updates.request.size() == (size_t)central_workers + (size_t)ps::NumGlobalWorkers()) {
-      // aggregate gradients and update model
-      ApplyUpdates(type, key, &updates, server);
-      // notify all workers to call pull
-      for (const auto& req : updates.request) {
-        server->Response(req, req.sender < ps::kOffset);
-      }
-      updates.request.clear();
-    } else {
-      updates.merged.WaitToRead();
-    }
+
+  void DefaultAutoPull(const DataHandleType type, const int key, const int version,
+                       const ps::KVMeta& req_meta, const ps::KVPairs<char>& req_data,
+                       ps::KVServer<char>* server, bool inter_domain) {
+      CHECK(type.requestType == RequestType::kDefaultPushPull);
+      ps::KVPairs<char> response;
+      const NDArray& stored = store_[key];
+      CHECK(!stored.is_none()) << "Init " << key << " first";
+
+      // as server returns when store_realt is ready in this case
+      if (has_multi_precision_copy(type)) stored.WaitToRead();
+
+      auto len = stored.shape().Size() * mshadow::mshadow_sizeof(stored.dtype());
+      response.keys = req_data.keys;
+      response.lens = {len};
+      response.vals.CopyFrom(static_cast<const char*>(stored.data().dptr_), len);
+      server->AutoPullUpdate(version, req_meta, response, inter_domain);
   }
-}
 
-void DataHandleSyncBSCompressed(const DataHandleType type, const ps::KVMeta& req_meta,
-                              const ps::KVPairs<char> &req_data,
-                              ps::KVServer<char>* server) {
-  // do some check
-  CHECK(ps::IsGlobalServer());
-  CHECK(req_meta.push);
-  CHECK(sync_global_mode_);
-  CHECK_EQ(req_data.keys.size(), (size_t)2);
-  CHECK_EQ(req_data.lens.size(), (size_t)2);
-  CHECK_EQ(req_data.vals.size(), (size_t)req_data.lens[1]);
-  int original_size = DecodeKey(req_data.keys[0], true);
-  int key = DecodeKey(req_data.keys[1], true);
-  auto& stored = has_multi_precision_copy(type) ? store_realt_[key] : store_[key];
-  CHECK(!stored.is_none()) << "init " << key << " first";
+  void DataHandleSyncCompressed(const DataHandleType type, const ps::KVMeta& req_meta,
+                                const ps::KVPairs<char>& req_data, ps::KVServer<char>* server) {
+    // do some check
+    CHECK(ps::IsGlobalServer());
+    CHECK(req_meta.push);
+    CHECK(sync_global_mode_);
+    CHECK_EQ(req_data.keys.size(), (size_t)2);
+    CHECK_EQ(req_data.lens.size(), (size_t)2);
+    CHECK_EQ(req_data.vals.size(), (size_t)req_data.lens[1]);
+    CHECK_EQ(type.dtype, mshadow::kFloat32)
+            << "Gradient compression is currently supported for fp32 only";
 
-  size_t ds[] = {(size_t)req_data.lens[1] / mshadow::mshadow_sizeof(type.dtype)};
-  TShape dshape(ds, ds + 1);
-  TBlob recv_blob;
-  MSHADOW_REAL_TYPE_SWITCH(type.dtype, DType, {
-    recv_blob = TBlob(reinterpret_cast<DType *>(req_data.vals.data()), dshape, cpu::kDevMask);
-  });
-  NDArray recved = NDArray(recv_blob, 0);
-  dshape = TShape{(int64_t) original_size};
+    int original_size = DecodeKey(req_data.keys[0], true);
+    int key = DecodeKey(req_data.keys[1], true);
+    auto& stored = store_[key];
+    // there used several WaitToRead, this is because \a recved's memory
+    // could be deallocated when this function returns. so we need to make sure
+    // the operators with \a NDArray are actually finished
+    size_t ds[] = {(size_t)req_data.lens[1] / mshadow::mshadow_sizeof(type.dtype)};
+    TShape dshape(ds, ds + 1);
+    TBlob recv_blob(reinterpret_cast<real_t*>(req_data.vals.data()), dshape, cpu::kDevMask);
+    NDArray recved = NDArray(recv_blob, 0);
 
-  if (req_meta.sender > ps::kOffset && !ps::EnableCentralWorkers())
-    return;
-
-  auto &updates = update_buf_[key];
-  if (updates.merged.is_none()) {
-    updates.merged = NDArray(dshape, Context(), false,
-                             has_multi_precision_copy(type) ? mshadow::kFloat32 : type.dtype);
-  }
-  if (updates.temp_array.is_none()) {
-    updates.temp_array = NDArray(dshape, Context(), false,
-                                 has_multi_precision_copy(type) ? mshadow::kFloat32 : type.dtype);
-  }
-  if (updates.request.empty()) {
-    gradient_compression_->BSCDecompress(recved, updates.merged, 0);
-  } else {
-    gradient_compression_->BSCDecompress(recved, updates.temp_array, 0);
-    updates.merged += updates.temp_array;
-  }
-  updates.merged.WaitToRead();
-  updates.request.push_back(req_meta);
-
-  int central_workers = 0;
-  if (ps::EnableCentralWorkers())  central_workers = ps::NumWorkers();
-  if (updates.request.size() == (size_t)central_workers + (size_t)ps::NumGlobalWorkers()) {
-    // aggregate gradients and update model
-    ApplyUpdates(type, key, &updates, server);
-    // notify all workers to call pull
-    for (const auto &req : updates.request) {
-      server->Response(req, req.sender < ps::kOffset);
-    }
-    updates.request.clear();
-  } else {
-    updates.merged.WaitToRead();
-  }
-}
-
-void DataHandleAsyncDefault(const DataHandleType type, const ps::KVMeta& req_meta,
-                            const ps::KVPairs<char> &req_data,
-                            ps::KVServer<char>* server) {
-  // do some check
-  CHECK(req_meta.push);
-  CHECK_EQ(req_data.keys.size(), (size_t)1);
-  CHECK_EQ(req_data.lens.size(), (size_t)1);
-  CHECK_EQ(req_data.vals.size(), (size_t)req_data.lens[0]);
-  CHECK(ps::IsGlobalServer() && !sync_global_mode_);
-
-  int key = DecodeKey(req_data.keys[0], true);
-  auto& stored = has_multi_precision_copy(type) ? store_realt_[key] : store_[key];
-  // there used several WaitToRead, this is because \a recved's memory
-  // could be deallocated when this function returns. so we need to make sure
-  // the operators with \a NDArray are actually finished
-  size_t ds[] = {(size_t) req_data.lens[0] / mshadow::mshadow_sizeof(type.dtype)};
-  TShape dshape(ds, ds + 1);
-  TBlob recv_blob;
-  MSHADOW_REAL_TYPE_SWITCH(type.dtype, DType, {
-    recv_blob = TBlob(reinterpret_cast<DType*>(req_data.vals.data()), dshape, cpu::kDevMask);
-  });
-  NDArray recved = NDArray(recv_blob, 0);
-  if (stored.is_none()) {
-    // initialization
-    stored = NDArray(dshape, Context(), false,
-                     has_multi_precision_copy(type) ? mshadow::kFloat32 : type.dtype);
-    CopyFromTo(recved, &stored, 0);
-    stored.WaitToRead();
-    if (has_multi_precision_copy(type)) {
-      auto &stored_dtype = store_[key];
-      stored_dtype = NDArray(dshape, Context(), false, type.dtype);
-      CopyFromTo(stored, stored_dtype);
-      stored_dtype.WaitToRead();
-    }
-    server->Response(req_meta);
-    mu_.lock();
-    initialized_[key] = true;
-    mu_.unlock();
-  } else {
-    // ignore central workers if DMLC_ENABLE_CENTRAL_WORKER is not set
-    if (req_meta.sender > ps::kOffset && !ps::EnableCentralWorkers()) return;
-
-    auto &updates = update_buf_[key];
-    if (updates.merged.is_none()) {
-      updates.merged = NDArray(dshape, Context(), false,
-                               has_multi_precision_copy(type) ? mshadow::kFloat32 : type.dtype);
-    }
-    if (has_multi_precision_copy(type) && updates.temp_array.is_none()) {
-      updates.temp_array = NDArray(dshape, Context(), false, mshadow::kFloat32);
+    NDArray decomp_buf = decomp_buf_[key];
+    dshape = TShape{(int64_t) original_size};
+    if (decomp_buf.is_none()) {
+      decomp_buf = NDArray(dshape, Context());
     }
 
-    if (req_meta.sender > ps::kOffset) {
-      // push from central workers, aggregate
-      if (updates.request.empty()) {
-        CopyFromTo(recved, updates.merged);
-      } else {
-        if (has_multi_precision_copy(type)) {
-          CopyFromTo(recved, updates.temp_array);
-          updates.merged += updates.temp_array;
-        } else {
-          updates.merged += recved;
-        }
-      }
-      updates.merged.WaitToRead();
-    } else {
-      // push from servers
-      if (has_multi_precision_copy(type)) {
-        CopyFromTo(recved, updates.temp_array);
-      } else {
-        updates.temp_array = recved;
-      }
-      updates.temp_array.WaitToRead();
-    }
-
-    if (req_meta.sender > ps::kOffset) {
-      // push from worker
-      updates.request.push_back(req_meta);
-      if (updates.request.size() == (size_t)ps::NumWorkers()) {
-        ApplyUpdates(type, key, true, &updates, server);
-        for (const auto& req : updates.request) {
-          CHECK(req.sender > ps::kOffset);
-          server->Response(req, false);
-        }
-        updates.request.clear();
-      } else {
-        updates.merged.WaitToRead();
+    if (stored.is_none()) {
+      // initialization
+      stored = NDArray(dshape, Context());
+      gradient_compression_->Dequantize(recved, &stored, 0);
+      server->Response(req_meta);
+      stored.WaitToRead();
+      if (ps::IsGlobalServer()) {
+        mu_.lock();
+        initialized_[key] = true;
+        mu_.unlock();
       }
     } else {
-      // push from server
-      ApplyUpdates(type, key, false, &updates, server);
-      server->Response(req_meta, true);
-    }
-  }
-}
+      // aggregate gradients from central workers or servers
+      // ignore central workers if DMLC_ENABLE_CENTRAL_WORKER is not set
+      if (req_meta.sender > ps::kOffset && !ps::EnableCentralWorkers()) return;
 
-void DataHandleAsyncCompressed(const DataHandleType type, const ps::KVMeta& req_meta,
-                               const ps::KVPairs<char> &req_data,
-                               ps::KVServer<char>* server) {
-  // do some check
-  CHECK(req_meta.push);
-  CHECK_EQ(req_data.keys.size(), (size_t)2);
-  CHECK_EQ(req_data.lens.size(), (size_t)2);
-  CHECK_EQ(req_data.vals.size(), (size_t)req_data.lens[1]);
-  CHECK(ps::IsGlobalServer() && !sync_global_mode_);
-  CHECK_EQ(type.dtype, mshadow::kFloat32)
-          << "Gradient compression is currently supported for fp32 only";
-
-  int original_size = DecodeKey(req_data.keys[0], true);
-  int key = DecodeKey(req_data.keys[1], true);
-  auto& stored = store_[key];
-  // there used several WaitToRead, this is because \a recved's memory
-  // could be deallocated when this function returns. so we need to make sure
-  // the operators with \a NDArray are actually finished
-  size_t ds[] = {(size_t)req_data.lens[1] / mshadow::mshadow_sizeof(type.dtype)};
-  TShape dshape(ds, ds + 1);
-  TBlob recv_blob(reinterpret_cast<real_t*>(req_data.vals.data()), dshape, cpu::kDevMask);
-  NDArray recved = NDArray(recv_blob, 0);
-
-  NDArray decomp_buf = decomp_buf_[key];
-  dshape = TShape{(int64_t) original_size};
-  if (decomp_buf.is_none()) {
-    decomp_buf = NDArray(dshape, Context());
-  }
-
-  if (stored.is_none()) {
-    // initialization
-    stored = NDArray(dshape, Context());
-    gradient_compression_->Dequantize(recved, &stored, 0);
-    server->Response(req_meta);
-    stored.WaitToRead();
-    if (ps::IsGlobalServer()) {
-      mu_.lock();
-      initialized_[key] = true;
-      mu_.unlock();
-    }
-  } else {
-    // ignore central workers if DMLC_ENABLE_CENTRAL_WORKER is not set
-    if (req_meta.sender > ps::kOffset && !ps::EnableCentralWorkers()) return;
-
-    auto& updates = update_buf_[key];
-    if (updates.merged.is_none()) {
-      updates.merged = NDArray(dshape, Context());
-    }
-
-    if (req_meta.sender > ps::kOffset) {
-      // push from central workers, aggregate
+      auto& updates = update_buf_[key];
+      if (updates.merged.is_none()) {
+        updates.merged = NDArray(dshape, Context());
+      }
       if (updates.request.empty()) {
         gradient_compression_->Dequantize(recved, &updates.merged, 0);
       } else {
@@ -1670,108 +1438,337 @@ void DataHandleAsyncCompressed(const DataHandleType type, const ps::KVMeta& req_
         updates.merged += decomp_buf;
       }
       updates.merged.WaitToRead();
-    } else {
-      // push from servers
-      gradient_compression_->Dequantize(recved, &decomp_buf, 0);
-    }
-
-    if (req_meta.sender > ps::kOffset) {
-      // push from central workers
       updates.request.push_back(req_meta);
-      if (updates.request.size() == (size_t)ps::NumWorkers()) {
-        ApplyUpdates(type, key, true, &updates, server);
+
+      int central_workers = 0;
+      if (ps::EnableCentralWorkers()) central_workers = ps::NumWorkers();
+      if (updates.request.size() == (size_t)central_workers + (size_t)ps::NumGlobalWorkers()) {
+        // aggregate gradients and update model
+        ApplyUpdates(type, key, &updates, server);
+        // notify all workers to call pull
         for (const auto& req : updates.request) {
-          CHECK(req.sender > ps::kOffset);
-          server->Response(req, false);
+          server->Response(req, req.sender < ps::kOffset);
         }
         updates.request.clear();
       } else {
         updates.merged.WaitToRead();
       }
-    } else {
-      // push from servers
-      CHECK(updater_);
-      exec_.Exec([this, key, &decomp_buf, &stored]() {
-          updater_(key, decomp_buf, &stored);
-      });
-      server->Response(req_meta, true);
-      stored.WaitToRead();
     }
   }
-}
 
-void DataHandleAsyncBSCompressed(const DataHandleType type, const ps::KVMeta& req_meta,
-                                 const ps::KVPairs<char> &req_data,
-                                 ps::KVServer<char>* server) {}
+  void DataHandleSyncBSCompressed(const DataHandleType type, const ps::KVMeta& req_meta,
+                                const ps::KVPairs<char>& req_data,
+                                ps::KVServer<char>* server) {
+    // do some check
+    CHECK(ps::IsGlobalServer());
+    CHECK(req_meta.push);
+    CHECK(sync_global_mode_);
+    CHECK_EQ(req_data.keys.size(), (size_t)2);
+    CHECK_EQ(req_data.lens.size(), (size_t)2);
+    CHECK_EQ(req_data.vals.size(), (size_t)req_data.lens[1]);
+    int original_size = DecodeKey(req_data.keys[0], true);
+    int key = DecodeKey(req_data.keys[1], true);
+    auto& stored = has_multi_precision_copy(type) ? store_realt_[key] : store_[key];
+    CHECK(!stored.is_none()) << "init " << key << " first";
 
-void DataHandlePullDefault(const DataHandleType type, const ps::KVMeta& req_meta,
-                           const ps::KVPairs<char> &req_data,
-                           ps::KVServer<char>* server) {
-  // do some check
-  CHECK(!req_meta.push);
-  CHECK_EQ(req_data.keys.size(), (size_t)1);
+    size_t ds[] = {(size_t)req_data.lens[1] / mshadow::mshadow_sizeof(type.dtype)};
+    TShape dshape(ds, ds + 1);
+    TBlob recv_blob;
+    MSHADOW_REAL_TYPE_SWITCH(type.dtype, DType, {
+      recv_blob = TBlob(reinterpret_cast<DType *>(req_data.vals.data()), dshape, cpu::kDevMask);
+    });
+    NDArray recved = NDArray(recv_blob, 0);
+    dshape = TShape{(int64_t) original_size};
 
-  bool request = req_meta.sender % 2 == 1;
-  if (req_meta.sender > 100) {
+    if (req_meta.sender > ps::kOffset && !ps::EnableCentralWorkers())
+      return;
+
+    auto &updates = update_buf_[key];
+    if (updates.merged.is_none()) {
+      updates.merged = NDArray(dshape, Context(), false,
+                               has_multi_precision_copy(type) ? mshadow::kFloat32 : type.dtype);
+    }
+    if (updates.temp_array.is_none()) {
+      updates.temp_array = NDArray(dshape, Context(), false,
+                                   has_multi_precision_copy(type) ? mshadow::kFloat32 : type.dtype);
+    }
+    if (updates.request.empty()) {
+      gradient_compression_->BSCDecompress(recved, updates.merged, 0);
+    } else {
+      gradient_compression_->BSCDecompress(recved, updates.temp_array, 0);
+      updates.merged += updates.temp_array;
+    }
+    updates.merged.WaitToRead();
+    updates.request.push_back(req_meta);
+
+    int central_workers = 0;
+    if (ps::EnableCentralWorkers())  central_workers = ps::NumWorkers();
+    if (updates.request.size() == (size_t)central_workers + (size_t)ps::NumGlobalWorkers()) {
+      // aggregate gradients and update model
+      ApplyUpdates(type, key, &updates, server);
+      // notify all workers to call pull
+      for (const auto &req : updates.request) {
+        server->Response(req, req.sender < ps::kOffset);
+      }
+      updates.request.clear();
+    } else {
+      updates.merged.WaitToRead();
+    }
+  }
+
+  void DataHandleAsyncDefault(const DataHandleType type, const ps::KVMeta& req_meta,
+                              const ps::KVPairs<char>& req_data,
+                              ps::KVServer<char>* server) {
+    // do some check
+    CHECK(req_meta.push);
+    CHECK_EQ(req_data.keys.size(), (size_t)1);
+    CHECK_EQ(req_data.lens.size(), (size_t)1);
+    CHECK_EQ(req_data.vals.size(), (size_t)req_data.lens[0]);
+    CHECK(ps::IsGlobalServer() && !sync_global_mode_);
+
+    int key = DecodeKey(req_data.keys[0], true);
+    auto& stored = has_multi_precision_copy(type) ? store_realt_[key] : store_[key];
+    // there used several WaitToRead, this is because \a recved's memory
+    // could be deallocated when this function returns. so we need to make sure
+    // the operators with \a NDArray are actually finished
+    size_t ds[] = {(size_t) req_data.lens[0] / mshadow::mshadow_sizeof(type.dtype)};
+    TShape dshape(ds, ds + 1);
+    TBlob recv_blob;
+    MSHADOW_REAL_TYPE_SWITCH(type.dtype, DType, {
+      recv_blob = TBlob(reinterpret_cast<DType*>(req_data.vals.data()), dshape, cpu::kDevMask);
+    });
+    NDArray recved = NDArray(recv_blob, 0);
+    if (stored.is_none()) {
+      // initialization
+      stored = NDArray(dshape, Context(), false,
+                       has_multi_precision_copy(type) ? mshadow::kFloat32 : type.dtype);
+      CopyFromTo(recved, &stored, 0);
+      stored.WaitToRead();
+      if (has_multi_precision_copy(type)) {
+        auto &stored_dtype = store_[key];
+        stored_dtype = NDArray(dshape, Context(), false, type.dtype);
+        CopyFromTo(stored, stored_dtype);
+        stored_dtype.WaitToRead();
+      }
+      server->Response(req_meta);
+      mu_.lock();
+      initialized_[key] = true;
+      mu_.unlock();
+    } else {
+      // ignore central workers if DMLC_ENABLE_CENTRAL_WORKER is not set
+      if (req_meta.sender > ps::kOffset && !ps::EnableCentralWorkers()) return;
+
+      auto &updates = update_buf_[key];
+      if (updates.merged.is_none()) {
+        updates.merged = NDArray(dshape, Context(), false,
+                                 has_multi_precision_copy(type) ? mshadow::kFloat32 : type.dtype);
+      }
+      if (has_multi_precision_copy(type) && updates.temp_array.is_none()) {
+        updates.temp_array = NDArray(dshape, Context(), false, mshadow::kFloat32);
+      }
+
+      if (req_meta.sender > ps::kOffset) {
+        // push from central workers, aggregate
+        if (updates.request.empty()) {
+          CopyFromTo(recved, updates.merged);
+        } else {
+          if (has_multi_precision_copy(type)) {
+            CopyFromTo(recved, updates.temp_array);
+            updates.merged += updates.temp_array;
+          } else {
+            updates.merged += recved;
+          }
+        }
+        updates.merged.WaitToRead();
+      } else {
+        // push from servers
+        if (has_multi_precision_copy(type)) {
+          CopyFromTo(recved, updates.temp_array);
+        } else {
+          updates.temp_array = recved;
+        }
+        updates.temp_array.WaitToRead();
+      }
+
+      if (req_meta.sender > ps::kOffset) {
+        // push from worker
+        updates.request.push_back(req_meta);
+        if (updates.request.size() == (size_t)ps::NumWorkers()) {
+          ApplyUpdates(type, key, true, &updates, server);
+          for (const auto& req : updates.request) {
+            CHECK(req.sender > ps::kOffset);
+            server->Response(req, false);
+          }
+          updates.request.clear();
+        } else {
+          updates.merged.WaitToRead();
+        }
+      } else {
+        // push from server
+        ApplyUpdates(type, key, false, &updates, server);
+        server->Response(req_meta, true);
+      }
+    }
+  }
+
+  void DataHandleAsyncCompressed(const DataHandleType type, const ps::KVMeta& req_meta,
+                                 const ps::KVPairs<char>& req_data, ps::KVServer<char>* server) {
+    // do some check
+    CHECK(req_meta.push);
+    CHECK_EQ(req_data.keys.size(), (size_t)2);
+    CHECK_EQ(req_data.lens.size(), (size_t)2);
+    CHECK_EQ(req_data.vals.size(), (size_t)req_data.lens[1]);
+    CHECK(ps::IsGlobalServer() && !sync_global_mode_);
+    CHECK_EQ(type.dtype, mshadow::kFloat32)
+            << "Gradient compression is currently supported for fp32 only";
+
+    int original_size = DecodeKey(req_data.keys[0], true);
+    int key = DecodeKey(req_data.keys[1], true);
+    auto& stored = store_[key];
+    // there used several WaitToRead, this is because \a recved's memory
+    // could be deallocated when this function returns. so we need to make sure
+    // the operators with \a NDArray are actually finished
+    size_t ds[] = {(size_t)req_data.lens[1] / mshadow::mshadow_sizeof(type.dtype)};
+    TShape dshape(ds, ds + 1);
+    TBlob recv_blob(reinterpret_cast<real_t*>(req_data.vals.data()), dshape, cpu::kDevMask);
+    NDArray recved = NDArray(recv_blob, 0);
+
+    NDArray decomp_buf = decomp_buf_[key];
+    dshape = TShape{(int64_t) original_size};
+    if (decomp_buf.is_none()) {
+      decomp_buf = NDArray(dshape, Context());
+    }
+
+    if (stored.is_none()) {
+      // initialization
+      stored = NDArray(dshape, Context());
+      gradient_compression_->Dequantize(recved, &stored, 0);
+      server->Response(req_meta);
+      stored.WaitToRead();
+      if (ps::IsGlobalServer()) {
+        mu_.lock();
+        initialized_[key] = true;
+        mu_.unlock();
+      }
+    } else {
+      // ignore central workers if DMLC_ENABLE_CENTRAL_WORKER is not set
+      if (req_meta.sender > ps::kOffset && !ps::EnableCentralWorkers()) return;
+
+      auto& updates = update_buf_[key];
+      if (updates.merged.is_none()) {
+        updates.merged = NDArray(dshape, Context());
+      }
+
+      if (req_meta.sender > ps::kOffset) {
+        // push from central workers, aggregate
+        if (updates.request.empty()) {
+          gradient_compression_->Dequantize(recved, &updates.merged, 0);
+        } else {
+          gradient_compression_->Dequantize(recved, &decomp_buf, 0);
+          updates.merged += decomp_buf;
+        }
+        updates.merged.WaitToRead();
+      } else {
+        // push from servers
+        gradient_compression_->Dequantize(recved, &decomp_buf, 0);
+      }
+
+      if (req_meta.sender > ps::kOffset) {
+        // push from central workers
+        updates.request.push_back(req_meta);
+        if (updates.request.size() == (size_t)ps::NumWorkers()) {
+          ApplyUpdates(type, key, true, &updates, server);
+          for (const auto& req : updates.request) {
+            CHECK(req.sender > ps::kOffset);
+            server->Response(req, false);
+          }
+          updates.request.clear();
+        } else {
+          updates.merged.WaitToRead();
+        }
+      } else {
+        // push from servers
+        CHECK(updater_);
+        exec_.Exec([this, key, &decomp_buf, &stored]() {
+            updater_(key, decomp_buf, &stored);
+        });
+        server->Response(req_meta, true);
+        stored.WaitToRead();
+      }
+    }
+  }
+
+  void DataHandleAsyncBSCompressed(const DataHandleType type, const ps::KVMeta& req_meta,
+                                   const ps::KVPairs<char>& req_data, ps::KVServer<char>* server) {
+    // todo.
+  }
+
+  void DataHandlePullDefault(const DataHandleType type, const ps::KVMeta& req_meta,
+                             const ps::KVPairs<char>& req_data, ps::KVServer<char>* server) {
+    // do some check
+    CHECK(!req_meta.push);
+    CHECK_EQ(req_data.keys.size(), (size_t)1);
+
+    bool request = req_meta.sender % 2 == 1;
+    if (req_meta.sender > 100) {
       if (request) {
-          // response pull requests
-          int key = ps_server_->enable_p3?(int)req_data.keys[0]:
-                    DecodeKey(req_data.keys[0], ps::IsGlobalServer());
+        // response pull requests
+        int key = ps_server_->enable_p3?(int)req_data.keys[0]:
+                  DecodeKey(req_data.keys[0], ps::IsGlobalServer());
 
+        mu_.lock();
+        auto& init = initialized_[key];
+        mu_.unlock();
+        while (!init.load()) {
+          std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        DefaultStorageResponse(type, key, req_meta, req_data, server);
+      } else {
+        // receive and handle pull data
+        DataHandlePullResponseDefault(type, req_meta, req_data, server);
+      }
+    } else {
+      if (ps_server_->enable_inter_ts) {
+        if (request && ps::IsGlobalServer()) {
+          // response pull requests
+          int key = DecodeKey(req_data.keys[0], ps::IsGlobalServer());
           mu_.lock();
-          auto& init = initialized_[key];
+          auto &init = initialized_[key];
           mu_.unlock();
           while (!init.load()) {
-              // LOG(INFO) << "!init.load()";
-              std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
           }
           DefaultStorageResponse(type, key, req_meta, req_data, server);
-      } else {
+        } else {
           // receive and handle pull data
           DataHandlePullResponseDefault(type, req_meta, req_data, server);
-      }
-  }else {
-      if (ps_server_->enable_inter_ts) {
-          if (request && ps::IsGlobalServer()) {
-              // response pull requests
-              int key = DecodeKey(req_data.keys[0], ps::IsGlobalServer());
-              mu_.lock();
-              auto &init = initialized_[key];
-              mu_.unlock();
-              while (!init.load()) {
-                  std::this_thread::sleep_for(std::chrono::milliseconds(100));
-              }
-              DefaultStorageResponse(type, key, req_meta, req_data, server);
-          } else {
-              // receive and handle pull data
-              DataHandlePullResponseDefault(type, req_meta, req_data, server);
-          }
+        }
       } else {
-          if (request) {
-              // response pull requests
-              int key = ps_server_->enable_p3?(int)req_data.keys[0]:
-                        DecodeKey(req_data.keys[0], ps::IsGlobalServer());
-              mu_.lock();
-              auto &init = initialized_[key];
-              mu_.unlock();
-              while (!init.load()) {
-                  std::this_thread::sleep_for(std::chrono::milliseconds(100));
-              }
-              DefaultStorageResponse(type, key, req_meta, req_data, server);
-          } else {
-              // receive and handle pull data
-              DataHandlePullResponseDefault(type, req_meta, req_data, server);
+        if (request) {
+          // response pull requests
+          int key = ps_server_->enable_p3?(int)req_data.keys[0]:
+            DecodeKey(req_data.keys[0], ps::IsGlobalServer());
+          mu_.lock();
+          auto &init = initialized_[key];
+          mu_.unlock();
+          while (!init.load()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
           }
+          DefaultStorageResponse(type, key, req_meta, req_data, server);
+        } else {
+          // receive and handle pull data
+          DataHandlePullResponseDefault(type, req_meta, req_data, server);
+        }
       }
+    }
   }
-}
 
-int DecodeKey(ps::Key key, bool is_global=false) {
-  auto kr = ps::Postoffice::Get()->GetServerKeyRanges(is_global)[ps::MyRank(is_global)];
-  return key - kr.begin();
-}
+  int DecodeKey(ps::Key key, bool is_global=false) {
+    auto kr = ps::Postoffice::Get()->GetServerKeyRanges(is_global)[ps::MyRank(is_global)];
+    return key - kr.begin();
+  }
 
-PSKV& EncodeDefaultKey(const int key, const size_t num_arr_elems, const int num_bytes) {
+  PSKV& EncodeDefaultKey(const int key, const size_t num_arr_elems, const int num_bytes) {
     mu_.lock();
     PSKV& pskv = ps_kv_[key];
     mu_.unlock();
@@ -2077,8 +2074,6 @@ PSKV& EncodeDefaultKey(const int key, const size_t num_arr_elems, const int num_
    */
   std::shared_ptr<kvstore::GradientCompression> gradient_compression_;
 };
-
 }  // namespace kvstore
 }  // namespace mxnet
-
 #endif  // MXNET_KVSTORE_KVSTORE_DIST_SERVER_H_
