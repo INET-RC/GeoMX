@@ -91,18 +91,15 @@ class KVStoreDist : public KVStoreLocal {
   void WorkersMerge(const ps::KVMeta& req_meta,
                     const ps::KVPairs<char> &req_data,
                     ps::KVWorker<char>* worker) {
-    // Check if there is data to be merged.
+    // Send my data to other workers.
     if (req_meta.num_merge == -1) {
-      // Get the key for the data to be sent.
       int key = send_q.front();
 
-      // Copy the merged data to the buffer.
+      // Copy my data to the sender buffer.
       req_data_buf[key].vals.CopyFrom(
         static_cast<const char*>(update_buf_[key].merged.data().dptr_),
         req_data_buf[key].lens[0]
       );
-
-      // Wait for the data read to complete.
       update_buf_[key].merged.WaitToRead();
 
       // Send the data.
@@ -120,58 +117,62 @@ class KVStoreDist : public KVStoreLocal {
       send_q.pop();
       send_lk.unlock();
     } else {
+      // Receive data from other workers and merge them.
       CHECK_EQ(req_data.keys.size(), (size_t)1);
       if (req_meta.push) {
         CHECK_EQ(req_data.lens.size(), (size_t)1);
         CHECK_EQ(req_data.vals.size(), (size_t)req_data.lens[0]);
       }
+
       int key = req_data.keys[0];
+      int server_id = (ps::MyRank() + 1) * 2 - 1 + 100;
       DataHandleType type = DepairDataHandleType(req_meta.cmd);
 
       std::unique_lock<std::mutex> send_lk(send_mu);
-      if (req_meta.sender != ((ps::MyRank() + 1) * 2 - 1 + 100)) {
+      if (req_meta.sender == server_id) {
+        send_q.push(key);
+        req_meta_buf[key].cmd         = req_meta.cmd;
+        req_meta_buf[key].push        = req_meta.push;
+        req_meta_buf[key].sender      = req_meta.sender;
+        req_meta_buf[key].timestamp   = req_meta.timestamp ;
+        req_meta_buf[key].customer_id = req_meta.customer_id ;
+        req_meta_buf[key].app_id      = req_meta.app_id;
+        req_meta_buf[key].key         = req_meta.key;
+        req_meta_buf[key].version     = req_meta.version;
+        req_meta_buf[key].num_merge   = req_meta.num_merge;
+        req_data_buf[key].keys        = req_data.keys;
+        req_data_buf[key].lens        = req_data.lens;
+      } else {
         worker->Response(req_meta);
       }
-      else {
-        send_q.push(key);
-        req_meta_buf[key].cmd       = req_meta.cmd;
-        req_meta_buf[key].push      = req_meta.push;
-        req_meta_buf[key].sender    = req_meta.sender;
-        req_meta_buf[key].timestamp = req_meta.timestamp ;
-        req_meta_buf[key].customer_id = req_meta.customer_id ;
-        req_meta_buf[key].app_id = req_meta.app_id;
-        req_meta_buf[key].key = req_meta.key;
-        req_meta_buf[key].version = req_meta.version;
-        req_meta_buf[key].num_merge = req_meta.num_merge;
-        req_data_buf[key].keys = req_data.keys;
-        req_data_buf[key].lens = req_data.lens;
-      }
+
       size_t ds[] = {(size_t) req_data.lens[0] / mshadow::mshadow_sizeof(type.dtype)};
-      TShape dshape(ds, ds + 1); //tensor.shape, tensor.shape+tensor.dim
+      TShape dshape(ds, ds + 1);
       TBlob recv_blob;
       MSHADOW_REAL_TYPE_SWITCH(type.dtype, DType, {
         recv_blob = TBlob(reinterpret_cast<DType*>(req_data.vals.data()), dshape, cpu::kDevMask);
       })
       NDArray recved = NDArray(recv_blob, 0);
+
       auto &updates = update_buf_[key];
       if (updates.merged.is_none()) {
-        updates.merged = NDArray(dshape, Context(), false,type.dtype);
+        updates.merged = NDArray(dshape, Context(), false, type.dtype);
       }
-      if (req_meta.sender==((ps::MyRank()+1)*2-1+100)) {
+
+      if (req_meta.sender == server_id) {
         updates.merged = recved;
         updates.merged.WaitToRead();
-      }
-      else {
+      } else {
         updates.merged += recved;
         updates.merged.WaitToRead();
-        req_meta_buf[key].num_merge+=req_meta.num_merge;
+        req_meta_buf[key].num_merge += req_meta.num_merge;
       }
       send_lk.unlock();
     }
   }
 
   void set_updater(const Updater& updater) override {
-    CHECK(updater) << "invalid updater";
+    CHECK(updater) << "Invalid updater";
     if (IsServerNode()) {
       CHECK_NOTNULL(server_)->set_updater(updater);
     } else {
@@ -187,8 +188,7 @@ class KVStoreDist : public KVStoreLocal {
     app->Response(recved);
   }
 
-  void SetGradientCompression(const std::vector<std::pair<std::string, std::string> >
-                              & kwargs) override {
+  void SetGradientCompression(const std::vector<std::pair<std::string, std::string>>& kwargs) override {
     if (ps::IsMasterWorker()) {
       KVStoreLocal::SetGradientCompression(kwargs);
       SendCommandToServers(static_cast<int>(CommandType::kSetGradientCompression),
@@ -196,23 +196,19 @@ class KVStoreDist : public KVStoreLocal {
     }
   }
 
-  void SetServerProfilerCommand(const KVStoreServerProfilerCommand type,
-                                const std::string& params) override {
+  void SetServerProfilerCommand(const KVStoreServerProfilerCommand type, const std::string& params) override {
     if (get_rank() == 0) {
       SendCommandToServers(static_cast<int>(CommandType::kSetProfilerParams),
                            params + std::to_string(static_cast<int>(type)));
     }
   }
 
-
   void Barrier(const bool is_global = false) override {
     const int group_id = is_global ? ps::kWorkerGroupGlobal : ps::kWorkerGroup;
-    ps::Postoffice::Get()->Barrier(ps_worker_->get_customer()->customer_id(),
-                                   group_id, is_global);
+    ps::Postoffice::Get()->Barrier(ps_worker_->get_customer()->customer_id(), group_id, is_global);
   }
 
-  void SendCommandToServers(int cmd_id,
-                            const std::string& cmd_body) override {
+  void SendCommandToServers(int cmd_id, const std::string& cmd_body) override {
     CHECK_NOTNULL(ps_worker_);
     ps_worker_->Wait(ps_worker_->Request(cmd_id, cmd_body, ps::kServerGroup));
   }
@@ -245,17 +241,17 @@ class KVStoreDist : public KVStoreLocal {
     ps::StartAsync(0, "mxnet_server\0");
     // Barrier within data centers
     if (!ps::Postoffice::Get()->is_recovery()) {
-      ps::Postoffice::Get()->Barrier(0, ps::kWorkerGroup + ps::kServerGroup + ps::kScheduler, false);
+      ps::Postoffice::Get()->Barrier(
+        0, ps::kWorkerGroup + ps::kServerGroup + ps::kScheduler, false);
     }
     // Barrier across data centers
     if (IsServerNode() || IsGlobalSchedulerNode()) {
-      ps::Postoffice::Get()->Barrier(0, ps::kSchedulerGlobal + ps::kServerGroupGlobal + ps::kWorkerGroupGlobal, true);
+      ps::Postoffice::Get()->Barrier(
+        0, ps::kSchedulerGlobal + ps::kServerGroupGlobal + ps::kWorkerGroupGlobal, true);
     }
     if (server_) server_->Run();
     ps::Finalize(0, true);
-    if (server_) {
-      delete server_;
-    }
+    if (server_) delete server_;
     server_ = nullptr;
   }
 
@@ -307,13 +303,12 @@ class KVStoreDist : public KVStoreLocal {
    */
   std::mutex mu_;
   std::mutex send_mu;
-  void InitImpl(const std::vector<int>& keys,
-                const std::vector<NDArray>& values) override {
+
+  void InitImpl(const std::vector<int>& keys, const std::vector<NDArray>& values) override {
     CheckUnique(keys);
     for (size_t i = 0; i < keys.size(); ++i) {
       comm_->Init(keys[i], values[i].storage_type(), values[i].shape(), values[i].dtype());
     }
-
     if (get_rank() == 0) {
       Push_(keys, values, 0, false);
       // wait until the push is finished
@@ -322,10 +317,7 @@ class KVStoreDist : public KVStoreLocal {
         compr_buf_[key].WaitToWrite();
       }
     }
-
-    if (!ps::Postoffice::Get()->is_recovery()) {
-      Barrier();
-    }
+    if (!ps::Postoffice::Get()->is_recovery()) Barrier();
   }
 
   void PushImpl(const std::vector<int>& keys,
@@ -397,7 +389,7 @@ class KVStoreDist : public KVStoreLocal {
           }
           const int cmd = GetCommandType(mode, dtype);
 
-          if (gradient_compression_->get_type() == CompressionType::kNone && ps_worker_->enable_intra_ts) {
+          if (ps_worker_->enable_intra_ts && gradient_compression_->get_type() == CompressionType::kNone) {
             CHECK_NOTNULL(ps_worker_)->AutoPull(
               key, pskv.keys, vals, &pskv.lens, cmd, [vals, cb]() {
                 delete vals;
@@ -468,12 +460,13 @@ class KVStoreDist : public KVStoreLocal {
              const std::vector<NDArray>& values,
              int priority,
              bool do_merge) {
-    // first aggregate the values over keys
+    // first aggregate the values over keys.
     std::vector<int> uniq_keys;
     std::vector<std::vector<NDArray> > grouped_vals;
     GroupKVPairsPush(keys, values, &uniq_keys, &grouped_vals, false);
+
     for (size_t i = 0; i < uniq_keys.size(); ++i) {
-      // merge over devices
+      // merge over devices.
       int key = uniq_keys[i];
       const auto& vals = grouped_vals[i];
       NDArray merged = do_merge? comm_->Reduce(key, vals, priority) : vals[0];
@@ -496,12 +489,14 @@ class KVStoreDist : public KVStoreLocal {
         }
         CopyFromTo(merged, &comm_buf);
       }
+
       const int dtype = merged.dtype();
       const int num_bytes = mshadow::mshadow_sizeof(dtype);
       // push to servers
       if (storage_type == kDefaultStorage) {
-          if (gradient_compression_->get_type() == CompressionType::kNone || gradient_compression_->get_type() == CompressionType::kBiSparseCompression) {
-          PSKV& pskv = ps_worker_->enable_p3 ? P3_EncodeDefaultKey(key, comm_buf.shape().Size(), num_bytes)
+          if (gradient_compression_->get_type() == CompressionType::kNone
+            || gradient_compression_->get_type() == CompressionType::kBiSparseCompression) {
+          PSKV& pskv = ps_worker_->enable_p3 ? EncodeP3Key(key, comm_buf.shape().Size(), num_bytes)
             : EncodeDefaultKey(key, comm_buf.shape().Size(), num_bytes);
           PushDefault(key, comm_buf, pskv, priority);
         } else {
@@ -543,6 +538,7 @@ class KVStoreDist : public KVStoreLocal {
       res_buf = NDArray(TShape{static_cast<int64_t>(original_size)}, comm_buf.ctx(), false, dtype);
       res_buf = 0;
     }
+
     gradient_compression_->Quantize(comm_buf, &small_buf, &res_buf, priority);
     auto push_to_servers =
       [this, key, dtype, pskv, small_buf](RunContext rctx, Engine::CallbackOnComplete cb) {
@@ -650,19 +646,17 @@ class KVStoreDist : public KVStoreLocal {
       CHECK_NOTNULL(ps_worker_)->ZPush(pskv.keys, vals, pskv.lens, cmd, [cb]() { cb(); });
     };
     Engine::Get()->PushAsync(
-        push_to_servers,
-        pinned_ctx_,
-        {send_buf.var()},
-        {},
-        FnProperty::kNormal,
-        priority,
-        "KVStoreDistRowSparsePush");
+      push_to_servers,
+      pinned_ctx_,
+      {send_buf.var()},
+      {},
+      FnProperty::kNormal,
+      priority,
+      "KVStoreDistRowSparsePush");
   }
 
-
   // pull row sparse weight into `recv_buf` based on indices given by `indices`
-  void PullRowSparse_(const int key, const NDArray& recv_buf,
-                      const NDArray& indices, int priority) {
+  void PullRowSparse_(const int key, const NDArray& recv_buf, const NDArray& indices, int priority) {
     using namespace rowsparse;
     auto pull_from_servers = [this, key, recv_buf, indices]
       (RunContext rctx, Engine::CallbackOnComplete cb) {
@@ -723,8 +717,7 @@ class KVStoreDist : public KVStoreLocal {
    * \param num_bytes size of each element in number of bytes
    * \return PSKV used for both push and pull
    */
-  inline PSKV& EncodeDefaultKey(const int key, const size_t num_arr_elems,
-                                const int num_bytes) {
+  inline PSKV& EncodeDefaultKey(const int key, const size_t num_arr_elems, const int num_bytes) {
     mu_.lock();
     PSKV& pskv = ps_kv_[key];
     mu_.unlock();
@@ -751,8 +744,8 @@ class KVStoreDist : public KVStoreLocal {
         pskv.size = 0;
         for (int i = 0; i < num_servers; ++i) {
           size_t part_size =
-                  static_cast<size_t>(round(static_cast<double>(num_arr_elems)/num_servers*(i+1))) -
-                  static_cast<size_t>(round(static_cast<double>(num_arr_elems)/num_servers*i));
+            static_cast<size_t>(round(static_cast<double>(num_arr_elems) / num_servers * (i + 1))) -
+            static_cast<size_t>(round(static_cast<double>(num_arr_elems) / num_servers * i));
           ps::Key ps_key = krs[i].begin() + key;
           CHECK_LT(ps_key, krs[i].end());
           pskv.keys.push_back(ps_key);
@@ -766,8 +759,7 @@ class KVStoreDist : public KVStoreLocal {
     return pskv;
   }
 
-  inline PSKV& P3_EncodeDefaultKey(const int key, const size_t num_arr_elems,
-                                   const int num_bytes) {
+  inline PSKV& EncodeP3Key(const int key, const size_t num_arr_elems, const int num_bytes) {
     mu_.lock();
     PSKV& pskv = ps_kv_[key];
     mu_.unlock();
@@ -790,8 +782,8 @@ class KVStoreDist : public KVStoreLocal {
         CHECK_LT(ps_key, krs[i % num_servers].end());
         pskv.keys.push_back(ps_key);
         if (s > bigarray_bound_) {
-          pskv.lens.push_back(bigarray_bound_*num_bytes);
-          pskv.size += (bigarray_bound_*num_bytes);
+          pskv.lens.push_back(bigarray_bound_ * num_bytes);
+          pskv.size += (bigarray_bound_ * num_bytes);
         } else {
           pskv.lens.push_back(s * num_bytes);
           pskv.size += (s * num_bytes);
@@ -865,13 +857,13 @@ class KVStoreDist : public KVStoreLocal {
 
         for (int i = 0; i < num_servers; ++i) {
           size_t part_compr, part_orig;
-          if (i == num_servers-1) {
+          if (i == num_servers - 1) {
             part_compr = compr_num_elem - push_pskv.size;
             part_orig = original_num_elem - pull_pskv.size;
           } else {
             part_compr =
-              static_cast<size_t> (round(static_cast<double>(compr_num_elem)/num_servers*(i+1))) -
-              static_cast<size_t> (round(static_cast<double>(compr_num_elem)/num_servers*(i)));
+              static_cast<size_t> (round(static_cast<double>(compr_num_elem) / num_servers * (i + 1))) -
+              static_cast<size_t> (round(static_cast<double>(compr_num_elem) / num_servers * i));
             part_orig = part_compr * gradient_compression_->GetCompressionFactor();
           }
 
@@ -898,8 +890,8 @@ class KVStoreDist : public KVStoreLocal {
         push_pskv.size *= num_bytes;
         pull_pskv.size *= num_bytes;
         CHECK_EQ(push_pskv.lens.size(), num_servers * 2);
-        }
       }
+    }
     return pskv;
   }
 
@@ -1001,8 +993,6 @@ class KVStoreDist : public KVStoreLocal {
   bool log_verbose_;
   int key_temp=0;
 };
-
 }  // namespace kvstore
 }  // namespace mxnet
-
 #endif  // MXNET_KVSTORE_KVSTORE_DIST_H_
