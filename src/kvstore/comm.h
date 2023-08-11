@@ -50,19 +50,20 @@ class Comm {
   /**
    * \brief init key with the data shape and storage shape
    */
-  virtual void Init(int key, const NDArrayStorageType stype,
-                    const TShape& shape, int dtype = mshadow::kFloat32) = 0;
+  virtual void Init(
+    int key, const NDArrayStorageType stype,
+    const TShape& shape, int dtype = mshadow::kFloat32) = 0;
   /**
    * \brief returns src[0] + .. + src[src.size()-1]
    */
   virtual const NDArray& Reduce(
-      int key, const std::vector<NDArray>& src, int priority) = 0;
+    int key, const std::vector<NDArray>& src, int priority) = 0;
   /**
    * \brief copy from src to dst[i] for every i
    */
   virtual void Broadcast(
-      int key, const NDArray& src,
-      const std::vector<NDArray*> dst, int priority) = 0;
+    int key, const NDArray& src,
+    const std::vector<NDArray*> dst, int priority) = 0;
 
   /**
    * \brief broadcast src to dst[i] with target row_ids for every i
@@ -72,9 +73,10 @@ class Comm {
             where the row_ids are expected to be unique and sorted in row_id.data()
    * \param priority the priority of the operation
    */
-  virtual void BroadcastRowSparse(int key, const NDArray& src,
-                                  const std::vector<std::pair<NDArray*, NDArray>>& dst,
-                                  const int priority) = 0;
+  virtual void BroadcastRowSparse(
+    int key, const NDArray& src,
+    const std::vector<std::pair<NDArray*, NDArray>>& dst,
+    const int priority) = 0;
 
   /**
    * \brief return a pinned contex
@@ -87,9 +89,7 @@ class Comm {
    * \brief Sets gradient compression parameters to be able to
    * perform reduce with compressed gradients
    */
-  void SetGradientCompression(std::shared_ptr<GradientCompression> gc) {
-    gc_ = gc;
-  }
+  void SetGradientCompression(std::shared_ptr<GradientCompression> gc) { gc_ = gc; }
 
  protected:
   Context pinned_ctx_;
@@ -106,7 +106,6 @@ class CommCPU : public Comm {
   CommCPU() {
     nthread_reduction_ = dmlc::GetEnv("MXNET_KVSTORE_REDUCTION_NTHREADS", 4);
     bigarray_bound_ = dmlc::GetEnv("MXNET_KVSTORE_BIGARRAY_BOUND", 1000 * 1000);
-    // TODO(junwu) delete the following data member, now for benchmark only
     is_serial_push_ = dmlc::GetEnv("MXNET_KVSTORE_SERIAL_PUSH", 0);
   }
   virtual ~CommCPU() { }
@@ -203,7 +202,6 @@ class CommCPU : public Comm {
         }, Context::CPU(), const_vars, {buf_merged.var(), rsc.var},
         FnProperty::kCPUPrioritized, priority, "KVStoreReduce");
     }
-
     return buf_merged;
   }
 
@@ -243,8 +241,7 @@ class CommCPU : public Comm {
       const bool is_same_ctx = out->ctx() == src.ctx();
       const bool is_diff_var = out->var() != src.var();
       NDArray retained_cpu = (is_same_ctx && is_diff_var) ? *out :
-          NDArray(kRowSparseStorage, src.shape(), src.ctx(), true,
-                  src.dtype(), src.aux_types());
+          NDArray(kRowSparseStorage, src.shape(), src.ctx(), true, src.dtype(), src.aux_types());
       if (!is_diff_var) {
         common::LogOnce("The output of row_sparse_pull() on key " + std::to_string(key) +
                         "refers to the same NDArray as the one stored in KVStore."
@@ -257,9 +254,8 @@ class CommCPU : public Comm {
         [=](RunContext rctx, Engine::CallbackOnComplete on_complete) {
           const TBlob& indices = row_id.data();
           NDArray temp = retained_cpu;  // get rid the of const qualifier
-          op::SparseRetainOpForwardRspImpl<cpu>(rctx.get_stream<cpu>(),
-                                                src, indices, kWriteTo,
-                                                &temp);
+          op::SparseRetainOpForwardRspImpl<cpu>(
+              rctx.get_stream<cpu>(), src, indices, kWriteTo, &temp);
           on_complete();
         }, Context::CPU(), {src.var(), row_id.var()}, {retained_cpu.var()},
         FnProperty::kNormal, priority, "KVStoreSparseRetain");
@@ -451,9 +447,7 @@ class CommCPU : public Comm {
  */
 class CommDevice : public Comm {
  public:
-  CommDevice() {
-    inited_ = false;
-  }
+  CommDevice() { inited_ = false; }
 
   virtual ~CommDevice() { }
 
@@ -480,7 +474,6 @@ class CommDevice : public Comm {
                                  int priority) {
     auto& buf = merge_buf_[key];
     std::vector<NDArray> reduce(src.size());
-
     const NDArrayStorageType stype = src[0].storage_type();
     NDArray& buf_merged = buf.merged_buf(stype);
     if (buf.copy_buf.empty()) {
@@ -508,7 +501,6 @@ class CommDevice : public Comm {
     if ((gc_ != nullptr) && (gc_->get_type() != CompressionType::kNone)) {
       return ReduceCompressed(key, src, priority);
     }
-
     // avoid extra copy for single device, but it may bring problems for
     // abnormal usage of kvstore
     if (src.size() == 1) {
@@ -626,47 +618,48 @@ class CommDevice : public Comm {
       NDArray* out = dst_kv.first;
       NDArray row_id = dst_kv.second;
       CHECK_EQ(out->storage_type(), kRowSparseStorage)
-               << "BroadcastRowSparse expects row_sparse dst NDArray";
+        << "BroadcastRowSparse expects row_sparse dst NDArray";
       CHECK_EQ(row_id.ctx(), src.ctx())
-              << "row_id and src are expected to be on the same context";
+        << "row_id and src are expected to be on the same context";
 
       // retain according to indices
       const bool is_same_ctx = out->ctx() == src.ctx();
       const bool is_diff_var = out->var() != src.var();
       NDArray retained_gpu = (is_same_ctx && is_diff_var) ? *out :
-          NDArray(kRowSparseStorage, out->shape(), src.ctx(), true,
-                  out->dtype(), out->aux_types());
+        NDArray(kRowSparseStorage, out->shape(), src.ctx(), true,
+                out->dtype(), out->aux_types());
       if (!is_diff_var) {
-        common::LogOnce("The output of row_sparse_pull() on key " + std::to_string(key) +
-                        "refers to the same NDArray as the one stored in KVStore."
-                        "Performing row_sparse_pull() with such output is going to change the "
-                        "data stored in KVStore. Incorrect result may be generated "
-                        "next time row_sparse_pull() is called. To avoid such an issue,"
-                        "consider create a new NDArray buffer to store the output.");
+        common::LogOnce(
+          "The output of row_sparse_pull() on key " + std::to_string(key) +
+          "refers to the same NDArray as the one stored in KVStore."
+          "Performing row_sparse_pull() with such output is going to change the "
+          "data stored in KVStore. Incorrect result may be generated "
+          "next time row_sparse_pull() is called. To avoid such an issue,"
+          "consider create a new NDArray buffer to store the output.");
       }
       bool is_gpu = retained_gpu.ctx().dev_mask() == gpu::kDevMask;
       Engine::Get()->PushAsync([=](RunContext rctx, Engine::CallbackOnComplete on_complete) {
-          const TBlob& indices = row_id.data();
-          using namespace mxnet::common;
-          NDArray temp = retained_gpu;
-          switch (temp.ctx().dev_mask()) {
-            case cpu::kDevMask: {
-              SparseRetainOpForwardRspWrapper<cpu>(rctx.get_stream<cpu>(),
-                  src, indices, kWriteTo, &temp);
-              break;
-            }
-#if MXNET_USE_CUDA
-            case gpu::kDevMask: {
-              SparseRetainOpForwardRspWrapper<gpu>(rctx.get_stream<gpu>(),
-                  src, indices, kWriteTo, &temp);
-              // wait for GPU operations to complete
-              rctx.get_stream<gpu>()->Wait();
-              break;
-            }
-#endif
-            default: LOG(FATAL) << MXNET_GPU_NOT_ENABLED_ERROR;
+        const TBlob& indices = row_id.data();
+        using namespace mxnet::common;
+        NDArray temp = retained_gpu;
+        switch (temp.ctx().dev_mask()) {
+          case cpu::kDevMask: {
+            SparseRetainOpForwardRspWrapper<cpu>(
+              rctx.get_stream<cpu>(), src, indices, kWriteTo, &temp);
+            break;
           }
-          on_complete();
+#if MXNET_USE_CUDA
+          case gpu::kDevMask: {
+            SparseRetainOpForwardRspWrapper<gpu>(rctx.get_stream<gpu>(),
+                src, indices, kWriteTo, &temp);
+            // wait for GPU operations to complete
+            rctx.get_stream<gpu>()->Wait();
+            break;
+          }
+#endif
+          default: LOG(FATAL) << MXNET_GPU_NOT_ENABLED_ERROR;
+        }
+        on_complete();
         }, retained_gpu.ctx(), {src.var(), row_id.var()}, {retained_gpu.var()},
       is_gpu ? FnProperty::kGPUPrioritized : FnProperty::kCPUPrioritized,
       priority, "KVStoreSparseRetain");
@@ -781,8 +774,8 @@ class CommDevice : public Comm {
       // check if sparse_merged is initialized
       if (sparse_merged.is_none()) {
         CHECK(!merged.is_none());
-        sparse_merged = NDArray(kRowSparseStorage, merged.shape(), merged.ctx(),
-                                true, merged.dtype());
+        sparse_merged = NDArray(
+          kRowSparseStorage, merged.shape(), merged.ctx(), true, merged.dtype());
       }
       return sparse_merged;
     }
@@ -797,7 +790,6 @@ class CommDevice : public Comm {
   bool inited_;
   std::vector<KeyAttrs> sorted_key_attrs_;
 };
-
 }  // namespace kvstore
 }  // namespace mxnet
 #endif  // MXNET_KVSTORE_COMM_H_
