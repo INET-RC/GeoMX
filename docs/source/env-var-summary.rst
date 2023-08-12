@@ -109,6 +109,22 @@ Summary of Env Variables
      - ADAPTIVE_K_FLAG
      - Enable or disable adaptive K value adjustment.
 
+   * -
+     - DGT_CONTRIBUTION_ALPHA
+     - The weighted average coefficient used to update gradient contributions.
+
+   * -
+     - DGT_INFO
+     - Enable or disable the debug information of DGT.
+
+   * -
+     - DGT_BLOCK_SIZE
+     - The block size for gradient classification, default is 4096.
+
+   * -
+     - DMLC_K_MIN
+     - The lower limit of DMLC_K when ADAPTIVE_K_FLAG is enabled，default is 0.2.
+
    * - :ref:`TSEngine <tsengine>`
      - ENABLE_INTER_TS
      - Enable or disable TSEngine within the data center.

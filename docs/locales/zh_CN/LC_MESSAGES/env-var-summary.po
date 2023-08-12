@@ -368,3 +368,14 @@ msgstr ""
 msgid "Enable or disable P3 scheduler."
 msgstr "启用或禁用 P3 调度器"
 
+msgid "The weighted average coefficient used to update gradient contributions."
+msgstr "用于更新梯度贡献值的加权平均系数"
+
+msgid "Enable or disable the debug information of DGT."
+msgstr "启用或禁止 DGT 的日志输出"
+
+msgid "The block size for gradient classification, default is 4096."
+msgstr "梯度重要度分类时的块大小，默认为 4096"
+
+msgid "The lower limit of DMLC_K when ADAPTIVE_K_FLAG is enabled，default is 0.2."
+msgstr "启用 ADAPTIVE_K_FLAG 时允许 DMLC_K 的最小值，默认为 0.2"
