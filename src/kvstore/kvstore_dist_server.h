@@ -772,7 +772,8 @@ class KVStoreDistServer {
     const size_t size = num_arr_elems * num_bytes;
     const int cmd = GetCommandType(RequestType::kDefaultPushPull, dtype);
 
-    PSKV& pskv =  EncodeDefaultKey(key, stored.shape().Size(), num_bytes);
+    PSKV& pskv = EncodeDefaultKey(key, stored.shape().Size(), num_bytes);
+
     ps::KVPairs<char> params;
     char *data = static_cast<char *>(stored.data().dptr_);
     ps::SArray<char> vals(data, size, false);
@@ -841,7 +842,8 @@ class KVStoreDistServer {
       const int dtype = mshadow::kFloat32;
       const int num_bytes = mshadow::mshadow_sizeof(dtype);
       const int cmd = GetCommandType(RequestType::kBSCompressedPushPull, dtype);
-      PSKV &pskv = EncodeBSCompressedKey(key, original_size, true, num_bytes);
+
+      PSKV &pskv = EncodeCompressedKey(key, original_size, true, num_bytes);
 
       // Calculate the expected size of the compressed data.
       float threshold = gradient_compression_->get_threshold();
@@ -916,7 +918,7 @@ class KVStoreDistServer {
       pskv = EncodeCompressedKey(key, num_arr_elems, false, num_bytes);
     } else if (is_bscompressed) {
       cmd = GetCommandType(RequestType::kBSCompressedPushPull, dtype);
-      pskv = EncodeBSCompressedKey(key, num_arr_elems, false, num_bytes);
+      pskv = EncodeCompressedKey(key, num_arr_elems, false, num_bytes);
     } else {
       cmd = GetCommandType(RequestType::kDefaultPushPull, dtype);
       pskv = EncodeDefaultKey(key, num_arr_elems, num_bytes);
@@ -1034,10 +1036,9 @@ class KVStoreDistServer {
       }
     } else {
       // Handle large data tensor.
-      PSKV& pskv =
-        is_compressed ? EncodeCompressedKey(key, num_arr_elems, false, num_bytes) :
-        is_bscompressed ? EncodeBSCompressedKey(key, num_arr_elems, false, num_bytes) :
-        EncodeDefaultKey(key, num_arr_elems, num_bytes);
+      PSKV& pskv = (is_compressed || is_bscompressed) ?
+          EncodeCompressedKey(key, num_arr_elems, false, num_bytes) :
+          EncodeDefaultKey(key, num_arr_elems, num_bytes);
       auto& keys = pskv.keys;
       auto* lens = &pskv.lens;
       auto& recv_buf = comm_buf_[key];
@@ -1793,8 +1794,8 @@ class KVStoreDistServer {
         pskv.size = 0;
         for (int i = 0; i < num_global_servers; ++i) {
           size_t part_size =
-            static_cast<size_t>(round(static_cast<double>(num_arr_elems)/num_global_servers*(i+1))) -
-            static_cast<size_t>(round(static_cast<double>(num_arr_elems)/num_global_servers*i));
+            static_cast<size_t>(round(static_cast<double>(num_arr_elems) / num_global_servers * (i + 1))) -
+            static_cast<size_t>(round(static_cast<double>(num_arr_elems) / num_global_servers * i));
           ps::Key ps_key = krs[i].begin() + key;
           CHECK_LT(ps_key, krs[i].end());
           pskv.keys.push_back(ps_key);
@@ -1815,102 +1816,19 @@ class KVStoreDistServer {
     CHECK_GT(num_global_servers, 0);
 
     // represents size of data to be sent
-    size_t compr_num_elem;
-    if (gradient_compression_->get_type() == CompressionType::kTwoBit) {
+    size_t compr_num_elem = 0;
+    size_t compr_pull_num_elem = 0;
+    bool is_2bit_compr = gradient_compression_->get_type() == CompressionType::kTwoBit;
+    bool is_bsc_compr = gradient_compression_->get_type() == CompressionType::kBiSparseCompression;
+
+    if (is_2bit_compr) {
       compr_num_elem = gradient_compression_->GetCompressedSize(original_num_elem);
-    }
-    else if (gradient_compression_->get_type() == CompressionType::kBiSparseCompression) {
+      compr_pull_num_elem = original_num_elem;
+    } else if (is_bsc_compr) {
       compr_num_elem = original_num_elem * gradient_compression_->get_threshold() * 2;
+      compr_pull_num_elem = compr_num_elem * ps::NumGlobalWorkers();
     }
-    mu_.lock();
-    PSKV& pskv = is_push ? compr_ps_kv_[key].push : compr_ps_kv_[key].pull;
-    mu_.unlock();
 
-    if (!pskv.keys.empty()) {
-      const size_t num_elem = is_push ? compr_num_elem : original_num_elem;
-      CHECK_EQ(static_cast<size_t>(pskv.size), num_elem * num_bytes)
-        << "The value size can't be changed. For key " << key;
-    } else {
-      // populate both pull and push pskvs
-      // push pskv has sizes corresponding to compressed data
-      // pull pskv has decompressed sizes for parts in push_pskv
-      mu_.lock();
-      PSKV& pull_pskv = compr_ps_kv_[key].pull;
-      PSKV& push_pskv = compr_ps_kv_[key].push;
-      mu_.unlock();
-
-      if (original_num_elem < bigarray_bound_) {
-        // send it to a single random picked server
-        int global_server = (key * 9973) % num_global_servers;
-        ps::Key ps_key = krs[global_server].begin() + key;
-        CHECK_LT(ps_key, krs[global_server].end());
-        // meta info
-        push_pskv.keys.push_back(krs[global_server].begin() + original_num_elem);
-        push_pskv.lens.push_back(0);
-        // data
-        push_pskv.keys.push_back(ps_key);
-        pull_pskv.keys.push_back(ps_key);
-        const int compr_size = compr_num_elem * num_bytes;
-        const int original_size = original_num_elem * num_bytes;
-        push_pskv.lens.push_back(compr_size);
-        pull_pskv.lens.push_back(original_size);
-        push_pskv.size = compr_size;
-        pull_pskv.size = original_size;
-      } else {
-        // partition it to all servers
-        push_pskv.size = 0;
-        pull_pskv.size = 0;
-        for (int i = 0; i < num_global_servers; ++i) {
-          size_t part_compr, part_orig;
-          if (i == num_global_servers - 1) {
-            part_compr = compr_num_elem - push_pskv.size;
-            part_orig = original_num_elem - pull_pskv.size;
-          } else {
-            part_compr =
-              static_cast<size_t>(round(static_cast<double>(compr_num_elem)/num_global_servers*(i+1))) -
-              static_cast<size_t>(round(static_cast<double>(compr_num_elem)/num_global_servers*i));
-            part_orig = part_compr * gradient_compression_->GetCompressionFactor();
-          }
-          // meta info
-          ps::Key ps_key_dummy = krs[i].begin() + part_orig;
-          CHECK_LT(ps_key_dummy, krs[i].end());
-          push_pskv.keys.push_back(ps_key_dummy);
-          push_pskv.lens.push_back(0);
-          // data
-          ps::Key ps_key = krs[i].begin() + key;
-          CHECK_LT(ps_key, krs[i].end());
-          push_pskv.keys.push_back(ps_key);
-          pull_pskv.keys.push_back(ps_key);
-          push_pskv.lens.push_back(part_compr * num_bytes);
-          pull_pskv.lens.push_back(part_orig * num_bytes);
-          // num elements need to be inserted below so that for last server,
-          // there is no round off error
-          push_pskv.size += part_compr;
-          pull_pskv.size += part_orig;
-        }
-        CHECK_EQ(static_cast<size_t>(push_pskv.size), compr_num_elem);
-        CHECK_EQ(static_cast<size_t>(pull_pskv.size), original_num_elem);
-        push_pskv.size *= num_bytes;
-        pull_pskv.size *= num_bytes;
-        CHECK_EQ(push_pskv.lens.size(), num_global_servers * 2);
-      }
-    }
-    return pskv;
-  }
-
-  PSKV& EncodeBSCompressedKey(const int key, const size_t original_num_elem,
-                              const bool is_push, const int num_bytes) {
-    auto krs = ps::Postoffice::Get()->GetServerKeyRanges(true);
-    const int num_global_servers = krs.size();
-    CHECK_GT(num_global_servers, 0);
-
-    // represents size of data to be sent
-    size_t compr_num_elem;
-    size_t compr_pull_num_elem;
-      CHECK(gradient_compression_->get_type() == CompressionType::kBiSparseCompression)
-              << "EncodeBSCompressedKey misused";
-    compr_num_elem = original_num_elem * gradient_compression_->get_threshold() * 2;
-    compr_pull_num_elem = compr_num_elem * ps::NumGlobalWorkers();
     mu_.lock();
     PSKV& pskv = is_push ? compr_ps_kv_[key].push : compr_ps_kv_[key].pull;
     mu_.unlock();
@@ -1928,7 +1846,7 @@ class KVStoreDistServer {
       PSKV& push_pskv = compr_ps_kv_[key].push;
       mu_.unlock();
 
-      if (true) {
+      if (is_bsc_compr || original_num_elem < bigarray_bound_) {
         // send it to a single random picked server
         int global_server = (key * 9973) % num_global_servers;
         ps::Key ps_key = krs[global_server].begin() + key;
@@ -1940,13 +1858,12 @@ class KVStoreDistServer {
         push_pskv.keys.push_back(ps_key);
         pull_pskv.keys.push_back(ps_key);
         const int compr_size = compr_num_elem * num_bytes;
-        const int compr_pull_size = compr_pull_num_elem * num_bytes;
+        const int pull_size = compr_pull_num_elem * num_bytes;
         push_pskv.lens.push_back(compr_size);
-        pull_pskv.lens.push_back(compr_pull_size);
+        pull_pskv.lens.push_back(pull_size);
         push_pskv.size = compr_size;
-        pull_pskv.size = compr_pull_size;
+        pull_pskv.size = pull_size;
       } else {
-        // no support for BSC now
         // partition it to all servers
         push_pskv.size = 0;
         pull_pskv.size = 0;
@@ -1957,9 +1874,9 @@ class KVStoreDistServer {
             part_orig = original_num_elem - pull_pskv.size;
           } else {
             part_compr =
-              static_cast<size_t>(round(static_cast<double>(compr_num_elem)/num_global_servers*(i+1))) -
-              static_cast<size_t>(round(static_cast<double>(compr_num_elem)/num_global_servers*i));
-              part_orig = part_compr * ps::NumGlobalWorkers();
+              static_cast<size_t>(round(static_cast<double>(compr_num_elem) / num_global_servers * (i + 1))) -
+              static_cast<size_t>(round(static_cast<double>(compr_num_elem) / num_global_servers * i));
+            part_orig = part_compr * gradient_compression_->GetCompressionFactor();
           }
           // meta info
           ps::Key ps_key_dummy = krs[i].begin() + part_orig;
