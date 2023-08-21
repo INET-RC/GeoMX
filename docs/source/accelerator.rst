@@ -74,7 +74,7 @@ be set through the environmental variable
 
 .. code:: shell
 
-   MXNET_KVSTORE_SIZE_LOWER_BOUND = 200000
+   MXNET_KVSTORE_SIZE_LOWER_BOUND = 1000
 
 The demo code can be found in
 `examples/cnn_bsc.py <https://github.com/INET-RC/GeoMX/blob/main/examples/cnn_bsc.py>`_.
@@ -192,7 +192,7 @@ code for using MPQ is given below:
 
    # Define the threshold to classify large and tiny tensors, here, the threshold
    # is the same as that in Bidirectional Gradient Sparsification.
-   size_lower_bound = int(os.getenv('MXNET_KVSTORE_SIZE_LOWER_BOUND', 2e5))
+   size_lower_bound = int(os.getenv('MXNET_KVSTORE_SIZE_LOWER_BOUND', 1e3))
 
    # Initialize distributed kvstore in synchronous mode.
    kvstore_dist = mx.kv.create("dist_sync")
