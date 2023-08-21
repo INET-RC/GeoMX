@@ -1219,8 +1219,8 @@ class KVStoreDistServer {
     }
     if (ps::IsGlobalServer()) CHECK(sync_global_mode_);
 
-    int key = ps_server_->enable_p3?(int)req_data.keys[0]:
-                   DecodeKey(req_data.keys[0], ps::IsGlobalServer());
+    int key = ps_server_->enable_p3 ? (int)req_data.keys[0]:
+      DecodeKey(req_data.keys[0], ps::IsGlobalServer());
     auto& stored = has_multi_precision_copy(type) ? store_realt_[key] : store_[key];
     auto& stored_milestone = store_milestone_[key];
     // there used several WaitToRead, this is because a recved's memory
@@ -1270,12 +1270,13 @@ class KVStoreDistServer {
       // aggregate gradients from workers or servers
       CHECK(sync_mode_);
       // ignore central workers if DMLC_ENABLE_CENTRAL_WORKER is not set
-      if (ps::IsGlobalServer() && req_meta.sender > ps::kOffset && !ps::EnableCentralWorkers()) return;
+      if (ps::IsGlobalServer() && req_meta.sender > ps::kOffset
+        && !ps::EnableCentralWorkers()) return;
 
       auto &updates = update_buf_[key];
       if (updates.merged.is_none()) {
-          updates.merged = NDArray(dshape, Context(), false,
-                                   has_multi_precision_copy(type) ? mshadow::kFloat32 : type.dtype);
+        updates.merged = NDArray(dshape, Context(), false,
+                                 has_multi_precision_copy(type) ? mshadow::kFloat32 : type.dtype);
       }
       if (has_multi_precision_copy(type) && updates.temp_array.is_none()) {
         updates.temp_array = NDArray(dshape, Context(), false, mshadow::kFloat32);
@@ -1339,7 +1340,6 @@ class KVStoreDistServer {
                 server->Response(req, false);
               }
             }
-
             // push to global servers
             int ts;
             switch (gradient_compression_->get_type()) {
@@ -1357,11 +1357,11 @@ class KVStoreDistServer {
             ts_key_map_[ts] = key;
             mu_.unlock();
           }
-      } else {
-        updates.merged.WaitToRead();
+        } else {
+          updates.merged.WaitToRead();
+        }
       }
     }
-  }
   }
 
   void DefaultAutoPull(const DataHandleType type, const int key, const int version,
@@ -1457,8 +1457,7 @@ class KVStoreDistServer {
   }
 
   void DataHandleSyncBSCompressed(const DataHandleType type, const ps::KVMeta& req_meta,
-                                const ps::KVPairs<char>& req_data,
-                                ps::KVServer<char>* server) {
+                                  const ps::KVPairs<char>& req_data, ps::KVServer<char>* server) {
     // do some check
     CHECK(ps::IsGlobalServer());
     CHECK(req_meta.push);
@@ -1517,8 +1516,7 @@ class KVStoreDistServer {
   }
 
   void DataHandleAsyncDefault(const DataHandleType type, const ps::KVMeta& req_meta,
-                              const ps::KVPairs<char>& req_data,
-                              ps::KVServer<char>* server) {
+                              const ps::KVPairs<char>& req_data, ps::KVServer<char>* server) {
     // do some check
     CHECK(req_meta.push);
     CHECK_EQ(req_data.keys.size(), (size_t)1);
@@ -1713,8 +1711,8 @@ class KVStoreDistServer {
     if (req_meta.sender > 100) {
       if (request) {
         // response pull requests
-        int key = ps_server_->enable_p3?(int)req_data.keys[0]:
-                  DecodeKey(req_data.keys[0], ps::IsGlobalServer());
+        int key = ps_server_->enable_p3 ? (int)req_data.keys[0]:
+          DecodeKey(req_data.keys[0], ps::IsGlobalServer());
 
         mu_.lock();
         auto& init = initialized_[key];
@@ -1746,7 +1744,7 @@ class KVStoreDistServer {
       } else {
         if (request) {
           // response pull requests
-          int key = ps_server_->enable_p3?(int)req_data.keys[0]:
+          int key = ps_server_->enable_p3 ? (int)req_data.keys[0]:
             DecodeKey(req_data.keys[0], ps::IsGlobalServer());
           mu_.lock();
           auto &init = initialized_[key];
@@ -1901,7 +1899,7 @@ class KVStoreDistServer {
   }
 
   PSKV& EncodeBSCompressedKey(const int key, const size_t original_num_elem,
-                            const bool is_push, const int num_bytes) {
+                              const bool is_push, const int num_bytes) {
     auto krs = ps::Postoffice::Get()->GetServerKeyRanges(true);
     const int num_global_servers = krs.size();
     CHECK_GT(num_global_servers, 0);
