@@ -29,7 +29,7 @@ DMLC_ENABLE_CENTRAL_WORKER=0 \
 DMLC_NUM_ALL_WORKER=4 \
 PS_VERBOSE=1 \
 DMLC_INTERFACE=eth0 \
-MXNET_KVSTORE_SIZE_LOWER_BOUND=200000 \
+MXNET_KVSTORE_SIZE_LOWER_BOUND=1000 \
 nohup python -c "import mxnet" > /dev/null &
 
 # run master worker in deamon process
@@ -78,7 +78,7 @@ DMLC_NUM_SERVER=1 \
 DMLC_NUM_WORKER=2 \
 PS_VERBOSE=1 \
 DMLC_INTERFACE=eth0 \
-MXNET_KVSTORE_SIZE_LOWER_BOUND=200000 \
+MXNET_KVSTORE_SIZE_LOWER_BOUND=1000 \
 nohup python -c "import mxnet" > /dev/null &
 
 # run two workers in deamon process
@@ -126,7 +126,7 @@ DMLC_NUM_SERVER=1 \
 DMLC_NUM_WORKER=2 \
 PS_VERBOSE=1 \
 DMLC_INTERFACE=eth0 \
-MXNET_KVSTORE_SIZE_LOWER_BOUND=200000 \
+MXNET_KVSTORE_SIZE_LOWER_BOUND=1000 \
 nohup python -c "import mxnet" > /dev/null &
 
 # run one worker in deamon process and another one not
