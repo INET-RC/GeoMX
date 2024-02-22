@@ -30,6 +30,7 @@ RUN APT_INSTALL="apt install -y --no-install-recommends" && \
         autoconf \
         automake \
         libtool \
+        iputils-ping \
         net-tools \
         htop \
         psmisc
