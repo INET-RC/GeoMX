@@ -97,7 +97,7 @@ If this repo is helpful to you, please kindly cite us:
 ```bibtex
 @misc{li2020geomx,
   author = {Li, Zonghang and Zhang, Zhaofeng and Zhou, Huaman and Cai, Weibo and Yu, Hongfang},
-  title = {GeoMX: Fast and unified distributed system for training machine learning algorithms over geographical data centers.},
+  title = {GeoMX: A fast and unified system for distributed machine learning over geo-distributed data centers.},
   year = {2020},
   howpublished = {GitHub},
   url = {https://github.com/INET-RC/GeoMX}
